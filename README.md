@@ -53,18 +53,24 @@ After :
 
 ## Installation
 
-    python setup.py install
+It's not recommended to install this *unstable* framework on your Python environnement, but rather to build
+its modules and use it from its directory.
 
-will install the package and its dependencies. On Linux systems, if you have
-Python 2 and 3 interpreters installed together, run :
+You need `distutils` and `cython` prior to anything. Then, the following command will
+build the C modules and check the dependencies :
 
-    python3 setup.py install
+    python setup.py build_ext --inplace
+
+On Linux systems, if you have Python 2 and 3 interpreters installed together, you may run :
+
+    python3 setup.py build_ext --inplace
+
     
 ## Use
 
 Import PIL and the library : 
 
-    from lib import utils
+    from lib import utils # if you are working directly in the package directory
     from PIL import Image
     
 Load an image :
