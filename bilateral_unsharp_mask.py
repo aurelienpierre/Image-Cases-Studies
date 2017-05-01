@@ -37,7 +37,7 @@ if __name__ == '__main__':
             L = utils.bilateral_filter(pic.L, 10, 6.0, 3.0)
 
             # USM formula
-            pic.L = pic. L + (pic.L - L) * amount
+            pic.L = pic.L + (pic.L - L) * amount
 
             with Image.fromarray(pic.RGB) as output:
 

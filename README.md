@@ -47,7 +47,7 @@ is usually performed with a Gaussian blur and results in halos
 around the sharp edges of the image.
 
 Using a [bilateral filter](https://en.wikipedia.org/wiki/Bilateral_filter) 
-(e.g a *surface blur*) in LAB space allows to perform a better unsharp mask without
+(e.g a *surface blur*) on the L channel allows to perform a better unsharp mask without
 halos, because we don't sharpen the edges. It's much slower though.
 Run or see `bilateral_unsharp_mask.py`.
 
@@ -56,6 +56,27 @@ Before :
 
 After :
 ![alt text](img/bilateral-unsharp-mask/original.jpg "After")
+
+This 1.7 Mpx picture took around 18s to compute on an Intel i7 Sandy Bridge with 8 threads. 
+
+#### Defringe with bilateral filter
+
+Purples and green fringes along edges are classic chromatic aberrations caused by lenses that
+occur at wide aperture. Defringing is usually performed with edge detection, by desaturing
+edges. However, this can lead to legitimate purple edges (lips, signs) becoming muddy grey. 
+
+Using a [bilateral filter](https://en.wikipedia.org/wiki/Bilateral_filter) 
+(e.g a *surface blur*) on the A channel allows fringe reduction without affecting
+the legitimate edges. 
+
+
+Before :
+![alt text](img/original.jpg "Before")
+
+After :
+![alt text](img/bilateral-LAB/original.jpg "After")
+
+This 1.7 Mpx picture took around 13s to compute on an Intel i7 Sandy Bridge with 8 threads. 
 
 ## Installation
 
