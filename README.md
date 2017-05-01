@@ -46,7 +46,7 @@ are in `img` subfolders.
 is usually performed with a Gaussian blur and results in halos
 around the sharp edges of the image.
 
-Using a [bilateral filter] (https://en.wikipedia.org/wiki/Bilateral_filter) 
+Using a [bilateral filter](https://en.wikipedia.org/wiki/Bilateral_filter) 
 (e.g a *surface blur*) in LAB space allows to perform a better unsharp mask without
 halos, because we don't sharpen the edges. It's much slower though.
 Run or see `bilateral_unsharp_mask.py`.
