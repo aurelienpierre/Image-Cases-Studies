@@ -11,11 +11,33 @@ chromatic aberrations.
 '''
 from PIL import Image
 from os import listdir
+import numpy as np
+from skimage import color
 from os.path import isfile, join
-import pyximport
 
 from lib import utils
-pyximport.install()
+
+import numba
+
+@utils.timeit
+@numba.jit
+def process(pic):
+    # Open RGB image in float mode
+    pic = np.array(pic).astype(float)
+    
+    # Convert to LAB
+    pic = color.rgb2lab(pic / 255)
+
+    # Compute a bilateral filter on A channel
+    A = utils.bilateral_filter(pic[..., 2], 8, 18, 12)
+    
+    # USM formula
+    pic[..., 2] = pic[..., 2] - (pic[..., 2] - A) * amount
+    
+    # Convert back to 8 bits RGB before saving
+    pic = (color.lab2rgb(pic) * 255).astype(np.uint8)
+    
+    return pic
 
 if __name__ == '__main__':
 
@@ -28,16 +50,9 @@ if __name__ == '__main__':
     for picture in images:
         with Image.open(join(source_path, picture)) as pic:
 
-            # Create a LAB/RGB image object
-            pic = utils.image_open(pic)
+            pic = process(pic)
 
-            # Compute a bilateral filter on A channel
-            A = utils.bilateral_filter(pic.A, 8, 18.0, 18.0)
-            
-            # USM formula
-            pic.A = pic.A - (pic.A - A) * amount
-
-            with Image.fromarray(pic.RGB) as output:
+            with Image.fromarray(pic) as output:
 
                 output.save(join(dest_path, picture),
                             format="jpeg",

@@ -3,7 +3,9 @@ Created on 27 avr. 2017
 
 @author: aurelien
 
-Source : https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3166524/
+Numba implementation of lib.utils module. Turns out to be slower than the Cython 
+implementation 
+
 '''
 from PIL import Image
 from scipy import interpolate
@@ -17,19 +19,12 @@ import os
 import scipy.signal
 import time
 import warnings
-import numba
+from  numba import *
 
 import numpy as np
 
 
-cimport numpy as np
-from numpy cimport ndarray
-
-
-DTYPE = np.float
-ctypedef np.float_t DTYPE_t
-
-
+@jit
 def timeit(method):
     '''
     From: http://www.samuelbosch.com/2012/02/timing-functions-in-python.html
@@ -45,7 +40,7 @@ def timeit(method):
     return timed
 
 
-cdef np.ndarray Lagrange_interpolation(np.ndarray points, str variable=None):
+def Lagrange_interpolation(points, variable=None):
     """
     Compute the Lagrange interpolation polynomial.
 
@@ -58,7 +53,7 @@ cdef np.ndarray Lagrange_interpolation(np.ndarray points, str variable=None):
 
     x = Symbol("x")
     L = zeros(1, points.shape[0])
-    cdef int i = 0
+    i = 0
 
     for p in points:
         numerator = 1
@@ -85,18 +80,19 @@ cdef np.ndarray Lagrange_interpolation(np.ndarray points, str variable=None):
 
     return P, Y
 
-def histogram(np.ndarray[DTYPE_t, ndim=3] src):
+
+def histogram(src):
     """
     Fit the histogram entirely
     """
-    delta = 100 / (np.max(src[..., 0]) - np.min(src[..., 0]))
-    src[..., 0] = (src[..., 0] - np.min(src[..., 0])) * delta
-    src[..., 1] = src[..., 1] * delta
-    src[..., 2] = src[..., 2] * delta
+    delta = 100 / (np.max(src.L) - np.min(src.L))
+    src.L = (src.L - np.min(src.L)) * delta
+    src.A = src.A * delta
+    src.B = src.B * delta
     return src
 
 
-def grey_point(np.ndarray[DTYPE_t, ndim=3] src, float amount):
+def grey_point(src, amount):
     """
     Adjust the grey point to the desired amount using Lagrange interpolation
 
@@ -127,7 +123,7 @@ def grey_point(np.ndarray[DTYPE_t, ndim=3] src, float amount):
     return src
 
 
-def auto_vibrance(np.ndarray[DTYPE_t, ndim=2] src):
+def auto_vibrance(src):
     """
     Add some more saturation preserving the skin tones (A < 20, B < 18)
     """
@@ -144,47 +140,38 @@ def auto_vibrance(np.ndarray[DTYPE_t, ndim=2] src):
 
     return src
 
-def gaussian(x, float sigma):
+
+def gaussian(x, sigma):
     return (1.0 / (2 * np.pi * (sigma ** 2))) * np.exp(- (x ** 2) / (2 * sigma ** 2))
 
 
-def gaussian_kernel(int radius, float std):
+def gaussian_kernel(radius, std):
     window = scipy.signal.gaussian(radius, std=std)
     kern = np.outer(window, window)
     kern = kern / kern.sum()
     return kern
 
-def kaiser_kernel(int radius, float beta):
+
+def kaiser_kernel(radius, beta):
     window = np.kaiser(radius, beta)
     kern = np.outer(window, window)
     kern = kern / kern.sum()
     return kern
 
-def poisson_kernel(int radius, float tau):
+def poisson_kernel(radius, tau):
     window = scipy.signal.exponential(radius, tau=tau)
     kern = np.outer(window, window)
     kern = kern / kern.sum()
     return kern
 
 
-cdef np.ndarray[DTYPE_t, ndim=2] bilateral_differences(np.ndarray[DTYPE_t, ndim=2] source,\
-                                                       np.ndarray[DTYPE_t, ndim=2] filtered_image, \
-                                                       np.ndarray[DTYPE_t, ndim=2] W, \
-                                                       np.ndarray[long, ndim=2] thread, \
-                                                       int radius, \
-                                                       np.ndarray[DTYPE_t, ndim=2] pad, \
-                                                       float std_i, \
-                                                       float std_s):
+def bilateral_differences(source, filtered_image, W, thread, radius, pad, std_i, std_s):
     """
     Perform the bilateral differences and weighting on the (i, j) neighbour.
     For multithreading purposes
     This provides the loop to run inside each thread.
     """
-
-    cdef float distance, gs
-    cdef np.ndarray[DTYPE_t, ndim=2] gi, w, neighbour
-    cdef int i, j
-
+    
     for (i, j) in thread:
         neighbour = pad[radius + i: radius + i + source.shape[0],
                         radius + j: radius + j + source.shape[1]]
@@ -198,13 +185,9 @@ cdef np.ndarray[DTYPE_t, ndim=2] bilateral_differences(np.ndarray[DTYPE_t, ndim=
         filtered_image += neighbour * w
         W += w
 
-
 @timeit
-def bilateral_filter(np.ndarray[DTYPE_t, ndim=2] source,\
-                    int radius, \
-                    float std_i, \
-                    float std_s, \
-                    bint parallel=1):
+@jit(cache=True)
+def bilateral_filter(source, radius, std_i, std_s, parallel=1):
     """
     Optimized parallel Cython function to perform bilateral filtering
     For multithreading purposes
@@ -212,23 +195,20 @@ def bilateral_filter(np.ndarray[DTYPE_t, ndim=2] source,\
     
     """
 
-    cdef np.ndarray[DTYPE_t, ndim=2] filtered_image = np.zeros_like(source).astype(float)
-    cdef np.ndarray[DTYPE_t, ndim=2] pad = np.pad(source, (radius, radius), mode="symmetric")
-    cdef np.ndarray[DTYPE_t, ndim=2] W = np.zeros_like(source).astype(float)
+    filtered_image = np.zeros_like(source).astype(float)
+    pad = np.pad(source, (radius, radius), mode="symmetric")
+    W = np.zeros_like(source).astype(float)
 
-    cdef int num_threads = os.cpu_count()
+    num_threads = os.cpu_count()
 
     iseq = range(-radius, radius + 1)
     jseq = iseq
 
-    cdef np.ndarray combi = np.transpose([np.tile(iseq, len(jseq)),
+    combi = np.transpose([np.tile(iseq, len(jseq)),
                                           np.repeat(jseq, len(iseq))])
 
-    cdef list chunks = np.array_split(combi, num_threads)
-    cdef np.ndarray[DTYPE_t, ndim=2] w, neighbour
-    cdef np.ndarray[long, ndim=2] chunk
-
-    cdef list processing_threads = []
+    chunks = np.array_split(combi, num_threads)
+    processing_threads = []
 
     for chunk in chunks:
         if parallel == 0:
@@ -248,8 +228,7 @@ def bilateral_filter(np.ndarray[DTYPE_t, ndim=2] source,\
     return np.divide(filtered_image, W)
 
 
-cdef np.ndarray[DTYPE_t, ndim=2] bessel_blur(np.ndarray[DTYPE_t, ndim=2] src,\
-                                             int radius, float amount):
+def bessel_blur(src, radius, amount):
     """
     Blur filter using Bessel function
     """
@@ -263,8 +242,7 @@ cdef np.ndarray[DTYPE_t, ndim=2] bessel_blur(np.ndarray[DTYPE_t, ndim=2] src,\
     return src
 
 
-cdef np.ndarray[DTYPE_t, ndim=2] gaussian_blur(np.ndarray[DTYPE_t, ndim=2] src,\
-                                               int radius, float amount):
+def gaussian_blur(src, radius, amount):
     """
     Blur filter using the Gaussian function
     """
@@ -279,7 +257,6 @@ cdef np.ndarray[DTYPE_t, ndim=2] gaussian_blur(np.ndarray[DTYPE_t, ndim=2] src,\
 
 
 @timeit
-@numba.vectorize
 def USM(src, radius, strength, amount, method="bessel"):
     """
     Unsharp mask using Bessel or Gaussian blur
@@ -292,8 +269,7 @@ def USM(src, radius, strength, amount, method="bessel"):
     return src
 
 
-cdef np.ndarray[DTYPE_t, ndim=2] overlay(np.ndarray[DTYPE_t, ndim=2] upx,\
-                                         np.ndarray[DTYPE_t, ndim=2] lpx):
+def overlay(upx, lpx):
     """
     Overlay blending mode between 2 layers : upx (top) and lpx (bottom)
     """
@@ -303,9 +279,7 @@ cdef np.ndarray[DTYPE_t, ndim=2] overlay(np.ndarray[DTYPE_t, ndim=2] upx,\
 
 
 @timeit
-def blending(np.ndarray[DTYPE_t, ndim=2] upx,\
-             np.ndarray[DTYPE_t, ndim=2] lpx, \
-             str type):
+def blending(upx, lpx, type):
     """
     Expose the blending modes to Python code
     upx : top layer
@@ -317,15 +291,12 @@ def blending(np.ndarray[DTYPE_t, ndim=2] upx,\
     return types[type](upx, lpx)
 
 
-def richardson_lucy_2d(np.ndarray[DTYPE_t, ndim=2] image,\
-                    np.ndarray[DTYPE_t, ndim=2] psf, \
-                    float damp, \
-                    int iterations=50, \
-                    str mode="LAB"):
+@jit(cache=True)
+def richardson_lucy(image, psf, iterations=50, clip=1, mode="LAB"):
     """Richardson-Lucy deconvolution.
-     
+    
     Adapted for Cython and performance from skimage.restore module
- 
+
     Parameters
     ----------
     image : ndarray
@@ -335,78 +306,61 @@ def richardson_lucy_2d(np.ndarray[DTYPE_t, ndim=2] image,\
     iterations : int
        Number of iterations. This parameter plays the role of
        regularisation.
-    damp : float
-        Removes the pixels that are `damp` times the standard deviations further
-        from the original image. This prevent noise amplification. Set damp = 0
-        to bypass noise damping.
- 
- 
+    clip : boolean, optional
+       True by default. If true, pixel value of the result above 1 or
+       under -1 are thresholded for skimage pipeline compatibility.
+
+    Returns
+    -------
+    im_deconv : ndarray
+       The deconvolved image.
+
+    Examples
+    --------
+    >>> from skimage import color, data, restoration
+    >>> camera = color.rgb2gray(data.camera())
+    >>> from scipy.signal import convolve2d
+    >>> psf = np.ones((5, 5)) / 25
+    >>> camera = convolve2d(camera, psf, 'same')
+    >>> camera += 0.1 * camera.std() * np.random.standard_normal(camera.shape)
+    >>> deconvolved = restoration.richardson_lucy(camera, psf, 5)
+
     References
     ----------
     .. [1] http://en.wikipedia.org/wiki/Richardson%E2%80%93Lucy_deconvolution
     """
-     
+    
     # Pad the image with symmetric data to avoid border effects
     image = np.pad(image, (iterations, iterations), mode="symmetric")
-     
-    cdef np.ndarray[DTYPE_t, ndim=2] im_deconv = 0.5 * np.ones_like(image)
-    cdef np.ndarray[DTYPE_t, ndim=2] psf_mirror = psf[::-1, ::-1]
-    cdef np.ndarray[DTYPE_t, ndim=2] relative_blur, im_backup, delta, 
-    cdef list damping_array
- 
- 
-    # There is a way to make it a recursive function, which is more elegant, but it my tests it was a bit slower
+    
+    im_deconv = 0.5 * np.ones_like(image)
+    psf_mirror = psf[::-1, ::-1]
+
     for _ in range(iterations):
         relative_blur = image / fftconvolve(im_deconv, psf, 'same')
         im_deconv *= fftconvolve(relative_blur, psf_mirror, 'same')
         
-        if damp != 0:
-            # Remove the current iteration for pixels where the difference
-            # between original and deconvoluted image is above damp * std
-            # this prevents noise amplification from one iteration to another
-            delta = image - im_deconv
-            damping_array = [np.absolute(delta) > damp * delta.std()]
-            im_deconv[damping_array] = image[damping_array]
-         
+    if clip:
+        im_deconv[im_deconv > 255] = 255
+        im_deconv[im_deconv < 0] = 0
+        
     image = im_deconv[iterations:-iterations, iterations:-iterations]
-     
+    
     return image 
- 
- 
-cdef richardson_lucy_3d(np.ndarray[DTYPE_t, ndim=3] image,\
-                    np.ndarray[DTYPE_t, ndim=2] psf, \
-                    float damp, \
-                    int iterations=50, \
-                    str mode="LAB"):
+
+@timeit
+def richardson_lucy_3d(image, psf, iterations=50, clip=1, mode="LAB"):
     """
     Run 3 Richardson-Lucy deconvolutions on 3 channels in 3 different threads
     """
-     
-    cdef list processing_threads = []
-    cdef int i
-     
+    
     with Pool(processes=3) as pool:
- 
+
         image = np.dstack(pool.starmap(
-                                        richardson_lucy_2d, 
-                                        [(image[..., i], psf, damp, iterations, mode) for i in range(3)]
+                                        richardson_lucy, 
+                                        [(image[..., i], psf, iterations, clip, mode) for i in range(3)]
                                         )
                           )
- 
-         
-    return image
 
-@timeit
-def richardson_lucy(np.ndarray image,\
-                    np.ndarray[DTYPE_t, ndim=2] psf, \
-                    float damp, \
-                    int iterations=50,\
-                    str mode="LAB"):
-
-    """Expose C function to Python"""
-    
-    if image.ndim == 3:
-        return richardson_lucy_3d(image, psf, damp, iterations, mode)
-    
-    if image.ndim == 2:
-        return richardson_lucy_2d(image, psf, damp, iterations, mode)
+        
+    return image 

@@ -39,5 +39,6 @@ setup(
                           "sympy",
                           "skimage",
                           "warnings",
-                          "time"]
+                          "time",
+                          "numba"]
 )
