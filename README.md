@@ -53,10 +53,10 @@ halos, because we don't sharpen the edges. It's much slower though.
 Run or see `bilateral_unsharp_mask.py`.
 
 Before :
-![alt text](img/original.jpg | width=50)
+![alt text](img/original.jpg)
 
 After :
-![alt text](img/bilateral-unsharp-mask/original.jpg | width=50)
+![alt text](img/bilateral-unsharp-mask/original.jpg)
 
 This 1.7 Mpx picture took around 18s to compute on an Intel i7 2.20 GHz Sandy Bridge with 8 threads. 
 
@@ -72,10 +72,10 @@ the legitimate edges.
 
 
 Before :
-![alt text](img/original.jpg | width=50)
+![alt text](img/original.jpg)
 
 After :
-![alt text](img/bilateral-LAB/original.jpg | width=50)
+![alt text](img/bilateral-LAB/original.jpg)
 
 This 1.7 Mpx picture took around 13s to compute on an Intel i7 2.20 GHz Sandy Bridge with 8 threads. 
 
@@ -92,13 +92,13 @@ source image - deconvoluted image) from the original image. These pixels are con
 noise and would be amplificated from iteration to iteration otherwise.
 
 Original :
-![alt text](img/original.jpg | width=33)
+![alt text](img/original.jpg)
 
 Blured :
-![alt text](img/blured.jpg | width=33)
+![alt text](img/blured.jpg)
 
 After :
-![alt text](img/richardson-lucy-deconvolution/blured.jpg | width=33)
+![alt text](img/richardson-lucy-deconvolution/blured.jpg)
 
 This 1.7 Mpx picture took around 65 s to compute 100 iterations
  on an Intel i7 2.20 GHz Sandy Bridge with 8 threads. 
