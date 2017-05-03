@@ -30,24 +30,21 @@ import numba
 def processing(pic):
     
     pic = np.array(pic).astype(float)
-                
-    #Make a L copy of the original data 
-    L_backup = color.rgb2lab(pic / 255)[..., 0]
     
     # Generate a blur kernel as point spread function
-    psf = utils.kaiser_kernel(10, 8)
+    psf = utils.kaiser_kernel(10, 6)
                 
     # Make a Richardson- Lucy deconvolution on the RGB signal
-    pic = utils.richardson_lucy(pic, psf, 3)
+    pic = utils.richardson_lucy(pic, psf, 1, iterations=100)
     
     # Convert to LAB
     pic = color.rgb2lab(pic / 255)
     
     # Generate a blur kernel as point spread function
-    psf = utils.kaiser_kernel(10, 12)
+    psf = utils.kaiser_kernel(10, 10)
     
     # Make an additional Richardson- Lucy deconvolution on L channel
-    pic[..., 0] = utils.richardson_lucy(pic[..., 0], psf, 1.5)
+    pic[..., 0] = utils.richardson_lucy(pic[..., 0], psf, 1, iterations=100)
     
     # Convert back to 8 bits RGB before saving
     pic = (color.lab2rgb(pic) * 255).astype(np.uint8)

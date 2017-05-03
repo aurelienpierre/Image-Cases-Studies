@@ -364,8 +364,8 @@ def richardson_lucy_2d(np.ndarray[DTYPE_t, ndim=2] image,\
             # Remove the current iteration for pixels where the difference
             # between original and deconvoluted image is above damp * std
             # this prevents noise amplification from one iteration to another
-            delta = image - im_deconv
-            damping_array = [np.absolute(delta) > damp * delta.std()]
+            delta = np.absolute(image - im_deconv)
+            damping_array = [delta > damp * delta.std()]
             im_deconv[damping_array] = image[damping_array]
          
     image = im_deconv[iterations:-iterations, iterations:-iterations]

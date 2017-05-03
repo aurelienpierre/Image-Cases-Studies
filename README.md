@@ -97,8 +97,11 @@ Original :
 Blured :
 ![alt text](img/blured.jpg)
 
-After :
+After (light settings):
 ![alt text](img/richardson-lucy-deconvolution/blured.jpg)
+
+After (harsh settings):
+![alt text](img/richardson-lucy-deconvolution/blured-alternative.jpg)
 
 This 1.7 Mpx picture took around 65 s to compute 100 iterations
  on an Intel i7 2.20 GHz Sandy Bridge with 8 threads. 
