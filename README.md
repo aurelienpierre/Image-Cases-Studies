@@ -6,12 +6,12 @@ Python prototypes of image processing methods
 ### Motivation
 
 This collection of scripts is intended to prototype methods and functionalities that
-could be useful in [DarkTable](https://github.com/darktable-org/darktable) and
+could be useful in [darktable](https://github.com/darktable-org/darktable) and
 show proofs of concept.
 
 ### How it's made
 
-It's written in Python 3, and relies deeply on PIL (Python Image Library) for the I/O, Numpy for the arrays
+It's written in Python 3, and relies on PIL (Python Image Library) for the I/O, Numpy for the arrays
 operations, and Cython to optimize the execution time. Heavy arrays operations 
 are parallelized through multithreading but can be run serialized as well.
 
@@ -108,11 +108,14 @@ Blured :
 After (No masking):
 ![alt text](img/richardson-lucy-deconvolution/blured-alternative.jpg)
 
-After (Masking on the red rectangle):
-![alt text](img/richardson-lucy-deconvolution/blured.jpg)
+After (Masking on the red rectangle - fast algorithm):
+![alt text](img/richardson-lucy-deconvolution/blured-fast.jpg)
 
-Further edit in Darktable:
-![alt text](img/richardson-lucy-deconvolution/blured-DT-further-edit.jpg)
+After (Masking on the red rectangle - best algorithm):
+![alt text](img/richardson-lucy-deconvolution/blured-best.jpg)
+The "best" algorithm oversamples the picture by 2 before applying the deconvolution
+and then resizes it back, using Lanczos interpolation. This leads to an almost invisible
+noise but increases dramatically the running time, for a small visual improvement.
 
 
 This 1.7 Mpx picture took around 118 s to compute 200 iterations
