@@ -111,6 +111,10 @@ After (No masking):
 After (Masking on the red rectangle):
 ![alt text](img/richardson-lucy-deconvolution/blured.jpg)
 
+Further edit in Darktable:
+![alt text](img/richardson-lucy-deconvolution/blured-DT-further-edit.jpg)
+
+
 This 1.7 Mpx picture took around 118 s to compute 200 iterations
  on an Intel i7 2.20 GHz Sandy Bridge with 3 threads, using less than 450 Mo/thread.
 
