@@ -1,7 +1,8 @@
-import os
+from Cython.Distutils import build_ext
 from distutils.core import setup
 from distutils.extension import Extension
-from Cython.Distutils import build_ext
+import os
+
 
 def scandir(dir, files=[]):
     for file in os.listdir(dir):
@@ -14,12 +15,14 @@ def scandir(dir, files=[]):
 
 
 def makeExtension(extName):
-    extPath = extName.replace(".", os.path.sep)+".pyx"
+    extPath = extName.replace(".", os.path.sep) + ".pyx"
     return Extension(
         extName,
         [extPath],
-        include_dirs = ['.'] #your include_dirs must contains the '.' for setup to search all the subfolder of the codeRootFolder
-        )
+        # your include_dirs must contains the '.' for setup to search all the
+        # subfolder of the codeRootFolder
+        include_dirs=['.']
+    )
 
 
 extNames = scandir('lib')
@@ -27,18 +30,18 @@ extNames = scandir('lib')
 extensions = [makeExtension(name) for name in extNames]
 
 setup(
-      name="ICS",
-      ext_modules=extensions,
-      cmdclass = {'build_ext': build_ext},
-      script_args = ['build_ext'],
-      options = {'build_ext':{'inplace':True, 'force':True}},
-      install_requires = ["PIL",
-                          "numpy",
-                          "scipy",
-                          "cython",
-                          "sympy",
-                          "skimage",
-                          "warnings",
-                          "time",
-                          "numba"]
+    name="ICS",
+    ext_modules=extensions,
+    cmdclass={'build_ext': build_ext},
+    script_args=['build_ext'],
+    options={'build_ext': {'inplace': True, 'force': True}},
+    install_requires=["PIL",
+                      "numpy",
+                      "scipy",
+                      "cython",
+                      "sympy",
+                      "skimage",
+                      "warnings",
+                      "time",
+                      "numba"]
 )

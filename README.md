@@ -99,7 +99,7 @@ The Richardson-Lucy algorithm used here is slightly modified :
     and noisy results. So the deconvolution parameters can be estimated on a single
     zone and then applied on the whole image.
 
-Original :0
+Original :
 ![alt text](img/original.jpg)
 
 Blured :
@@ -108,18 +108,25 @@ Blured :
 After (No masking):
 ![alt text](img/richardson-lucy-deconvolution/blured-alternative.jpg)
 
-After (Masking on the red rectangle - fast algorithm):
+After (Masking on the red rectangle - fast algorithm - 117 s - 200 iterations):
 ![alt text](img/richardson-lucy-deconvolution/blured-fast.jpg)
 
-After (Masking on the red rectangle - best algorithm):
+After (Masking on the red rectangle - best algorithm - 122 s - 60 iterations):
 ![alt text](img/richardson-lucy-deconvolution/blured-best.jpg)
 The "best" algorithm oversamples the picture by 2 before applying the deconvolution
 and then resizes it back, using Lanczos interpolation. This leads to an almost invisible
 noise but increases dramatically the running time, for a small visual improvement.
 
+After (Masking on the red rectangle - extrapolated algorithm - 292 s (not optimized) - 260 iterations):
+![alt text](img/richardson-lucy-deconvolution/blured-extrapol.jpg)
+The extrapolated algorithm combines uses of the fast and best algorithm with the 
+[Richardson extrapolation](https://en.wikipedia.org/wiki/Richardson_extrapolation).
+The final image is 2 × (best image) - (fast image) and is supposed to converge twice
+as fast as the best or fast algorithms towards the perfect deblured image. 
+As we combine 2 different noise patterns, the final image has a more natural noise,
+less smudgy than the fast but sharper than the best.
 
-This 1.7 Mpx picture took around 118 s to compute 200 iterations
- on an Intel i7 2.20 GHz Sandy Bridge with 3 threads, using less than 450 Mo/thread.
+FIXME! These algorithm need a stopping condition based on their convergence.
 
 ## Installation
 
@@ -140,22 +147,28 @@ On Linux systems, if you have Python 2 and 3 interpreters installed together, yo
 
 Import the required Python packages : 
 
-    from lib import utils # if you are working directly in the package directory
-    from PIL import Image 
-    import numpy as np
-    from skimage import color
+```python
+from lib import utils # if you are working directly in the package directory
+from PIL import Image 
+import numpy as np
+from skimage import color
+```
     
 Load an image as a 3D RGB array:
 
-    with Image.open("path/image") as pic:
+```python
+with Image.open("path/image") as pic:
 
-            pic = np.array(pic).astype(float)
+        pic = np.array(pic).astype(float)
+```
     
 Set/Reset RGB channels 
 
-    pic[..., 0] = numpy.array([...]) # sets the R channel with a 2D numpy array
-    pic[..., 1] = numpy.array([...]) # sets the G channel with a 2D numpy array
-    pic[..., 2] = numpy.array([...]) # sets the B channel with a 2D numpy array
+```python
+pic[..., 0] = numpy.array([...]) # sets the R channel with a 2D numpy array
+pic[..., 1] = numpy.array([...]) # sets the G channel with a 2D numpy array
+pic[..., 2] = numpy.array([...]) # sets the B channel with a 2D numpy array
+```
     
 
 Convert to LAB channels 
@@ -174,8 +187,10 @@ Blur a channel :
     
 Save the picture :
     
-    with Image.fromarray(pic) as output:
+```python
+with Image.fromarray(pic) as output:
 
-                output.save("file.jpg")
+    output.save("file.jpg")
+```
     
 See the scripts in the root directory for real examples.

@@ -12,32 +12,33 @@ halos.
 from PIL import Image
 from os import listdir
 from os.path import isfile, join
-import numpy as np
 from skimage import color
-import numpy as np
-from lib import utils
-
 import numba
+
+from lib import utils
+import numpy as np
+
 
 @utils.timeit
 @numba.jit
 def process(pic):
      # Open RGB image in float mode
     pic = np.array(pic).astype(float)
-    
+
     # Convert to LAB
     pic = color.rgb2lab(pic / 255)
-    
+
     # Compute a bilateral filter on L channel
     L = utils.bilateral_filter(pic[..., 0], 10, 6, 3)
 
     # USM formula
     pic[..., 0] = pic[..., 0] + (pic[..., 0] - L) * amount
-    
+
     # Convert back to 8 bits RGB before saving
     pic = (color.lab2rgb(pic) * 255).astype(np.uint8)
-    
+
     return pic
+
 
 if __name__ == '__main__':
 
@@ -53,9 +54,9 @@ if __name__ == '__main__':
         with Image.open(join(source_path, picture)) as pic:
 
             pic = process(pic)
-        
+
             with Image.fromarray(pic) as output:
-        
+
                 output.save(join(dest_path, picture),
                             format="jpeg",
                             optimize=True,

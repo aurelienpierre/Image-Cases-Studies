@@ -16,15 +16,14 @@ source image - deconvoluted image) from the original image. This pixels are cons
 noise and would be amplificated from iteration to iteration otherwise.
 '''
 from PIL import Image, ImageDraw
-from os import listdir
-from os.path import isfile, join
-from skimage import color
 from scipy import misc
-import numpy as np
+from skimage import color
+import numba
 
 from lib import utils
+import numpy as np
+from os.path import isfile, join
 
-import numba
 
 @utils.timeit
 @numba.jit(cache=True)
@@ -60,6 +59,7 @@ def processing_FAST(pic):
     pic = (color.lab2rgb(pic) * 255).astype(np.uint8)
 
     return pic
+
 
 @utils.timeit
 @numba.jit(cache=True)
@@ -106,19 +106,22 @@ def processing_BEST(pic):
     
     return pic
 
+
 def save(pic, name):
     with Image.fromarray(pic) as output:
-            
-            # Draw the mask
-            draw = ImageDraw.Draw(output)
-            draw.rectangle([(680, 252), (680+320, 252+734)], fill=None, outline=128)
-            del draw
-    
-            output.save(join(dest_path, picture + "-" + name),
-                        format="jpeg",
-                        optimize=True,
-                        progressive=True,
-                        quality=90)
+
+        # Draw the mask
+        draw = ImageDraw.Draw(output)
+        draw.rectangle([(680, 252), (680 + 320, 252 + 734)],
+                       fill=None, outline=128)
+        del draw
+
+        output.save(join(dest_path, picture + "-" + name),
+                    format="jpeg",
+                    optimize=True,
+                    progressive=True,
+                    quality=90)
+
 
 if __name__ == '__main__':
 
@@ -126,32 +129,34 @@ if __name__ == '__main__':
     dest_path = "img/richardson-lucy-deconvolution"
 
     images = ["blured.jpg"]
-    
+
     for picture in images:
-        
-     with Image.open(join(source_path, picture)) as pic:
-         
-         
-        """
-        The "BEST" algorithm resamples the image × 2, applies the deconvolution and
-        then sample it back. It's good to dilute the noise on low res images.
-        
-        The "FAST" algorithm is a direct method, more suitable for high res images
-        that will be resized anyway. It's twice as fast and almost as good.
-        """
-        
-        # The strength of the unsharp mask
-        amount = 2
-        pic_best = processing_BEST(pic)
-        
-        save(pic_best, "best")
-        
-        del pic_best
-        
-        
-        # The strength of the unsharp mask
-        amount = 1
-        pic_fast = processing_FAST(pic)
-        
-        save(pic_fast, "fast")
-   
+
+        with Image.open(join(source_path, picture)) as pic:
+
+            """
+            The "BEST" algorithm resamples the image × 2, applies the deconvolution and
+            then sample it back. It's good to dilute the noise on low res images.
+
+            The "FAST" algorithm is a direct method, more suitable for high res images
+            that will be resized anyway. It's twice as fast and almost as good.
+            """
+
+            # The strength of the unsharp mask
+            amount = 1
+            pic_best = processing_BEST(pic)
+
+            save(pic_best, "best")
+
+            # The strength of the unsharp mask
+            amount = 1
+            pic_fast = processing_FAST(pic)
+
+            save(pic_fast, "fast")
+
+            # Richardson extrapolation assuming order 1 convergence :
+            # https://en.wikipedia.org/wiki/Richardson_extrapolation
+            pic_extrapol = - color.rgb2lab(pic_fast / 255) + 2 * color.rgb2lab(pic_best / 255)
+            pic_extrapol = (color.lab2rgb(pic_extrapol) * 255).astype(np.uint8)
+
+            save(pic_extrapol, "extrapol")
