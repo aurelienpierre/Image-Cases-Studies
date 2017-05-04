@@ -15,7 +15,7 @@ the iterations the pixels which deviate to much (x times the standard deviation 
 source image - deconvoluted image) from the original image. This pixels are considered 
 noise and would be amplificated from iteration to iteration otherwise.
 '''
-from PIL import Image
+from PIL import Image, ImageDraw
 from os import listdir
 from os.path import isfile, join
 from skimage import color
@@ -26,25 +26,31 @@ from lib import utils
 import numba
 
 @utils.timeit
-@numba.jit
+@numba.jit(cache=True)
 def processing(pic):
     
     pic = np.array(pic).astype(float)
     
     # Generate a blur kernel as point spread function
-    psf = utils.kaiser_kernel(10, 6)
+    psf = utils.kaiser_kernel(10, 8)
+    
+    # Generate a mask around the face, excluding the background
+    mask = np.zeros_like(pic[..., 0])
+    
+    # Draw a 510×734 pixels mask beginning at the coordinate [252, 608] (corner)
+    mask[252:252+734, 680:680+320] = 1
                 
     # Make a Richardson- Lucy deconvolution on the RGB signal
-    pic = utils.richardson_lucy(pic, psf, 1, iterations=100)
+    pic = utils.richardson_lucy(pic, psf, 3, iterations=100)
     
     # Convert to LAB
     pic = color.rgb2lab(pic / 255)
     
     # Generate a blur kernel as point spread function
-    psf = utils.kaiser_kernel(10, 10)
+    psf = utils.kaiser_kernel(10, 12)
     
     # Make an additional Richardson- Lucy deconvolution on L channel
-    pic[..., 0] = utils.richardson_lucy(pic[..., 0], psf, 1, iterations=100)
+    pic[..., 0] = utils.richardson_lucy(pic[..., 0], psf, 1, weight=mask, iterations=100)
     
     # Convert back to 8 bits RGB before saving
     pic = (color.lab2rgb(pic) * 255).astype(np.uint8)
@@ -68,6 +74,11 @@ if __name__ == '__main__':
         pic = processing(pic)
         
         with Image.fromarray(pic) as output:
+            
+            # Draw the mask
+            draw = ImageDraw.Draw(output)
+            draw.rectangle([(680, 252), (680+320, 252+734)], fill=None, outline=128)
+            del draw
     
             output.save(join(dest_path, picture),
                         format="jpeg",

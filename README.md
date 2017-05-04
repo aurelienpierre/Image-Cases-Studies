@@ -86,25 +86,33 @@ know the [*Point spread function*](https://en.wikipedia.org/wiki/Point_spread_fu
 of their maker. In practice, we can only estimate it.
 One of the means to do so is the [Richardson-Lucy deconvolution](https://en.wikipedia.org/wiki/Richardson%E2%80%93Lucy_deconvolution).
 
-The Richardson-Lucy algorithm used here has a damping coefficient wich allows to remove from 
-the iterations the pixels which deviate to much (x times the standard deviation of the difference
-source image - deconvoluted image) from the original image. These pixels are considered 
-noise and would be amplificated from iteration to iteration otherwise.
+The Richardson-Lucy algorithm used here is slightly modified :
 
-Original :
+ 1. it has a damping coefficient wich allows to remove from 
+    the iterations the pixels which deviate to much from the original image.
+    These pixels are considered 
+    noise and would be amplificated from iteration to iteration otherwise.
+    
+ 1. it has a masking feature that allows to select the zone where the deconvolution
+    has to be performed, namely where the focus is supposed to be. Computing the deconvolution
+    on the whole image when background blur (*bokeh*) is present will lead to instable
+    and noisy results. So the deconvolution parameters can be estimated on a single
+    zone and then applied on the whole image.
+
+Original :0
 ![alt text](img/original.jpg)
 
 Blured :
 ![alt text](img/blured.jpg)
 
-After (light settings):
-![alt text](img/richardson-lucy-deconvolution/blured.jpg)
-
-After (harsh settings):
+After (No masking):
 ![alt text](img/richardson-lucy-deconvolution/blured-alternative.jpg)
 
-This 1.7 Mpx picture took around 65 s to compute 100 iterations
- on an Intel i7 2.20 GHz Sandy Bridge with 8 threads. 
+After (Masking on the red rectangle):
+![alt text](img/richardson-lucy-deconvolution/blured.jpg)
+
+This 1.7 Mpx picture took around 118 s to compute 200 iterations
+ on an Intel i7 2.20 GHz Sandy Bridge with 3 threads, using less than 450 Mo/thread.
 
 ## Installation
 

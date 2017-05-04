@@ -20,6 +20,7 @@ import warnings
 import numba
 
 import numpy as np
+from docutils.nodes import image
 
 
 cimport numpy as np
@@ -320,6 +321,7 @@ def blending(np.ndarray[DTYPE_t, ndim=2] upx,\
 def richardson_lucy_2d(np.ndarray[DTYPE_t, ndim=2] image,\
                     np.ndarray[DTYPE_t, ndim=2] psf, \
                     float damp, \
+                    weight = None,\
                     int iterations=50, \
                     str mode="LAB"):
     """Richardson-Lucy deconvolution.
@@ -339,7 +341,12 @@ def richardson_lucy_2d(np.ndarray[DTYPE_t, ndim=2] image,\
         Removes the pixels that are `damp` times the standard deviations further
         from the original image. This prevent noise amplification. Set damp = 0
         to bypass noise damping.
- 
+    weight : ndarray.
+        If given, this array will be understood as a mask : pixels with a weight
+        of 1 will be processed, pixels with a weight < 1 will be cut through.
+        This allows to estimate the deconvolution matrix only on a zone, typically
+        where the focus is supposed to be, and cut the bokeh to reduce noise.
+        The deconvolution is then applied on the whole image.
  
     References
     ----------
@@ -348,17 +355,29 @@ def richardson_lucy_2d(np.ndarray[DTYPE_t, ndim=2] image,\
      
     # Pad the image with symmetric data to avoid border effects
     image = np.pad(image, (iterations, iterations), mode="symmetric")
-     
+         
     cdef np.ndarray[DTYPE_t, ndim=2] im_deconv = 0.5 * np.ones_like(image)
     cdef np.ndarray[DTYPE_t, ndim=2] psf_mirror = psf[::-1, ::-1]
-    cdef np.ndarray[DTYPE_t, ndim=2] relative_blur, im_backup, delta, 
-    cdef list damping_array
- 
- 
-    # There is a way to make it a recursive function, which is more elegant, but it my tests it was a bit slower
+    cdef np.ndarray[DTYPE_t, ndim=2] relative_blur, im_backup, delta
+    cdef list damping_array, mask
+    cdef bint masked = False
+    
+    if type(weight) == np.ndarray:
+        # Pad the mask like the image
+        weight = np.pad(weight, (iterations, iterations), mode="constant", constant_values=0)
+        mask = [weight < 1]
+        # Replace the optimisation with the actual image on the mask
+        im_deconv[mask] = image[mask]
+        masked = True
+        del weight
+    
+    # There is a way to make it a recursive function, which is more elegant, but in my tests it was a bit slower
     for _ in range(iterations):
-        relative_blur = image / fftconvolve(im_deconv, psf, 'same')
+        relative_blur = (image / fftconvolve(im_deconv, psf, 'same'))     
         im_deconv *= fftconvolve(relative_blur, psf_mirror, 'same')
+        
+        if masked:
+            im_deconv[mask] = image[mask] 
         
         if damp != 0:
             # Remove the current iteration for pixels where the difference
@@ -367,15 +386,21 @@ def richardson_lucy_2d(np.ndarray[DTYPE_t, ndim=2] image,\
             delta = np.absolute(image - im_deconv)
             damping_array = [delta > damp * delta.std()]
             im_deconv[damping_array] = image[damping_array]
-         
-    image = im_deconv[iterations:-iterations, iterations:-iterations]
+
+            
+    if masked:
+        # On the final step, extract the deconvolution matrix from the masked zone
+        # and apply it on the whole picture
+        relative_blur = im_deconv / fftconvolve(image, psf, 'same')
+        im_deconv = image * fftconvolve(relative_blur, psf_mirror, 'same')
      
-    return image 
+    return im_deconv[iterations:-iterations, iterations:-iterations]
  
  
 cdef richardson_lucy_3d(np.ndarray[DTYPE_t, ndim=3] image,\
                     np.ndarray[DTYPE_t, ndim=2] psf, \
                     float damp, \
+                    weight = None,\
                     int iterations=50, \
                     str mode="LAB"):
     """
@@ -389,7 +414,7 @@ cdef richardson_lucy_3d(np.ndarray[DTYPE_t, ndim=3] image,\
  
         image = np.dstack(pool.starmap(
                                         richardson_lucy_2d, 
-                                        [(image[..., i], psf, damp, iterations, mode) for i in range(3)]
+                                        [(image[..., i], psf, damp, weight, iterations, mode) for i in range(3)]
                                         )
                           )
  
@@ -400,13 +425,14 @@ cdef richardson_lucy_3d(np.ndarray[DTYPE_t, ndim=3] image,\
 def richardson_lucy(np.ndarray image,\
                     np.ndarray[DTYPE_t, ndim=2] psf, \
                     float damp, \
+                    weight = None,\
                     int iterations=50,\
                     str mode="LAB"):
 
     """Expose C function to Python"""
     
     if image.ndim == 3:
-        return richardson_lucy_3d(image, psf, damp, iterations, mode)
+        return richardson_lucy_3d(image, psf, damp, weight, iterations, mode)
     
     if image.ndim == 2:
-        return richardson_lucy_2d(image, psf, damp, iterations, mode)
+        return richardson_lucy_2d(image, psf, damp, weight, iterations, mode)
