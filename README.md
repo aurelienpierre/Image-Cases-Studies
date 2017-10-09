@@ -86,18 +86,8 @@ know the [*Point spread function*](https://en.wikipedia.org/wiki/Point_spread_fu
 of their maker. In practice, we can only estimate it.
 One of the means to do so is the [Richardson-Lucy deconvolution](https://en.wikipedia.org/wiki/Richardson%E2%80%93Lucy_deconvolution).
 
-The Richardson-Lucy algorithm used here is slightly modified :
-
- 1. it has a damping coefficient wich allows to remove from 
-    the iterations the pixels which deviate to much from the original image.
-    These pixels are considered 
-    noise and would be amplificated from iteration to iteration otherwise.
-    
- 1. it has a masking feature that allows to select the zone where the deconvolution
-    has to be performed, namely where the focus is supposed to be. Computing the deconvolution
-    on the whole image when background blur (*bokeh*) is present will lead to instable
-    and noisy results. So the deconvolution parameters can be estimated on a single
-    zone and then applied on the whole image.
+The Richardson-Lucy algorithm used here is slightly modified to implement [Total Variation regularization
+](http://www.cs.sfu.ca/~pingtan/Papers/pami10_deblur.pdf). WIP : [Ringing Artifact Detection and Removal via PSF Frequency Analysis](http://www.groupes.polymtl.ca/amosleh/papers/ECCV14.pdf)
 
 Original :
 ![alt text](img/original.jpg)
@@ -105,20 +95,18 @@ Original :
 Blured :
 ![alt text](img/blured.jpg)
 
-After (No masking):
-![alt text](img/richardson-lucy-deconvolution/blured-alternative.jpg)
 
-After (Masking on the red rectangle - fast algorithm - 117 s - 200 iterations):
-![alt text](img/richardson-lucy-deconvolution/blured-fast.jpg)
+After (fast algorithm - 87 s - 50 iterations):
+![alt text](img/richardson-lucy-deconvolution/blured-fast-v2.jpg)
 
-After (Masking on the red rectangle - best algorithm - 122 s - 60 iterations):
-![alt text](img/richardson-lucy-deconvolution/blured-best.jpg)
+After (best algorithm - 316 s - 50 iterations):
+![alt text](img/richardson-lucy-deconvolution/blured-best-v2.jpg)
 The "best" algorithm oversamples the picture by 2 before applying the deconvolution
 and then resizes it back, using Lanczos interpolation. This leads to an almost invisible
 noise but increases dramatically the running time, for a small visual improvement.
 
-After (Masking on the red rectangle - extrapolated algorithm - 292 s (not optimized) - 260 iterations):
-![alt text](img/richardson-lucy-deconvolution/blured-extrapol.jpg)
+After (extrapolated algorithm - 403 s - 2 × 50 iterations):
+![alt text](img/richardson-lucy-deconvolution/blured-extrapol-v2.jpg)
 The extrapolated algorithm combines uses of the fast and best algorithm with the 
 [Richardson extrapolation](https://en.wikipedia.org/wiki/Richardson_extrapolation).
 The final image is 2 × (best image) - (fast image) and is supposed to converge twice

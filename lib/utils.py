@@ -3,28 +3,22 @@ Created on 27 avr. 2017
 
 @author: aurelien
 
-Numba implementation of lib.utils module. Turns out to be slower than the Cython 
-implementation 
-
+Source : https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3166524/
 '''
-from PIL import Image
+
 from scipy import interpolate
-from scipy.signal import fftconvolve, convolve
-from skimage import color
 from sympy import *
 from sympy.matrices import *
 from threading import Thread
-from multiprocessing import Pool
+import numba
 import os
 import scipy.signal
+import scipy.sparse
 import time
 import warnings
-from  numba import *
 
 import numpy as np
 
-
-@jit
 def timeit(method):
     '''
     From: http://www.samuelbosch.com/2012/02/timing-functions-in-python.html
@@ -79,18 +73,6 @@ def Lagrange_interpolation(points, variable=None):
             "No input variable given - polynomial evaluation skipped")
 
     return P, Y
-
-
-def histogram(src):
-    """
-    Fit the histogram entirely
-    """
-    delta = 100 / (np.max(src.L) - np.min(src.L))
-    src.L = (src.L - np.min(src.L)) * delta
-    src.A = src.A * delta
-    src.B = src.B * delta
-    return src
-
 
 def grey_point(src, amount):
     """
@@ -158,6 +140,7 @@ def kaiser_kernel(radius, beta):
     kern = kern / kern.sum()
     return kern
 
+
 def poisson_kernel(radius, tau):
     window = scipy.signal.exponential(radius, tau=tau)
     kern = np.outer(window, window)
@@ -171,7 +154,7 @@ def bilateral_differences(source, filtered_image, W, thread, radius, pad, std_i,
     For multithreading purposes
     This provides the loop to run inside each thread.
     """
-    
+
     for (i, j) in thread:
         neighbour = pad[radius + i: radius + i + source.shape[0],
                         radius + j: radius + j + source.shape[1]]
@@ -185,14 +168,14 @@ def bilateral_differences(source, filtered_image, W, thread, radius, pad, std_i,
         filtered_image += neighbour * w
         W += w
 
+
 @timeit
-@jit(cache=True)
 def bilateral_filter(source, radius, std_i, std_s, parallel=1):
     """
     Optimized parallel Cython function to perform bilateral filtering
     For multithreading purposes
     This provides the thread splitting and returns the filtered image
-    
+
     """
 
     filtered_image = np.zeros_like(source).astype(float)
@@ -205,9 +188,10 @@ def bilateral_filter(source, radius, std_i, std_s, parallel=1):
     jseq = iseq
 
     combi = np.transpose([np.tile(iseq, len(jseq)),
-                                          np.repeat(jseq, len(iseq))])
+                                    np.repeat(jseq, len(iseq))])
 
     chunks = np.array_split(combi, num_threads)
+
     processing_threads = []
 
     for chunk in chunks:
@@ -232,7 +216,7 @@ def bessel_blur(src, radius, amount):
     """
     Blur filter using Bessel function
     """
-    
+
     src = scipy.signal.convolve2d(src,
                                   kaiser_kernel(radius, amount),
                                   mode="same",
@@ -246,7 +230,7 @@ def gaussian_blur(src, radius, amount):
     """
     Blur filter using the Gaussian function
     """
-    
+
     src = scipy.signal.convolve2d(src,
                                   gaussian_kernel(radius, amount),
                                   mode="same",
@@ -257,11 +241,12 @@ def gaussian_blur(src, radius, amount):
 
 
 @timeit
+@numba.vectorize
 def USM(src, radius, strength, amount, method="bessel"):
     """
     Unsharp mask using Bessel or Gaussian blur
     """
-    
+
     blur = {"bessel": bessel_blur, "gauss": gaussian_blur}
 
     src = src + (src - blur[method](src, radius, strength)) * amount
@@ -278,89 +263,13 @@ def overlay(upx, lpx):
         (100 - 2 * (100 - upx) * (100 - lpx) / 100)
 
 
-@timeit
 def blending(upx, lpx, type):
     """
     Expose the blending modes to Python code
-    upx : top layer
+    upx : top layer
     dpx: bottom layer
     """
 
     types = {"overlay": overlay}
 
     return types[type](upx, lpx)
-
-
-@jit(cache=True)
-def richardson_lucy(image, psf, iterations=50, clip=1, mode="LAB"):
-    """Richardson-Lucy deconvolution.
-    
-    Adapted for Cython and performance from skimage.restore module
-
-    Parameters
-    ----------
-    image : ndarray
-       Input degraded image (can be N dimensional).
-    psf : ndarray
-       The point spread function.
-    iterations : int
-       Number of iterations. This parameter plays the role of
-       regularisation.
-    clip : boolean, optional
-       True by default. If true, pixel value of the result above 1 or
-       under -1 are thresholded for skimage pipeline compatibility.
-
-    Returns
-    -------
-    im_deconv : ndarray
-       The deconvolved image.
-
-    Examples
-    --------
-    >>> from skimage import color, data, restoration
-    >>> camera = color.rgb2gray(data.camera())
-    >>> from scipy.signal import convolve2d
-    >>> psf = np.ones((5, 5)) / 25
-    >>> camera = convolve2d(camera, psf, 'same')
-    >>> camera += 0.1 * camera.std() * np.random.standard_normal(camera.shape)
-    >>> deconvolved = restoration.richardson_lucy(camera, psf, 5)
-
-    References
-    ----------
-    .. [1] http://en.wikipedia.org/wiki/Richardson%E2%80%93Lucy_deconvolution
-    """
-    
-    # Pad the image with symmetric data to avoid border effects
-    image = np.pad(image, (iterations, iterations), mode="symmetric")
-    
-    im_deconv = 0.5 * np.ones_like(image)
-    psf_mirror = psf[::-1, ::-1]
-
-    for _ in range(iterations):
-        relative_blur = image / fftconvolve(im_deconv, psf, 'same')
-        im_deconv *= fftconvolve(relative_blur, psf_mirror, 'same')
-        
-    if clip:
-        im_deconv[im_deconv > 255] = 255
-        im_deconv[im_deconv < 0] = 0
-        
-    image = im_deconv[iterations:-iterations, iterations:-iterations]
-    
-    return image 
-
-@timeit
-def richardson_lucy_3d(image, psf, iterations=50, clip=1, mode="LAB"):
-    """
-    Run 3 Richardson-Lucy deconvolutions on 3 channels in 3 different threads
-    """
-    
-    with Pool(processes=3) as pool:
-
-        image = np.dstack(pool.starmap(
-                                        richardson_lucy, 
-                                        [(image[..., i], psf, iterations, clip, mode) for i in range(3)]
-                                        )
-                          )
-
-        
-    return image 
