@@ -12,25 +12,22 @@ show proofs of concept.
 ### How it's made
 
 It's written in Python 3, and relies on PIL (Python Image Library) for the I/O, Numpy for the arrays
-operations, and Cython to optimize the execution time. Heavy arrays operations 
-are parallelized through multithreading but can be run serialized as well.
+operations, and Numba to optimize the execution time. Heavy arrays operations 
+are parallelized through multiprocesses but can be run serialized as well.
 
 
 Every function is timed natively, so you can benchmark performance. 
-The built-in functions are staticly typed and compiled with Cython.
 
 ### What's inside
 
 For now, we have :
 
-* Blending modes :
-    * overlay
 * Filters :
     * Gaussian blur
     * Bessel blur (Kaiser denoising)
     * bilateral filter
     * unsharp mask
-    * Richardson-Lucy deconvolution with damping factor (similar to Matlab)
+    * Richardson-Lucy blind and non-blind deconvolution with Total Variation regularization
 * Windows/Kernels : (*for convolution and frequential analysis*)
     * Poisson/exponential
     * Kaiser-Bessel
@@ -86,43 +83,32 @@ know the [*Point spread function*](https://en.wikipedia.org/wiki/Point_spread_fu
 of their maker. In practice, we can only estimate it.
 One of the means to do so is the [Richardson-Lucy deconvolution](https://en.wikipedia.org/wiki/Richardson%E2%80%93Lucy_deconvolution).
 
-The Richardson-Lucy algorithm used here is slightly modified to implement [Total Variation regularization
-](http://www.cs.sfu.ca/~pingtan/Papers/pami10_deblur.pdf). WIP : [Ringing Artifact Detection and Removal via PSF Frequency Analysis](http://www.groupes.polymtl.ca/amosleh/papers/ECCV14.pdf)
+The Richardson-Lucy algorithm used here is  modified to implement [Total Variation regularization
+](http://www.cs.sfu.ca/~pingtan/Papers/pami10_deblur.pdf). It can be run in a non-blind fashion (when the PSF is known)
+or in a blind one to determine the PSF iteratively from an initial guess.
 
-Original :
-![alt text](img/original.jpg)
-
-Blured :
+##### Blurred original :
 ![alt text](img/blured.jpg)
 
+##### After (fast algorithm - 52 s - 50 iterations - Non blind):
+This takes in input an user-defined SPF guessed by trial and error.
+![alt text](img/richardson-lucy-deconvolution/blured-fast-v3.jpg)
 
-After (fast algorithm - 87 s - 50 iterations):
-![alt text](img/richardson-lucy-deconvolution/blured-fast-v2.jpg)
+##### After (myope algorithm - 238 s - 50 iterations - Semi-Blind refinement):
+This takes in input an user-defined SPF guessed by trial and error but will refine it every iteration.
+![alt text](img/richardson-lucy-deconvolution/blured-myope-v3.jpg)
 
-After (best algorithm - 316 s - 50 iterations):
-![alt text](img/richardson-lucy-deconvolution/blured-best-v2.jpg)
-The "best" algorithm oversamples the picture by 2 before applying the deconvolution
-and then resizes it back, using Lanczos interpolation. This leads to an almost invisible
-noise but increases dramatically the running time, for a small visual improvement.
+##### After (blind algorithm - 236 s - 50 iterations - Blind):
+This takes in input a dumb SPF (ones) and will build the SPF along from scratch. Some parameters are still under developement.
+![alt text](img/richardson-lucy-deconvolution/blured-blind-v3.jpg)
 
-After (extrapolated algorithm - 403 s - 2 × 50 iterations):
-![alt text](img/richardson-lucy-deconvolution/blured-extrapol-v2.jpg)
-The extrapolated algorithm combines uses of the fast and best algorithm with the 
-[Richardson extrapolation](https://en.wikipedia.org/wiki/Richardson_extrapolation).
-The final image is 2 × (best image) - (fast image) and is supposed to converge twice
-as fast as the best or fast algorithms towards the perfect deblured image. 
-As we combine 2 different noise patterns, the final image has a more natural noise,
-less smudgy than the fast but sharper than the best.
+TO DO : compute the blind SPF on a part of the picture only with a mask, then apply the solution
 
-FIXME! These algorithm need a stopping condition based on their convergence.
 
 ## Installation
 
 It's not recommended to install this *unstable* framework on your Python environnement, but rather to build
 its modules and use it from its directory.
-
-You need `distutils` and `cython` prior to anything. Then, the following command will
-build the C modules and check the dependencies :
 
     python setup.py build_ext --inplace
 
@@ -158,16 +144,7 @@ pic[..., 1] = numpy.array([...]) # sets the G channel with a 2D numpy array
 pic[..., 2] = numpy.array([...]) # sets the B channel with a 2D numpy array
 ```
     
-
-Convert to LAB channels 
-
-    pic = color.rgb2lab(pic / 255)
     
-Convert back to RGB before saving
-
-    pic = (color.lab2rgb(pic) * 255).astype(np.uint8)
-    
-
 Blur a channel : 
 
     i = # 0, 1 or 2

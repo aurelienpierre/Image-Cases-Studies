@@ -15,196 +15,183 @@ the iterations the pixels which deviate to much (x times the standard deviation 
 source image - deconvoluted image) from the original image. This pixels are considered 
 noise and would be amplificated from iteration to iteration otherwise.
 '''
-from PIL import Image, ImageDraw
-from scipy import misc
-from skimage import color
-from scipy.signal import fftconvolve
-from multiprocessing import Pool
-
-
-import numba
-
-from lib import utils
-import numpy as np
+import multiprocessing
 from os.path import isfile, join
 
-@numba.jit(cache=True)
-def nabla(I):
-    # http://znah.net/rof-and-tv-l1-denoising-with-primal-dual-algorithm.html
-    G = np.zeros((I.shape[0], I.shape[1], 2), I.dtype)
-    G[:, :-1, 0] -= I[:, :-1]
-    G[:, :-1, 0] += I[:, 1:]
-    G[:-1, :, 1] -= I[:-1]
-    G[:-1, :, 1] += I[1:]
-    return G
+import numpy as np
+from PIL import Image
+from numba import float32, int16, jit, autojit, prange
+from scipy import misc
+from scipy.signal import fftconvolve
 
-@numba.jit(cache=True)
-def nablaT(G):
-    I = np.zeros((G.shape[0], G.shape[1]), G.dtype)
-    # note that we just reversed left and right sides
-    # of each line to obtain the transposed operator
-    I[:, :-1] -= G[:, :-1, 0]
-    I[:, 1: ] += G[:, :-1, 0]
-    I[:-1]    -= G[:-1, :, 1]
-    I[1: ]    += G[:-1, :, 1]
-    return I
+from lib import utils
 
-@numba.jit(cache=True)
-def anorm(x):
-    '''Calculate L2 norm over the last array dimension'''
-    return np.sqrt(np.square(x).sum(-1))
 
-@numba.jit(cache=True)
-def project_nd(P, r):
-    '''perform a pixel-wise projection onto R-radius balls'''
-    nP = np.maximum(1.0, anorm(P)/r)
-    return P / nP[...,np.newaxis]
+@jit(float32[:, :](float32[:, :]), cache=True)
+def divTV(image: np.ndarray) -> np.ndarray:
+    """Compute the second-order divergence of the pixel matrix, known as the Total Variation.
 
-@numba.jit(cache=True)
-def regularization(image, im_deconv, lambd):
-    """Total variation regularisation term as described in :
-    Richardson-Lucy Deblurring for Scenes Under A Projective Motion Path
-    Yu-Wing Tai  Ping Tan  Michael S. Brown
-    http://www.cs.sfu.ca/~pingtan/Papers/pami10_deblur.pdf"""
+    :param ndarray image: Input array of pixels
+    :return: div(Total Variation regularization term) as described in [3]
+    :rtype: ndarray
 
-    # Compute total variation
-    Grad_R_TV = - nablaT(nabla(nablaT(project_nd(nabla(im_deconv), 1.0))))
-
-    # regularize
-    im_deconv /= (1 - lambd * Grad_R_TV)
-
-    # Clip out of range values
-    factor = im_deconv.max()
-    im_deconv = im_deconv + np.clip(image - im_deconv, -lambd*factor, lambd*factor)
-
-    return im_deconv
-
-@numba.jit(cache=True)
-def deconvolution(image, im_deconv, psf, psf_mirror):
-    relative_blur = (image / fftconvolve(im_deconv, psf, 'same'))
-    im_deconv *= fftconvolve(relative_blur, psf_mirror, 'same')
-    return im_deconv
-
-def richardson_lucy(image, psf, lambd, iterations):
-    """Richardson-Lucy deconvolution.
-
-    Adapted from skimage.restore module
-
-    Parameters
+    References
     ----------
-    image : ndarray
-       Input degraded image (can be N dimensional).
-    psf : ndarray
-       The point spread function.
-    iterations : int
-       Number of iterations. This parameter plays the role of
-       regularisation.
-    lambd : float
-       Lambda parameter of the total Variation regularization
+
+
+    """
+    grad = np.array(np.gradient(image, edge_order=2))
+    grad = np.sqrt(grad[0] ** 2 + grad[1] ** 2)
+    grad = grad / np.amax(grad)
+    return grad
+
+
+@jit(cache=True)
+def convergence(image_after: np.ndarray, image_before: np.ndarray) -> float:
+    """Compute the convergence rate between 2 iterations
+
+    :param ndarray image_after: Image @ iteration n
+    :param ndarray image_before: Image @ iteration n-1
+    :param int padding: Number of pixels to ignore along each side
+    :return float: convergence rate
+    """
+    convergence = np.log(np.linalg.norm(image_after) / np.linalg.norm((image_before)))
+    print("Convergence :", convergence)
+    return convergence
+
+
+@jit(float32[:, :](float32[:, :], float32[:, :], int16, float32[:, :]), cache=True)
+def update_image(image, u, lambd, psf):
+    # Richardson-Lucy deconvolution
+    gradUdata = fftconvolve(fftconvolve(u, psf, "valid") - image, np.rot90(psf), "full")
+
+    # Total Variation Regularization
+    gradu = gradUdata - lambd * divTV(u)
+    sf = 5E-3 * np.max(u) / np.maximum(1E-31, np.amax(np.abs(gradu)))
+    u = u - sf * gradu
+
+    # Normalize for 8 bits RGB values
+    u = np.clip(u, 0.0000001, 255)
+
+    return u
+
+
+@jit(float32[:, :](float32[:, :], float32[:, :], float32[:, :], float32[:, :]), cache=True)
+def update_kernel(gradk: np.ndarray, u: np.ndarray, psf: np.ndarray, image: np.ndarray) -> np.ndarray:
+    for chan in range(3):
+        gradk = gradk + fftconvolve(np.rot90(u[..., chan], 2),
+                                    fftconvolve(u[..., chan], psf, "valid") - image[..., chan], "valid")
+
+    sh = 1e-3 * np.amax(psf) / np.maximum(1e-31, np.amax(np.abs(gradk)))
+    psf = psf - sh * gradk
+    psf = psf / np.sum(psf)
+
+    return psf, gradk
+
+
+# @jit(float32[:,:](float32[:,:], float32[:,:], float32, int16), cache=True)
+def richardson_lucy(image: np.ndarray, psf: np.ndarray, lambd: float, iterations: int,
+                    blind: bool = False) -> np.ndarray:
+    """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization.
+
+    Based on Matlab sourcecode of D. Perrone and P. Favaro: "Total Variation Blind Deconvolution:
+    The Devil is in the Details", IEEE Conference on Computer Vision
+    and Pattern Recognition (CVPR), 2014: http://www.cvg.unibe.ch/dperrone/tvdb/
+
+    :param ndarray image : Input 3 channels image.
+    :param ndarray psf : The point spread function.
+    :param int iterations : Number of iterations.
+    :param float lambd : Lambda parameter of the total Variation regularization
+    :param bool blind : Determine if it is a blind deconvolution is launched, thus if the PSF is updated
+        between two iterations
+    :returns ndarray: deconvoluted image
 
     References
     ----------
     .. [1] http://en.wikipedia.org/wiki/Richardson%E2%80%93Lucy_deconvolution
-    .. [2] http://www.cs.sfu.ca/~pingtan/Papers/pami10_deblur.pdf
-    .. [3] http://znah.net/rof-and-tv-l1-denoising-with-primal-dual-algorithm.html
-    .. [4] http://www.groupes.polymtl.ca/amosleh/papers/ECCV14.pdf
+    .. [2] http://www.cvg.unibe.ch/dperrone/tvdb/perrone2014tv.pdf
+    .. [3] http://hal.archives-ouvertes.fr/docs/00/43/75/81/PDF/preprint.pdf
+    .. [4] http://znah.net/rof-and-tv-l1-denoising-with-primal-dual-algorithm.html
+    .. [5] http://www.cs.sfu.ca/~pingtan/Papers/pami10_deblur.pdf
     """
 
-    # Pad the image with symmetric data to avoid border effects
-    image = np.pad(image, (iterations, iterations), mode="symmetric")
+    # image dimensions
+    M, N, C = image.shape
+    MK, NK = psf.shape
+    pad_v = np.floor(MK / 2).astype(int)
+    pad_h = np.floor(NK / 2).astype(int)
 
-    im_deconv = 0.5 * np.ones_like(image)
-    psf_mirror = psf[::-1, ::-1]
+    # Pad the image on each channel with data to avoid border effects
+    R = np.pad(image[..., 0], (pad_v, pad_h), mode="edge")
+    G = np.pad(image[..., 1], (pad_v, pad_h), mode="edge")
+    B = np.pad(image[..., 2], (pad_v, pad_h), mode="edge")
+    u = np.dstack((R, G, B))
+
+    gradUdata = np.zeros((M + MK - 1, N + NK - 1, C))
+    gradk = np.zeros((MK, NK))
 
     for i in range(iterations):
-        # Richardson-Lucy actual deconvolution
-        im_deconv = deconvolution(image, im_deconv, psf, psf_mirror)
 
-        if lambd !=0:
-            # Noise regularization
-            im_deconv = regularization(image, im_deconv, lambd)
-            lambd /= 2
+        # Update sharp image
+        with multiprocessing.Pool(processes=3) as pool:
+            u = np.dstack(pool.starmap(
+                update_image,
+                [(image[..., chan], u[..., chan], lambd, psf) for chan in range(3)]
+            )
+            )
 
+        # Update blur kernel
+        if blind:
+            psf, gradk = update_kernel(gradk, u, psf, image)
 
-    # Unpad image
-    im_deconv = im_deconv[iterations :-iterations , iterations :-iterations ]
-    image = image[iterations:-iterations, iterations:-iterations]
+        lambd = lambd / 2
 
-    # Compute error
-    delta = np.absolute(image - im_deconv)
-    error = np.linalg.norm(delta, 2)
-    print("Difference :", error)
-
-    return im_deconv
-
+    return u[pad_v:-pad_v, pad_h:-pad_h, ...], psf
 
 @utils.timeit
 def processing_FAST(pic):
-    
-    pic = np.array(pic).astype(float)
+    # Open the picture
+    pic = np.array(pic).astype(np.float32)
     
     # Generate a blur kernel as point spread function
-    psf = utils.kaiser_kernel(10, 8)
-                
-    # Make a Richardson- Lucy deconvolution on the RGB signal
-    with Pool(processes=3) as pool:
-        pic = np.dstack(pool.starmap(
-            richardson_lucy,
-            [(pic[..., i], psf, 10, 50) for i in range(3)]
-            )
-        )
+    psf = utils.kaiser_kernel(11, 8)
 
-    # Convert to LAB
-    pic = color.rgb2lab(pic / 255)
+    # Make a non-blind Richardson- Lucy deconvolution on the RGB signal
+    pic, psf = richardson_lucy(pic, psf, 12, 50, blind=False)
 
-    # Convert back to 8 bits RGB before saving
-    pic = (color.lab2rgb(pic) * 255).astype(np.uint8)
-
-    return pic
+    return pic.astype(np.uint8)
 
 @utils.timeit
-def processing_BEST(pic):
-    
-    sampling = 2.0
-    
+def processing_BLIND(pic):
     # Open the picture
-    pic = np.array(pic).astype(np.uint8)
-    
-    #Oversample the image with Lanczos interpolation
-    pic= misc.imresize(pic, sampling, interp="lanczos", mode="RGB").astype(float)
-    
-    # Generate a blur kernel as point spread function
-    psf = utils.kaiser_kernel(20, 8)
+    pic = np.array(pic).astype(np.float32)
+
+    # Generate a dumb blur kernel as point spread function
+    psf = np.ones((7, 7))
+    psf /= np.sum(psf)
+
+    # Make a blind Richardson- Lucy deconvolution on the RGB signal
+    pic, psf = richardson_lucy(pic, psf, 0.006, 50, blind=True)
+
+    return pic.astype(np.uint8)
 
 
-    # Make a Richardson- Lucy deconvolution on the RGB signal
-    with Pool(processes=3) as pool:
-        pic = np.dstack(pool.starmap(
-            richardson_lucy,
-            [(pic[..., i], psf, 10, 50) for i in range(3)]
-        )
-        )
-    
-    # Convert to LAB
-    pic = color.rgb2lab(pic / 255)
+@utils.timeit
+def processing_MYOPE(pic):
+    # Open the picture
+    pic = np.array(pic).astype(np.float32)
 
-    # Convert back to 8 bits RGB before saving
-    pic = (color.lab2rgb(pic) * 255).astype(np.uint8)
-    
-    #Resize back to original picture
-    pic = misc.imresize(pic, 1/sampling, interp="lanczos")
-    
-    return pic
+    # Generate a guessed blur kernel as point spread function
+    psf = utils.kaiser_kernel(11, 8)
+
+    # Make a blind Richardson- Lucy deconvolution on the RGB signal
+    pic, psf = richardson_lucy(pic, psf, 1, 50, blind=True)
+
+    return pic.astype(np.uint8)
 
 
 def save(pic, name):
     with Image.fromarray(pic) as output:
-
-        # Draw the mask
-        #draw = ImageDraw.Draw(output)
-        #draw.rectangle([(680, 252), (680 + 320, 252 + 734)], fill=None, outline=128)
-        #del draw
-
         output.save(join(dest_path, picture + "-" + name + ".jpg"),
                     format="jpeg",
                     optimize=True,
@@ -231,16 +218,11 @@ if __name__ == '__main__':
             that will be resized anyway. It's twice as fast and almost as good.
             """
 
-            pic_best = processing_BEST(pic)
-            save(pic_best, "best")
-
-
             pic_fast = processing_FAST(pic)
-            save(pic_fast, "fast")
+            save(pic_fast, "fast-v3")
 
-            # Richardson extrapolation assuming order 1 convergence :
-            # https://en.wikipedia.org/wiki/Richardson_extrapolation
-            pic_extrapol = - color.rgb2lab(pic_fast / 255) + 2 * color.rgb2lab(pic_best / 255)
-            pic_extrapol = (color.lab2rgb(pic_extrapol) * 255).astype(np.uint8)
+            pic_myope = processing_MYOPE(pic)
+            save(pic_myope, "myope-v3")
 
-            save(pic_extrapol, "extrapol")
+            pic_blind = processing_BLIND(pic)
+            save(pic_blind, "blind-v3")
