@@ -90,15 +90,15 @@ or in a blind one to determine the PSF iteratively from an initial guess.
 ##### Blurred original :
 ![alt text](img/blured.jpg)
 
-##### After (fast algorithm - 52 s - 50 iterations - Non blind):
+##### After (fast algorithm - 35 s - 50 iterations - Non blind):
 This takes in input an user-defined SPF guessed by trial and error.
 ![alt text](img/richardson-lucy-deconvolution/blured-fast-v3.jpg)
 
-##### After (myope algorithm - 238 s - 50 iterations - Semi-Blind refinement):
+##### After (myope algorithm - 234 s - 50 iterations - Semi-Blind refinement):
 This takes in input an user-defined SPF guessed by trial and error but will refine it every iteration.
 ![alt text](img/richardson-lucy-deconvolution/blured-myope-v3.jpg)
 
-##### After (blind algorithm - 236 s - 50 iterations - Blind):
+##### After (blind algorithm - 231 s - 50 iterations - Blind):
 This takes in input a dumb SPF (ones) and will build the SPF along from scratch. Some parameters are still under developement.
 ![alt text](img/richardson-lucy-deconvolution/blured-blind-v3.jpg)
 

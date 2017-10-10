@@ -16,12 +16,11 @@ source image - deconvoluted image) from the original image. This pixels are cons
 noise and would be amplificated from iteration to iteration otherwise.
 '''
 import multiprocessing
-from os.path import isfile, join
+from os.path import join
 
 import numpy as np
 from PIL import Image
-from numba import float32, int16, jit, autojit, prange
-from scipy import misc
+from numba import float32, int16, jit
 from scipy.signal import fftconvolve
 
 from lib import utils
@@ -62,6 +61,14 @@ def convergence(image_after: np.ndarray, image_before: np.ndarray) -> float:
 
 @jit(float32[:, :](float32[:, :], float32[:, :], int16, float32[:, :]), cache=True)
 def update_image(image, u, lambd, psf):
+    """Update one channel only (R, G or B)
+
+    :param image:
+    :param u:
+    :param lambd:
+    :param psf:
+    :return:
+    """
     # Richardson-Lucy deconvolution
     gradUdata = fftconvolve(fftconvolve(u, psf, "valid") - image, np.rot90(psf), "full")
 
@@ -76,11 +83,36 @@ def update_image(image, u, lambd, psf):
     return u
 
 
+@jit(float32[:, :](float32[:, :], float32[:, :], int16, float32[:, :], int16), cache=True)
+def loop_update_image(image, u, lambd, psf, iterations):
+    for i in range(iterations):
+        # Richardson-Lucy deconvolution
+        gradUdata = fftconvolve(fftconvolve(u, psf, "valid") - image, np.rot90(psf), "full")
+
+        # Total Variation Regularization
+        gradu = gradUdata - lambd * divTV(u)
+        sf = 5E-3 * np.max(u) / np.maximum(1E-31, np.amax(np.abs(gradu)))
+        u = u - sf * gradu
+
+        # Normalize for 8 bits RGB values
+        u = np.clip(u, 0.0000001, 255)
+
+        lambd = lambd / 2
+
+    return u
+
+@jit(float32[:, :](float32[:, :], int16, int16), cache=True)
+def pad_image(image: np.ndarray, pad_v: int, pad_h: int):
+    R = np.pad(image[..., 0], (pad_v, pad_h), mode="edge")
+    G = np.pad(image[..., 1], (pad_v, pad_h), mode="edge")
+    B = np.pad(image[..., 2], (pad_v, pad_h), mode="edge")
+    u = np.dstack((R, G, B))
+    return u
+
+
 @jit(float32[:, :](float32[:, :], float32[:, :], float32[:, :], float32[:, :]), cache=True)
 def update_kernel(gradk: np.ndarray, u: np.ndarray, psf: np.ndarray, image: np.ndarray) -> np.ndarray:
-    for chan in range(3):
-        gradk = gradk + fftconvolve(np.rot90(u[..., chan], 2),
-                                    fftconvolve(u[..., chan], psf, "valid") - image[..., chan], "valid")
+    gradk = gradk + fftconvolve(np.rot90(u, 2), fftconvolve(u, psf, "valid") - image, "valid")
 
     sh = 1e-3 * np.amax(psf) / np.maximum(1e-31, np.amax(np.abs(gradk)))
     psf = psf - sh * gradk
@@ -122,29 +154,36 @@ def richardson_lucy(image: np.ndarray, psf: np.ndarray, lambd: float, iterations
     pad_h = np.floor(NK / 2).astype(int)
 
     # Pad the image on each channel with data to avoid border effects
-    R = np.pad(image[..., 0], (pad_v, pad_h), mode="edge")
-    G = np.pad(image[..., 1], (pad_v, pad_h), mode="edge")
-    B = np.pad(image[..., 2], (pad_v, pad_h), mode="edge")
-    u = np.dstack((R, G, B))
+    u = pad_image(image, pad_v, pad_h)
 
-    gradUdata = np.zeros((M + MK - 1, N + NK - 1, C))
-    gradk = np.zeros((MK, NK))
+    if blind:
+        gradk = np.zeros((MK, NK))
 
-    for i in range(iterations):
+        for i in range(iterations):
 
+            # Update sharp image
+            with multiprocessing.Pool(processes=3) as pool:
+                u = np.dstack(pool.starmap(
+                    update_image,
+                    [(image[..., chan], u[..., chan], lambd, psf) for chan in range(C)]
+                )
+                )
+
+            # Update blur kernel
+            for chan in range(3):
+                psf, gradk = update_kernel(gradk, u[..., chan], psf, image[..., chan])
+
+            lambd = lambd / 2
+
+    else:
         # Update sharp image
         with multiprocessing.Pool(processes=3) as pool:
             u = np.dstack(pool.starmap(
-                update_image,
-                [(image[..., chan], u[..., chan], lambd, psf) for chan in range(3)]
+                loop_update_image,
+                [(image[..., chan], u[..., chan], lambd, psf, iterations) for chan in range(C)]
             )
             )
 
-        # Update blur kernel
-        if blind:
-            psf, gradk = update_kernel(gradk, u, psf, image)
-
-        lambd = lambd / 2
 
     return u[pad_v:-pad_v, pad_h:-pad_h, ...], psf
 
