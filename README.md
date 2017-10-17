@@ -38,44 +38,6 @@ are in `img` subfolders. The built-in functions are in the `lib.utils` module.
     
 ### Current prototypes
 
-#### Unsharp mask with bilateral filter
-
-[Unsharp masking](https://en.wikipedia.org/wiki/Unsharp_masking)
-is usually performed with a Gaussian blur and results in halos
-around the sharp edges of the image.
-
-Using a [bilateral filter](https://en.wikipedia.org/wiki/Bilateral_filter) 
-(e.g a *surface blur*) on the L channel allows to perform a better unsharp mask without
-halos, because we don't sharpen the edges. It's much slower though.
-Run or see `bilateral_unsharp_mask.py`.
-
-Before :
-![alt text](img/original.jpg)
-
-After :
-![alt text](img/bilateral-unsharp-mask/original.jpg)
-
-This 1.7 Mpx picture took around 18s to compute on an Intel i7 2.20 GHz Sandy Bridge with 8 threads. 
-
-#### Defringe with bilateral filter
-
-Purples and green fringes along edges are classic chromatic aberrations caused by lenses that
-occur at wide aperture. Defringing is usually performed with edge detection, by desaturing
-edges. However, this can lead to legitimate purple edges (lips, signs) becoming muddy grey. 
-
-Using a [bilateral filter](https://en.wikipedia.org/wiki/Bilateral_filter) 
-(e.g a *surface blur*) on the A channel allows fringe reduction without affecting
-the legitimate edges. 
-
-
-Before :
-![alt text](img/original.jpg)
-
-After :
-![alt text](img/bilateral-LAB/original.jpg)
-
-This 1.7 Mpx picture took around 13s to compute on an Intel i7 2.20 GHz Sandy Bridge with 8 threads. 
-
 #### Richardson-Lucy deconvolution
 
 In theory, blurred and noisy pictures can be perfectly sharpened if we perfectly 
@@ -91,18 +53,18 @@ or in a blind one to determine the PSF iteratively from an initial guess.
 ![alt text](img/blured.jpg)
 
 ##### After (fast algorithm - 35 s - 50 iterations - Non blind):
-This takes in input an user-defined SPF guessed by trial and error.
+This takes in input an user-defined PSF guessed by trial and error.
 ![alt text](img/richardson-lucy-deconvolution/blured-fast-v3.jpg)
 
-##### After (myope algorithm - 234 s - 50 iterations - Semi-Blind refinement):
-This takes in input an user-defined SPF guessed by trial and error but will refine it every iteration.
-![alt text](img/richardson-lucy-deconvolution/blured-myope-v3.jpg)
+##### After (myope algorithm - 73 s - 50 iterations - Semi-Blind refinement):
+This takes in input an user-defined PSF guessed by trial and error but will refine it every iteration on a 256×256 px sampling patch.
+(drawn in red here).
+![alt text](img/richardson-lucy-deconvolution/blured-myope-v5.jpg)
 
-##### After (blind algorithm - 231 s - 50 iterations - Blind):
-This takes in input a dumb SPF (ones) and will build the SPF along from scratch. Some parameters are still under developement.
-![alt text](img/richardson-lucy-deconvolution/blured-blind-v3.jpg)
-
-TO DO : compute the blind SPF on a part of the picture only with a mask, then apply the solution
+##### After (blind algorithm - 194 s - 80 iterations - Blind):
+This takes no input and will build the SPF along from scratch. 
+A balance between the masked zone weight and the whole image weight in the computation can be adjusted.
+![alt text](img/richardson-lucy-deconvolution/blured-blind-v6.jpg)
 
 
 ## Installation
@@ -115,9 +77,34 @@ its modules and use it from its directory.
 On Linux systems, if you have Python 2 and 3 interpreters installed together, you may run :
 
     python3 setup.py build_ext --inplace
+    
+The Python interpreter should be in the 3.x serie (3.5 is best).
+    
+Unfortunately, the setup file has been reported defective so in most cases, the dependencies will
+not be automatically installed.
+
+To solve this problem until an elegant solution is found, the simpliest way is to first install the [Anaconda Python distribution](https://www.anaconda.com/download/)
+which is a bundle of Python packages for scientific computation and signal processing.
+
+Then, ensure the following packages are installed :
+
+    PIL (known as pillow)
+    numba
+    scipy 
+    numpy (normally included into scipy)
+    sympy
+    skimage
 
     
 ## Use
+
+### In console
+
+Execute :
+
+```shell
+ python3 richardson_lucy_deconvolution.py 
+```
 
 Import the required Python packages : 
 
