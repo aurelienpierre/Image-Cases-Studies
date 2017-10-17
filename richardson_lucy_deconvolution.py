@@ -19,13 +19,50 @@ import multiprocessing
 from os.path import join
 
 import numpy as np
+import pyfftw
+import scipy.signal
 from PIL import Image, ImageDraw
-from numba import float32, int16, jit
+from numba import float32, jit
 from scipy import misc
-from scipy.signal import fftconvolve
 
 from lib import utils
 
+scipy.fftpack = pyfftw.interfaces.scipy_fftpack
+pyfftw.interfaces.cache.enable()
+
+
+class FFTconvolve(object):
+    def __init__(self, A, B, type, threads=8):
+
+        threads = int(threads)
+        shape = (np.array(A.shape) + np.array(B.shape)) - 1
+
+        if np.iscomplexobj(A) and np.iscomplexobj(B):
+            self.fft_A_obj = pyfftw.builders.fftn(A, s=shape, threads=threads)
+            self.fft_B_obj = pyfftw.builders.fftn(B, s=shape, threads=threads)
+            self.ifft_obj = pyfftw.builders.ifftn(self.fft_A_obj.get_output_array(), s=shape, threads=threads)
+
+        else:
+
+            self.fft_A_obj = pyfftw.builders.rfftn(A, s=shape, threads=threads)
+            self.fft_B_obj = pyfftw.builders.rfftn(B, s=shape, threads=threads)
+            self.ifft_obj = pyfftw.builders.irfftn(self.fft_A_obj.get_output_array(), s=shape, threads=threads)
+
+    def __call__(self, A, B):
+
+        fft_padded_A = self.fft_A_obj(A)
+        fft_padded_B = self.fft_B_obj(B)
+
+        return self.ifft_obj(fft_padded_A * fft_padded_B)
+
+
+# scipy.signal.fftconvolve = FFTconvolve
+
+# @jit(float32[:, :](int16), cache=True)
+def uniform_kernel(size):
+    kern = np.ones((size, size))
+    kern /= np.sum(kern)
+    return kern
 
 @jit(float32[:, :](float32[:, :]), cache=True)
 def divTV(image: np.ndarray) -> np.ndarray:
@@ -46,87 +83,21 @@ def divTV(image: np.ndarray) -> np.ndarray:
     return grad
 
 
-@jit(cache=True)
-def convergence(image_after: np.ndarray, image_before: np.ndarray) -> float:
-    """Compute the convergence rate between 2 iterations
-
-    :param ndarray image_after: Image @ iteration n
-    :param ndarray image_before: Image @ iteration n-1
-    :param int padding: Number of pixels to ignore along each side
-    :return float: convergence rate
-    """
-    convergence = np.log(np.linalg.norm(image_after) / np.linalg.norm((image_before)))
-    print("Convergence :", convergence)
-    return convergence
-
-
-# @jit(float32[:, :](float32[:, :], float32[:, :], int16, float32[:, :]), cache=True)
-def update_image(image, u, lambd, psf):
-    """Update one channel only (R, G or B)
-
-    :param image:
-    :param u:
-    :param lambd:
-    :param psf:
-    :return:
-    """
-
-    # Richardson-Lucy deconvolution
-    gradUdata = fftconvolve(fftconvolve(u, psf, "valid") - image, np.rot90(psf), "full")
-
-    # Total Variation Regularization
-    gradu = gradUdata - lambd * divTV(u)
-    sf = 5E-3 * np.max(u) / np.maximum(1E-31, np.amax(np.abs(gradu)))
-    u = u - sf * gradu
-
-    # Normalize for 8 bits RGB values
-    u = np.clip(u, 0.0000001, 255)
-
-    return u
-
-
-@jit(float32[:, :](float32[:, :], float32[:, :], int16, float32[:, :], int16), cache=True)
-def loop_update_image(image, u, lambd, psf, iterations):
-    for i in range(iterations):
-        # Richardson-Lucy deconvolution
-        gradUdata = fftconvolve(fftconvolve(u, psf, "valid") - image, np.rot90(psf), "full")
-
-        # Total Variation Regularization
-        gradu = gradUdata - lambd * divTV(u)
-        sf = 5E-3 * np.max(u) / np.maximum(1E-31, np.amax(np.abs(gradu)))
-        u = u - sf * gradu
-
-        # Normalize for 8 bits RGB values
-        u = np.clip(u, 0.0000001, 255)
-
-        lambd = lambd * 0.99
-
-    return u
-
-@jit(float32[:, :](float32[:, :], int16, int16), cache=True)
-def pad_image(image: np.ndarray, pad_v: int, pad_h: int):
-    R = np.pad(image[..., 0], (pad_v, pad_h), mode="edge")
-    G = np.pad(image[..., 1], (pad_v, pad_h), mode="edge")
-    B = np.pad(image[..., 2], (pad_v, pad_h), mode="edge")
+# @jit(float32[:, :](float32[:, :], int16), cache=True)
+def pad_image(image: np.ndarray, pad: int):
+    R = np.pad(image[..., 0], (pad, pad), mode="edge")
+    G = np.pad(image[..., 1], (pad, pad), mode="edge")
+    B = np.pad(image[..., 2], (pad, pad), mode="edge")
     u = np.dstack((R, G, B))
     return u
 
 
-@jit(float32[:, :](float32[:, :], float32[:, :], float32[:, :], float32[:, :]), cache=True)
-def update_kernel(gradk: np.ndarray, u: np.ndarray, psf: np.ndarray, image: np.ndarray) -> np.ndarray:
-    # Compute the new PSF
-    gradk = gradk + fftconvolve(np.rot90(u, 2), fftconvolve(u, psf, "valid") - image, "valid")
-    sh = 1e-3 * np.amax(psf) / np.maximum(1e-31, np.amax(np.abs(gradk)))
-    psf = psf - sh * gradk
-
-    # Normalize the kernel
-    psf[psf < 0] = 0
-    psf = psf / np.sum(psf)
-
-    return psf, gradk
+# @jit(cache=True)
+def unpad_image(image: np.ndarray, pad: int):
+    return image[pad:-pad, pad:-pad, ...]
 
 
-@jit(float32[:, :](float32[:, :], float32[:, :]), cache=True)
+# @jit(float32[:, :](float32[:, :], float32[:, :]), cache=True)
 def trim_mask(image: np.ndarray, mask: np.ndarray):
     """Trim lines and columns out of the mask
 
@@ -138,8 +109,198 @@ def trim_mask(image: np.ndarray, mask: np.ndarray):
     return image
 
 
+# @jit(cache=True)
+def convolve_kernel(u, psf, image):
+    pyfftw.interfaces.cache.enable()
+    return scipy.signal.fftconvolve(np.rot90(u, 2), scipy.signal.fftconvolve(u, psf, "valid") - image, "valid")
+
+
+# @jit(cache=True)
+def convolve_image(u, psf, image):
+    pyfftw.interfaces.cache.enable()
+    return scipy.signal.fftconvolve(scipy.signal.fftconvolve(u, psf, "valid") - image, np.rot90(psf), "full")
+
+
+@jit(cache=True)
+def tiling(image: np.ndarray, pad: int = 0):
+    """
+    Takes a 2D image and split it into 4 padded tiles
+    :param image:
+    :return:
+    """
+    # optimize for 512×1024 px : https://software.intel.com/en-us/mkl/features/benchmarks
+
+    M, N = image.shape
+    tile_width = 512
+
+    hori_tiles = np.ceil(N / tile_width).astype(int)
+    vert_tiles = np.ceil(M / tile_width).astype(int)
+
+    tiles = []
+    offset_v = 0
+    offset_h = 0
+
+    for split_v in range(vert_tiles):
+        for split_h in range(hori_tiles):
+            if offset_h + tile_width < N:
+                if offset_v + tile_width < M:
+                    tiles.append(image[offset_v:tile_width, offset_h:tile_width])
+                else:
+                    tiles.append(image[offset_v:, offset_h:tile_width])
+            else:
+                if offset_v + tile_width < M:
+                    tiles.append(image[offset_v:tile_width, offset_h:])
+                else:
+                    tiles.append(image[offset_v:, offset_h:])
+
+            offset_h = offset_h + tile_width
+
+        offset_h = 0
+        offset_v = offset_v + tile_width
+
+    if pad != 0:
+        for i in range(len(tiles)):
+            tiles[i] = np.pad(tiles[i], (pad, pad), mode="edge")
+
+    return tiles, (vert_tiles, hori_tiles)
+
+
+@jit(cache=True)
+def untiling(tiles, shape, pad: int = 0):
+    """
+    Unpad and merges back 4 tiles in counter-clockwise order
+
+    :param tiles: list of tiles
+    :param pad_v:
+    :param pad_h:
+    :return:
+    """
+
+    if pad != 0:
+        for tile in tiles:
+            tile = unpad_image(tile, pad)
+
+    for tile in tiles:
+        print("Tile :", tile.shape)
+
+    columns = []
+    rows = []
+    count = 0
+
+    for y in range(shape[1]):
+        for x in range(shape[0]):
+            columns.append(tiles[count])
+            count = count + 1
+
+        rows.append(np.concatenate(tuple(columns), axis=1))
+        columns = []
+
+    image = np.concatenate(tuple(rows), axis=0)
+
+    return image
+
+
+#@jit(cache=True)
+def update_image(image, u, lambd, psf):
+    """Update one channel only (R, G or B)
+
+    :param image:
+    :param u:
+    :param lambd:
+    :param psf:
+    :return:
+    """
+
+    """
+    # Prepare the tiles for the multiprocess
+    image_tiles, shape = tiling(image)
+    u_tiles, shape = tiling(u, pad=pad)
+
+    for im, ut in zip(image_tiles, u_tiles):
+        print("Image tile :", im.shape, "U tile", ut.shape)
+
+    # Spawn a queue to handle multiprocess outputs
+    queue = multiprocessing.Queue()
+    lock = multiprocessing.Lock()
+
+    gradUdata = []
+    p = []
+
+    # Spawn 4 processes to deconvolve
+    for i in range(len(image_tiles)):
+        p.append(multiprocessing.Process(target=convolve_image, args=(u_tiles[i], psf, image_tiles[i], queue, lock)))
+        p[i].start()
+        time.sleep(0.5)
+
+    # Get the values
+    for i in range(len(image_tiles)):
+        gradUdata.append(queue.get())
+
+    # Stop the processes
+    queue.put('STOP')
+
+    # Untile the output
+    gradUdata = untiling(gradUdata, shape, pad = pad)
+
+    print("gradUdata", gradUdata.shape)
+    
+    """
+
+    # Total Variation Regularization
+    gradu = convolve_image(u, psf, image) - lambd * divTV(u)
+    sf = 5E-3 * np.max(u) / np.maximum(1E-31, np.amax(np.abs(gradu)))
+    u = u - sf * gradu
+
+    # Normalize for 8 bits RGB values
+    u = np.clip(u, 0.0000001, 255)
+
+    """
+    # Some tricks to output the results in a parallel Python queue
+    lock_channel.acquire()
+    queue_channel.put(u)
+    lock_channel.release()
+    """
+    return u
+
+
+#@jit(float32[:, :](float32[:, :], float32[:, :], int16, float32[:, :], int16), cache=True)
+def loop_update_image(image, u, lambd, psf, iterations):
+    for i in range(iterations):
+        update_image(image, u, lambd, psf)
+
+    return u
+
+
+#@jit(float32[:, :](float32[:, :], float32[:, :], float32[:, :], float32[:, :]), cache=True)
+def update_kernel(gradk: np.ndarray, u: np.ndarray, psf: np.ndarray, image: np.ndarray) -> np.ndarray:
+
+    # Compute the new PSF
+    gradk = gradk + convolve_kernel(u, psf, image)
+    sh = 1e-3 * np.amax(psf) / np.maximum(1e-31, np.amax(np.abs(gradk)))
+    psf = psf - sh * gradk
+
+    # Normalize the kernel
+    psf[psf < 0] = 0
+    psf = psf / np.sum(psf)
+    return psf, gradk
+
+
+# @jit(float32[:, :](float32[:, :], int16, float32, float32, float32), cache=True)
+def build_pyramid(image, psf_size, lambd, scaling=1.9, max_lambd=1):
+    # Initialize the pyramid of variables
+    lambdas = [lambd]
+    images = [image]
+    kernels = [psf_size]
+
+    while (lambdas[-1] * scaling < max_lambd and kernels[-1] > 3):
+        lambdas.append(lambdas[-1] * scaling)
+        kernels.append(kernels[-1] - 2)
+        images.append(misc.imresize(image, 1 / scaling, interp="lanczos", mode="RGB").astype(float))
+
+    return images, kernels, lambdas
+
 # @jit(float32[:,:](float32[:,:], float32[:,:], float32, int16, bool[:,:]), cache=True)
-@utils.timeit
+#@utils.timeit
 def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: float, iterations: int,
                     blind: bool = False, mask: np.ndarray = None) -> np.ndarray:
     """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization.
@@ -166,13 +327,15 @@ def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: fl
     """
 
     # image dimensions
-    M, N, C = image.shape
     MK, NK = psf.shape
-    pad_v = np.floor(MK / 2).astype(int)
-    pad_h = np.floor(NK / 2).astype(int)
+    M, N, C = image.shape
+    MU = M + MK - 1
+    NU = N + NK - 1
+    pad = np.floor(MK / 2).astype(int)
 
-    # Pad the image on each channel with data to avoid border effects
-    u = pad_image(u, pad_v, pad_h)
+    u = pad_image(u, pad)
+
+    print("SOURCE IMAGE :", image.shape)
 
     if blind:
         # Blind or myopic deconvolution
@@ -182,8 +345,31 @@ def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: fl
             masked_image = trim_mask(image, mask)
 
         for i in range(iterations):
-            print("Iteration :", i)
+            print(" == Iteration :", i, " ==")
+
+            """
             # Update sharp image
+            queue = multiprocessing.Queue()
+            lock = multiprocessing.Lock()
+            u_bis = []
+            p =  []
+
+            # Spawn 4 processes to deconvolve
+            for chan in range(C):
+                p.append(multiprocessing.Process(target=update_image, args=(image[..., chan], u[..., chan], lambd, psf, queue, lock)))
+                p[chan].start()
+                time.sleep(0.1)
+
+            # Get the values
+            for i in range(C):
+                u_bis.append(queue.get())
+
+            # Stop the processes
+            queue.put('STOP')
+
+            u = np.dstack(tuple(u_bis))
+            """
+
             with multiprocessing.Pool(processes=3) as pool:
                 u = np.dstack(pool.starmap(
                     update_image,
@@ -193,17 +379,37 @@ def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: fl
 
             # Extract the portion of the source image and the deconvolved image under the mask
             if mask != None:
-                masked_u = pad_image(trim_mask(u, mask), pad_v, pad_h)
+                masked_u = pad_image(trim_mask(unpad_image(u, pad), mask), pad)
 
             # Update the blur kernel
-            for chan in range(3):
+            output = []
+            with multiprocessing.Pool(processes=3) as pool:
                 if mask != None:
-                    psf, gradk = update_kernel(gradk, masked_u[..., chan], psf, masked_image[..., chan])
+                    output = pool.starmap(
+                        update_kernel,
+                        [(gradk, masked_u[..., chan], psf, masked_image[..., chan]) for chan in range(C)]
+                    )
                 else:
-                    psf, gradk = update_kernel(gradk, u[..., chan], psf, image[..., chan])
+                    output = pool.starmap(
+                        update_kernel,
+                        [(gradk, u[..., chan], psf, image[..., chan]) for chan in range(C)]
+                    )
+
+            gradk_bis = np.zeros((MK, NK))
+            psf_bis = np.zeros((MK, NK))
+
+            for chan in range(3):
+                gradk_bis += output[chan][1]
+                psf_bis += output[chan][0]
+
+            gradk = gradk_bis / 3
+            psf = psf_bis / 3
+            del gradk_bis, psf_bis
+
+            psf[psf < 0] = 0
+            psf = psf / np.sum(psf)
 
             lambd = lambd * 0.99
-
 
     else:
         # Regular non-blind RL deconvolution
@@ -216,37 +422,17 @@ def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: fl
             )
             )
 
-
-    return u[pad_v:-pad_v, pad_h:-pad_h, ...], psf
-
-
-@jit(float32[:, :](float32[:, :], int16, float32, float32, float32), cache=True)
-def build_pyramid(image, psf_size, lambd, scaling=1.9, max_lambd=0.5):
-    # Initialize the pyramid of variables
-    lambdas = [lambd]
-    images = [image]
-    kernels = [psf_size]
-
-    while (lambdas[-1] * scaling < max_lambd and kernels[-1] > 3):
-        lambdas.append(lambdas[-1] * scaling)
-        kernels.append(kernels[-1] - 2)
-        images.append(misc.imresize(image, 1 / scaling, interp="lanczos", mode="RGB").astype(float))
-
-    return images, kernels, lambdas
-
-
-@jit(float32[:, :](int16), cache=True)
-def uniform_kernel(size):
-    kern = np.ones((size, size))
-    kern /= np.sum(kern)
-    return kern
+    u = unpad_image(u, pad)
+    return u, psf
 
 @utils.timeit
 def deblur_module(image: np.ndarray, filename: str, blur_type: str, quality: int, artifacts_damping: float,
                   deblur_strength: float, blur_width: int = 3,
                   blur_strength: int = 1, refine: bool = False, mask: np.ndarray = None, backvsmask_ratio: float = 0,
                   debug: bool = False):
-    """This mimics a Darktable module inputs where the technical specs are hidden and translated into human-readable parameters
+    """This mimics a Darktable module inputs where the technical specs are hidden and translated into human-readable parameters.
+
+    It's an interface between the regular user and the geeky actual deconvolution parameters
 
     :param image: Blured image in RGB 8 bits
     :param filename: File name to save the sharp picture
@@ -274,14 +460,16 @@ def deblur_module(image: np.ndarray, filename: str, blur_type: str, quality: int
         u = pic.copy()
         psf = uniform_kernel(kernels[-1])
         runs = 1
+        steps = len(kernels)
+        iterations = np.maximum(np.ceil(quality / steps), kernels[-1]).astype(int)
 
         for i, k, l in zip(reversed(images), reversed(kernels), reversed(lambdas)):
 
-            print(runs)
+            print("==== Pyramid level", runs, " ====")
 
             i = np.array(i).astype(np.float32)
 
-            # Scale the previous deblured image
+            # Scale the previous deblured image to the dimensions of i
             u = misc.imresize(u, (i.shape[0], i.shape[1]), interp="lanczos")
 
             # Scale the PSF
@@ -290,11 +478,8 @@ def deblur_module(image: np.ndarray, filename: str, blur_type: str, quality: int
                 psf[psf < 0] = 0
                 psf = psf / np.sum(psf)
 
-            print(psf)
-            print(i.shape)
-
             # Make a blind Richardson- Lucy deconvolution on the RGB signal
-            u, psf = richardson_lucy(i, u, psf, l, np.round(quality / 2).astype(int), blind=True)
+            u, psf = richardson_lucy(i, u, psf, l, iterations, blind=True)
 
             runs = runs + 1
 
@@ -348,7 +533,7 @@ def deblur_module(image: np.ndarray, filename: str, blur_type: str, quality: int
 def processing_FAST(pic):
     # Open the picture
     pic = np.array(pic).astype(np.float32)
-    
+
     # Generate a blur kernel as point spread function
     psf = utils.kaiser_kernel(11, 8)
 
@@ -358,6 +543,7 @@ def processing_FAST(pic):
     save(pic, "fast-v3")
 
     return pic.astype(np.uint8)
+
 
 @utils.timeit
 @jit(float32[:, :](float32[:, :]), cache=True)
@@ -443,12 +629,10 @@ if __name__ == '__main__':
     source_path = "img"
     dest_path = "img/richardson-lucy-deconvolution"
 
-    images = ["DSC_1168_test.jpg"]
+    images = ["blured.jpg"]
 
     for picture in images:
-
         with Image.open(join(source_path, picture)) as pic:
-
             """
             The "BEST" algorithm resamples the image × 2, applies the deconvolution and
             then sample it back. It's good to dilute the noise on low res images.
@@ -463,7 +647,8 @@ if __name__ == '__main__':
 
             # pic_blind = processing_BLIND(pic)
 
-            # deblur_module(pic, "blind-v6", "auto", 5, 0.005, 0, mask=[150, 150 + 256, 600, 600 + 256], refine=True, backvsmask_ratio=0, blur_width=5)
+            deblur_module(pic, "blind-v6", "auto", 100, 0.05, 0, mask=[150, 150 + 256, 600, 600 + 256], refine=False,
+                          backvsmask_ratio=0.5, blur_width=9, debug=True)
 
-            deblur_module(pic, "test-v6", "auto", 50, 0.005, 10, mask=[1271, 1271 + 256, 3466, 3466 + 256], refine=True,
-                          backvsmask_ratio=0, blur_width=15)
+            # deblur_module(pic, "test-v6", "auto", 50, 0.005, 10, mask=[1271, 1271 + 256, 3466, 3466 + 256], refine=True,
+            #              backvsmask_ratio=0, blur_width=15)
