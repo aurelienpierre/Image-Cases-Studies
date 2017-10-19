@@ -16,6 +16,7 @@ source image - deconvoluted image) from the original image. This pixels are cons
 noise and would be amplificated from iteration to iteration otherwise.
 '''
 import multiprocessing
+import os
 from os.path import join
 
 import numpy as np
@@ -26,6 +27,55 @@ from scipy import misc
 
 from lib import utils
 
+CPU = os.cpu_count()
+
+try:
+    from pyculib.fft import FFTPlan, fft_inplace, ifft_inplace
+
+
+    # @jit(cache=True)
+    def fftconvolve(im, psf, domain):
+        """"GPU FFT convolution via CUDA/OpenCL
+
+        """
+        Nx1, Nx2 = im.shape
+        NKx1, NKx2, = psf.shape
+        dtype = np.complex64
+
+        # Define the best square fit
+        # square = np.maximum(Nx1, Nx2) + NKx1 -1
+        # im = np.pad(im, ((0, square - Nx1), (0, square - Nx2)), mode="constant", constant_values=0)
+        # psf = np.pad(psf, ((0, square - NKx1), (0, square - NKx2)), mode="constant", constant_values=0)
+
+        im = np.pad(im, ((0, NKx1 - 1), (0, NKx2 - 1)), mode="constant", constant_values=0)
+        psf = np.pad(psf, ((0, Nx1 - 1), (0, Nx2 - 1)), mode="constant", constant_values=0)
+        size = im.shape[0] * im.shape[1]
+
+        fft_inplace(im)
+        im = np.fft.fftshift(im)
+        fft_inplace(psf)
+        psf = np.fft.fftshift(psf)
+
+        result = ifft_inplace(np.fft.fftshift(im * psf)).real.astype(np.float32)
+
+        if domain == "same":
+            return result[np.floor(NKx1 / 2).astype(int):-np.floor(NKx1 / 2).astype(int) - 1,
+                   np.floor(NKx2 / 2).astype(int):-np.floor(NKx2 / 2).astype(int) - 1]
+        elif domain == "valid":
+            return result[NKx1 - 1:-NKx1 + 1, NKx2 - 1:-NKx2 + 1]
+        elif domain == "full":
+            return result
+        else:
+            raise ValueError
+
+except:
+    print("No Cuda support, fallback on CPU")
+    fftconvolve = scipy.signal.fftconvolve
+
+
+@jit
+def find_nearest_power(x):
+    return 1 << (x - 1).bit_length()
 
 @jit(float32[:, :](float32[:, :]), cache=True)
 def divTV(image: np.ndarray) -> np.ndarray:
@@ -42,7 +92,7 @@ def divTV(image: np.ndarray) -> np.ndarray:
     grad = np.array(np.gradient(image, edge_order=2))
     grad = np.sqrt(grad[0] ** 2 + grad[1] ** 2)
     grad = grad / np.amax(grad)
-    return grad.astype(np.float32)
+    return np.ascontiguousarray(grad, np.float32)
 
 
 @jit(cache=True)
@@ -51,13 +101,12 @@ def pad_image(image: np.ndarray, pad: tuple, mode="edge"):
     G = np.pad(image[..., 1], pad, mode=mode)
     B = np.pad(image[..., 2], pad, mode=mode)
     u = np.dstack((R, G, B))
-    return u
+    return np.ascontiguousarray(u, np.ndarray)
 
 
 @jit(cache=True)
 def unpad_image(image: np.ndarray, pad: tuple):
-    return image[pad[0]:-pad[0], pad[1]:-pad[1], ...]
-
+    return np.ascontiguousarray(image[pad[0]:-pad[0], pad[1]:-pad[1], ...], np.ndarray)
 
 @jit(float32[:, :](float32[:, :], float32[:, :]), cache=True)
 def trim_mask(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
@@ -73,14 +122,12 @@ def trim_mask(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
 
 @jit(float32[:, :](float32[:, :], float32[:, :], float32[:, :]), cache=True)
 def convolve_kernel(u, psf, image):
-    return scipy.signal.fftconvolve(np.rot90(u, 2), scipy.signal.fftconvolve(u, psf, "valid") - image, "valid").astype(
-        np.float32)
+    return fftconvolve(np.rot90(u, 2), fftconvolve(u, psf, "valid") - image, "valid").astype(np.float32)
 
 
 @jit(float32[:, :](float32[:, :], float32[:, :], float32[:, :]), cache=True)
 def convolve_image(u, psf, image):
-    return scipy.signal.fftconvolve(scipy.signal.fftconvolve(u, psf, "valid") - image, np.rot90(psf), "full").astype(
-        np.float32)
+    return fftconvolve(fftconvolve(u, psf, "valid") - image, np.rot90(psf), "full").astype(np.float32)
 
 
 @jit(float32[:, :](float32[:, :], float32[:, :], float32, float32[:, :]), cache=True)
@@ -101,15 +148,16 @@ def update_image(image, u, lambd, psf):
     # Normalize for 8 bits RGB values
     u = np.clip(u, 0.0000001, 255)
 
-    return u.astype(np.float32)
+    return np.ascontiguousarray(u, np.float32)
 
 
 @jit(float32[:, :](float32[:, :], float32[:, :], int16, float32[:, :], int16), cache=True)
 def loop_update_image(image, u, lambd, psf, iterations):
     for i in range(iterations):
+        print(" = Iteration :", i, " =")
         u = update_image(image, u, lambd, psf)
 
-    return u.astype(np.float32)
+    return np.ascontiguousarray(u, np.float32)
 
 
 @jit(float32[:, :](int16, float32, float32, float32), cache=True)
@@ -143,8 +191,7 @@ def update_values(target: np.ndarray, factor: float, source: np.ndarray) -> np.n
     return (target - factor * source).astype(np.float32)
 
 
-# @jit(cache=True)
-#@utils.timeit
+@utils.timeit
 def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: float, iterations: int,
                     blind: bool = False, mask: np.ndarray = None) -> np.ndarray:
     """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization.
@@ -178,7 +225,7 @@ def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: fl
 
     u = pad_image(u, pad).astype(np.float32)
 
-    print("SOURCE IMAGE :", image.shape)
+    print("working on image :", u.shape)
 
     if blind:
         # Blind or myopic deconvolution
@@ -187,13 +234,12 @@ def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: fl
             masked_image = trim_mask(image, mask)
 
         for i in range(iterations):
-            print(" == Iteration :", i, " ==")
+            print(" = Iteration :", i, " =")
 
-            with multiprocessing.Pool(processes=3) as pool:
+            with multiprocessing.Pool(processes=CPU) as pool:
                 u = np.dstack(pool.starmap(update_image,
                                            [(image[..., chan], u[..., chan], lambd, psf) for chan in range(C)])).astype(
                     np.float32)
-
 
             # Extract the portion of the source image and the deconvolved image under the mask
             if mask != None:
@@ -202,7 +248,7 @@ def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: fl
             # Update the blur kernel
             grad_psf = np.zeros_like(psf).astype(np.float32)
 
-            with multiprocessing.Pool(processes=3) as pool:
+            with multiprocessing.Pool(processes=CPU) as pool:
                 if mask != None:
                     grad_psf = grad_psf + pool.starmap(convolve_kernel,
                                                        [(masked_u[..., chan], psf, masked_image[..., chan]) for chan in
@@ -217,7 +263,7 @@ def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: fl
         # Regular non-blind RL deconvolution
 
         # Update sharp image
-        with multiprocessing.Pool(processes=3) as pool:
+        with multiprocessing.Pool(processes=CPU) as pool:
             u = np.dstack(pool.starmap(loop_update_image,
                                        [(image[..., chan], u[..., chan], lambd, psf, iterations) for chan in range(C)]))
 
@@ -225,7 +271,8 @@ def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: fl
     return u.astype(np.float32), psf
 
 @utils.timeit
-def deblur_module(image: np.ndarray, filename: str, blur_type: str, quality: int, artifacts_damping: float,
+@jit(cache=True)
+def deblur_module(pic: np.ndarray, filename: str, blur_type: str, quality: int, artifacts_damping: float,
                   deblur_strength: float, blur_width: int = 3,
                   blur_strength: int = 1, refine: bool = False, mask: np.ndarray = None, backvsmask_ratio: float = 0,
                   debug: bool = False):
@@ -233,7 +280,7 @@ def deblur_module(image: np.ndarray, filename: str, blur_type: str, quality: int
 
     It's an interface between the regular user and the geeky actual deconvolution parameters
 
-    :param image: Blured image in RGB 8 bits
+    :param pic: Blured image in RGB 8 bits
     :param filename: File name to save the sharp picture
     :param blur_type: kind of blur or "auto" to perform a blind deconvolution. Use "auto" for motion blur or composite blur
     :param blur_width: the width of the blur in px
@@ -250,30 +297,31 @@ def deblur_module(image: np.ndarray, filename: str, blur_type: str, quality: int
     :return:
     """
 
-    pic = np.array(image).astype(np.float32)
+    pic = np.ascontiguousarray(pic, np.float32)
 
     if blur_type == "auto":
+        print("\n===== KERNEL INIT =====")
 
         images, kernels, lambdas = build_pyramid(blur_width, artifacts_damping)
 
-        u = pic.copy()
+        u = pic.copy(order="C")
         psf = utils.uniform_kernel(kernels[-1]).astype(np.float32)
         runs = 1
-        steps = len(kernels)
-        iterations = np.maximum(np.ceil(quality / steps), kernels[-1]).astype(int)
+        iterations = np.maximum(np.ceil(quality / len(kernels)), kernels[-1]).astype(int)
 
         for i, k, l in zip(reversed(images), reversed(kernels), reversed(lambdas)):
 
             print("==== Pyramid level", runs, " ====")
 
             # Scale the previous deblured image to the dimensions of i
+            new_size = (round(i * pic.shape[0]) + k - 1, round(i * pic.shape[1]) + k - 1)
             if i != 1:
                 # For some reasons, rescaling by 1 gives weird sizes
-                im = misc.imresize(image, i, interp="lanczos", mode="RGB").astype(np.float32)
+                im = np.ascontiguousarray(misc.imresize(pic, new_size, interp="lanczos", mode="RGB"), np.float32)
             else:
-                im = pic.copy()
+                im = pic.copy(order="C")
 
-            u = misc.imresize(u, im.shape, interp="lanczos").astype(np.float32)
+            u = np.ascontiguousarray(misc.imresize(u, im.shape, interp="lanczos"), np.float32)
 
             # Scale the PSF
             if k != kernels[-1]:
@@ -284,7 +332,7 @@ def deblur_module(image: np.ndarray, filename: str, blur_type: str, quality: int
 
             runs = runs + 1
 
-        print("Kernel init done")
+        print("-> Kernel init done")
     else:
         u = pic.copy()
 
@@ -297,24 +345,28 @@ def deblur_module(image: np.ndarray, filename: str, blur_type: str, quality: int
     if refine:
         if mask:
             # Masked blind or myopic deconvolution
+            print("\n===== BLIND MASKED REFINEMENT =====")
             iter_background = np.round(quality * backvsmask_ratio).astype(int)
             iter_mask = np.round(quality - iter_background).astype(int)
 
             u, psf = richardson_lucy(pic, u, psf, artifacts_damping, iter_mask, blind=True, mask=mask)
-            print("Masked blind deconv done")
+            print("-> Masked blind deconv done")
 
             if iter_background != 0:
+                print("\n===== BLIND UNMASKED REFINEMENT =====")
                 u, psf = richardson_lucy(pic, u, psf, artifacts_damping, iter_background, blind=True)
-                print("Unmasked blind deconv done")
+                print("-> Unmasked blind deconv done")
         else:
             # Unmasked blind or myopic deconvolution
+            print("\n===== BLIND UNMASKED REFINEMENT =====")
             u, psf = richardson_lucy(pic, u, psf, artifacts_damping, quality, blind=True)
-            print("Unmasked blind deconv done")
+            print(" -> Unmasked blind deconv done")
 
         if deblur_strength > 0:
             # Apply a last round of non-blind optimization to enhance the sharpness
+            print("\n===== REGULAR DECONVOLUTION =====")
             u, psf = richardson_lucy(pic, u, psf, artifacts_damping, deblur_strength)
-            print("Additional deconv done")
+            print("-> Regular deconv done")
 
     else:
         # Regular Richardson-Lucy deconvolution
@@ -448,8 +500,10 @@ if __name__ == '__main__':
 
             # pic_blind = processing_BLIND(pic)
 
-            deblur_module(pic, "blind-v6", "auto", 40, 0.05, 20, mask=[150, 150 + 256, 600, 600 + 256], refine=True,
+            deblur_module(pic, "blind-v6", "auto", 40, 0.05, 20, mask=[150, 150 + 512, 600, 600 + 512], refine=True,
                           backvsmask_ratio=0.2, blur_width=9, debug=True)
 
-            # deblur_module(pic, "test-v6", "auto", 50, 0.005, 10, mask=[1271, 1271 + 256, 3466, 3466 + 256], refine=True,
-            #              backvsmask_ratio=0, blur_width=15)
+    with Image.open(join(source_path, "DSC_1168_test.jpg")) as pic:
+
+        # deblur_module(pic, "test-v6", "auto", 5, 0.005, 5, mask=[1271, 1271 + 256, 3466, 3466 + 256], refine=False, backvsmask_ratio=0, blur_width=15)
+        pass
