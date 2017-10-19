@@ -6,18 +6,19 @@ Created on 27 avr. 2017
 Source : https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3166524/
 '''
 
+import os
+import time
+import warnings
+from threading import Thread
+
+import numpy as np
+import scipy.signal
+import scipy.sparse
+from numba import jit, float32, int16, vectorize
 from scipy import interpolate
 from sympy import *
 from sympy.matrices import *
-from threading import Thread
-import numba
-import os
-import scipy.signal
-import scipy.sparse
-import time
-import warnings
 
-import numpy as np
 
 def timeit(method):
     '''
@@ -123,10 +124,19 @@ def auto_vibrance(src):
     return src
 
 
+@vectorize()
 def gaussian(x, sigma):
     return (1.0 / (2 * np.pi * (sigma ** 2))) * np.exp(- (x ** 2) / (2 * sigma ** 2))
 
 
+@jit(float32[:, :](int16), cache=True)
+def uniform_kernel(size):
+    kern = np.ones((size, size))
+    kern /= np.sum(kern)
+    return kern
+
+
+@jit(float32[:, :](int16, float32), cache=True)
 def gaussian_kernel(radius, std):
     window = scipy.signal.gaussian(radius, std=std)
     kern = np.outer(window, window)
@@ -134,6 +144,7 @@ def gaussian_kernel(radius, std):
     return kern
 
 
+@jit(float32[:, :](int16, float32), cache=True)
 def kaiser_kernel(radius, beta):
     window = np.kaiser(radius, beta)
     kern = np.outer(window, window)
@@ -141,6 +152,7 @@ def kaiser_kernel(radius, beta):
     return kern
 
 
+@jit(float32[:, :](int16, float32), cache=True)
 def poisson_kernel(radius, tau):
     window = scipy.signal.exponential(radius, tau=tau)
     kern = np.outer(window, window)
@@ -148,6 +160,7 @@ def poisson_kernel(radius, tau):
     return kern
 
 
+@jit(cache=True)
 def bilateral_differences(source, filtered_image, W, thread, radius, pad, std_i, std_s):
     """
     Perform the bilateral differences and weighting on the (i, j) neighbour.
@@ -169,7 +182,7 @@ def bilateral_differences(source, filtered_image, W, thread, radius, pad, std_i,
         W += w
 
 
-@timeit
+@jit(cache=True)
 def bilateral_filter(source, radius, std_i, std_s, parallel=1):
     """
     Optimized parallel Cython function to perform bilateral filtering
@@ -212,6 +225,7 @@ def bilateral_filter(source, radius, std_i, std_s, parallel=1):
     return np.divide(filtered_image, W)
 
 
+@jit(cache=True)
 def bessel_blur(src, radius, amount):
     """
     Blur filter using Bessel function
@@ -226,6 +240,7 @@ def bessel_blur(src, radius, amount):
     return src
 
 
+@jit(cache=True)
 def gaussian_blur(src, radius, amount):
     """
     Blur filter using the Gaussian function
@@ -240,8 +255,7 @@ def gaussian_blur(src, radius, amount):
     return src
 
 
-@timeit
-@numba.vectorize
+@jit(cache=True)
 def USM(src, radius, strength, amount, method="bessel"):
     """
     Unsharp mask using Bessel or Gaussian blur
@@ -254,6 +268,7 @@ def USM(src, radius, strength, amount, method="bessel"):
     return src
 
 
+@jit(cache=True)
 def overlay(upx, lpx):
     """
     Overlay blending mode between 2 layers : upx (top) and lpx (bottom)
@@ -263,6 +278,7 @@ def overlay(upx, lpx):
         (100 - 2 * (100 - upx) * (100 - lpx) / 100)
 
 
+@jit(cache=True)
 def blending(upx, lpx, type):
     """
     Expose the blending modes to Python code
