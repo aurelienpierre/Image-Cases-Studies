@@ -61,10 +61,10 @@ This takes in input an user-defined PSF guessed by trial and error but will refi
 (drawn in red here).
 ![alt text](img/richardson-lucy-deconvolution/blured-myope-v5.jpg)
 
-##### After (blind algorithm - 132 s - 100 iterations - Blind):
+##### After (blind algorithm - 106 s - 100 iterations - Blind):
 This takes no input and will build the SPF along from scratch. 
 A balance between the masked zone weight and the whole image weight in the computation can be adjusted.
-![alt text](img/richardson-lucy-deconvolution/blured-blind-v7.jpg)
+![alt text](img/richardson-lucy-deconvolution/blured-blind-v8.jpg)
 
 
 ## Installation
