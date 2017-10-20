@@ -1,5 +1,7 @@
- # Image Cases Studies
-Python prototypes of image processing methods
+# Image Cases Studies
+Python prototypes for image processing methods
+
+© 2017 - Aurélien Pierre, Polytechnique Montréal.
 
 ## Presentation
 
@@ -8,6 +10,15 @@ Python prototypes of image processing methods
 This collection of scripts is intended to prototype methods and functionalities that
 could be useful in [darktable](https://github.com/darktable-org/darktable) and
 show proofs of concept.
+
+### Intent
+
+While most studies in digital imagery and signal processing focus on making things possible,
+investigating options, analysing SNR and computing errors and convergence, they tend to produce unnatural results
+with artifacts, looking unpleasant to the eye. 
+
+This work tries to implement state-of-the-art algorithms into a realistic framework for photography and photographers, 
+realistic both in terms of computation time and of photographic results. 
 
 ### How it's made
 
@@ -25,18 +36,38 @@ For now, we have :
 * Filters :
     * Gaussian blur
     * Bessel blur (Kaiser denoising)
-    * bilateral filter
-    * unsharp mask
+    * Bilateral filter
+    * Unsharp mask
     * Richardson-Lucy blind and non-blind deconvolution with Total Variation regularization
+        * method TV-PAM : http://www.cvg.unibe.ch/dperrone/tvdb/index.html
+        * method TV-PD (work in progress) : http://www.cvg.unibe.ch/dperrone/logtv/index.html
+        * method TV-MM (work en progress) : ibid.
 * Windows/Kernels : (*for convolution and frequential analysis*)
     * Poisson/exponential
     * Kaiser-Bessel
     * Gauss
+    * Uniform
     
 A collection of test pictures is in `img` directory and the converted pictures
 are in `img` subfolders. The built-in functions are in the `lib.utils` module.
+
+### What may come one day
+
+    * Refocusing : 
+        * http://web.media.mit.edu/~bandy/refocus/PG07refocus.pdf
+        * http://manao.inria.fr/perso/~ihrke/Publications/wscg12.pdf
+        * https://users.soe.ucsc.edu/~milanfar/publications/journal/dbe_tip_final.pdf
+    * TV denoise : http://scikit-image.org/docs/dev/auto_examples/filters/plot_denoise.html
+    * Markov-chain Monte-Carlo denoise : http://www.sciencedirect.com/science/article/pii/S016516841100096X
+    * Lens PSF calibration : 
+        * http://www.cim.mcgill.ca/~langer/MY_PAPERS/MannanLanger-CRV16-DFDCalib.pdf
+        * http://people.csail.mit.edu/yichangshih/lensEnhancement/lensFittingEccv_camera_ready.pdf
+        * http://people.csail.mit.edu/sparis/publi/2011/iccp_blur/Kee_11_Optical_Blur.pdf
+        * http://wwwuser.gwdg.de/~uboehm/images/25.pdf
+        * http://www.cs.ubc.ca/labs/imager/tr/2013/SimpleLensImaging/SimpleLensImaging_Heide2013.pdf
     
 ### Current prototypes
+
 
 #### Richardson-Lucy deconvolution
 
