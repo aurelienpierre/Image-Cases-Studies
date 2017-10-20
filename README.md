@@ -66,6 +66,12 @@ This takes no input and will build the SPF along from scratch.
 A balance between the masked zone weight and the whole image weight in the computation can be adjusted.
 ![alt text](img/richardson-lucy-deconvolution/blured-blind-v8.jpg)
 
+##### After (blind algorithm - 2h 05 min - 6000 iterations - Blind):
+This extreme test case takes 3 different PSF sizes, optimize them separately in 3 layers
+and blend them with a weight proportional to their gradient norm L2. The algorithm
+is pushed to its limits to show the border effects and artifacts generated.
+![alt text](img/richardson-lucy-deconvolution/blured-extrapolated.jpg)
+
 
 ## Installation
 

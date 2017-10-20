@@ -142,8 +142,10 @@ def update_image(image, u, lambd, psf):
     """
 
     # Total Variation Regularization
-    gradu = convolve_image(u, psf, image) - lambd * divTV(u)
-    u = update_values(u, weight_update(5e-3, u, gradu), gradu)
+    gradUdata = convolve_image(u, psf, image)
+    gradu = gradUdata - lambd * divTV(u)[:gradUdata.shape[0], :gradUdata.shape[1]]
+    u = update_values(u[:gradUdata.shape[0], :gradUdata.shape[1]],
+                      weight_update(5e-3, u[:gradUdata.shape[0], :gradUdata.shape[1]], gradu), gradu)
 
     # Normalize for 8 bits RGB values
     u = np.clip(u, 0.0000001, 255)
@@ -156,6 +158,7 @@ def loop_update_image(image, u, lambd, psf, iterations):
     for i in range(iterations):
         print(" = Iteration :", i, " =")
         u = update_image(image, u, lambd, psf)
+        lambd = 0.99 * lambd
 
     return np.ascontiguousarray(u, np.float32)
 
@@ -241,6 +244,8 @@ def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: fl
                                            [(image[..., chan], u[..., chan], lambd, psf) for chan in range(C)])).astype(
                     np.float32)
 
+            lambd = 0.99 * lambd
+
             # Extract the portion of the source image and the deconvolved image under the mask
             if mask != None:
                 masked_u = pad_image(trim_mask(unpad_image(u, pad), mask), pad).astype(np.float32)
@@ -275,7 +280,7 @@ def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: fl
 def deblur_module(pic: np.ndarray, filename: str, blur_type: str, quality: int, artifacts_damping: float,
                   deblur_strength: float, blur_width: int = 3,
                   blur_strength: int = 1, refine: bool = False, mask: np.ndarray = None, backvsmask_ratio: float = 0,
-                  debug: bool = False):
+                  debug: bool = False, psf: np.ndarray = None):
     """This mimics a Darktable module inputs where the technical specs are hidden and translated into human-readable parameters.
 
     It's an interface between the regular user and the geeky actual deconvolution parameters
@@ -296,6 +301,7 @@ def deblur_module(pic: np.ndarray, filename: str, blur_type: str, quality: int, 
         runs faster, 1 runs much slower.
     :return:
     """
+    # ! TODO : refocus
 
     pic = np.ascontiguousarray(pic, np.float32)
 
@@ -464,6 +470,36 @@ def processing_MYOPE(pic):
     return pic.astype(np.uint8)
 
 
+def interpolated(pic, filename):
+    u_top, psf = deblur_module(pic, "blind-v6-top", "auto", 1000, 0.1, 0, mask=[150, 150 + 256, 600, 600 + 256],
+                               refine=True,
+                               backvsmask_ratio=0.1, blur_width=7, debug=True)
+
+    grad_top = divTV(u_top)
+    weight_top = 1 / weight_update(3, u_top, grad_top)
+
+    u_middle, psf = deblur_module(pic, "blind-v6-middle", "auto", 1000, 0.005, 0, mask=[150, 150 + 256, 600, 600 + 256],
+                                  refine=True,
+                                  backvsmask_ratio=0.1, debug=True, blur_width=9)
+
+    grad_middle = divTV(u_middle)
+    weight_middle = 1 / weight_update(3, u_middle, grad_middle)
+
+    u_bottom, psf = deblur_module(pic, "blind-v6-bottom", "auto", 1000, 0.005, 2, mask=[150, 150 + 256, 600, 600 + 256],
+                                  refine=True,
+                                  backvsmask_ratio=0.1, debug=True, blur_width=11)
+
+    grad_bottom = divTV(u_bottom)
+    weight_bottom = 1 / weight_update(3, u_bottom, grad_bottom)
+
+    u = (weight_top * u_top + weight_middle * u_middle + weight_bottom * u_bottom) / (
+    weight_top + weight_middle + weight_top)
+
+    u = np.clip(u, 0.00001, 255)
+
+    save(u, "interpolated")
+
+
 def save(pic, name, mask=False):
     with Image.fromarray(pic.astype(np.uint8)) as output:
         if mask:
@@ -495,13 +531,18 @@ if __name__ == '__main__':
             """
 
             # pic_fast = processing_FAST(pic)
+            #deblur_module(pic, "fast-v4", "kaiser", 0, 0.05, 50, blur_width=11, blur_strength=8)
 
             # pic_myope = processing_MYOPE(pic)
+            #deblur_module(pic, "myope-v4", "kaiser", 10, 0.05, 50, blur_width=11, blur_strength=8, mask=[150, 150 + 256, 600, 600 + 256], refine=True,)
 
             # pic_blind = processing_BLIND(pic)
+            deblur_module(pic, "blind-v6-middle", "auto", 40, 0.005, 10, mask=[150, 150 + 256, 600, 600 + 256],
+                          refine=True,
+                          backvsmask_ratio=0.2, debug=True, blur_width=9)
 
-            deblur_module(pic, "blind-v6", "auto", 40, 0.05, 20, mask=[150, 150 + 512, 600, 600 + 512], refine=True,
-                          backvsmask_ratio=0.2, blur_width=9, debug=True)
+            interpolated(pic, "interpolated")
+
 
     with Image.open(join(source_path, "DSC_1168_test.jpg")) as pic:
 
