@@ -5,199 +5,408 @@ Created on 30 avr. 2017
 
 This script shows an implementation of the Richardson-Lucy deconvolution.
 
-In theory, blurred and noisy pictures can be perfectly sharpened if we perfectly 
-know the [*Point spread function*](https://en.wikipedia.org/wiki/Point_spread_function) 
+In theory, blurred and noisy pictures can be perfectly sharpened if we perfectly
+know the [*Point spread function*](https://en.wikipedia.org/wiki/Point_spread_function)
 of their maker. In practice, we can only estimate it.
 One of the means to do so is the [Richardson-Lucy deconvolution](https://en.wikipedia.org/wiki/Richardson%E2%80%93Lucy_deconvolution).
 
-The Richardson-Lucy algorithm used here has a damping coefficient wich allows to remove from 
+The Richardson-Lucy algorithm used here has a damping coefficient wich allows to remove from
 the iterations the pixels which deviate to much (x times the standard deviation of the difference
-source image - deconvoluted image) from the original image. This pixels are considered 
+source image - deconvoluted image) from the original image. This pixels are considered
 noise and would be amplificated from iteration to iteration otherwise.
 '''
+
 import multiprocessing
-import os
+import warnings
 from os.path import join
 
 import numpy as np
-import scipy.signal
-from PIL import Image, ImageDraw
-from numba import float32, jit, int16
-from scipy import misc
+import scipy
+from PIL import Image
+from numba import float32, jit, int16, boolean, int8, prange
+from scipy import ndimage
+from scipy.signal import convolve
+from skimage.restoration import denoise_tv_chambolle
+
+try:
+    import pyfftw
+
+    pyfftw.interfaces.cache.enable()
+    scipy.fftpack = pyfftw.interfaces.scipy_fftpack
+
+except:
+    pass
+
+warnings.simplefilter("ignore", (DeprecationWarning, UserWarning))
 
 from lib import utils
 
-CPU = os.cpu_count()
-
-try:
-    from pyculib.fft import FFTPlan, fft_inplace, ifft_inplace
+CPU = 8
 
 
-    # @jit(cache=True)
-    def fftconvolve(im, psf, domain):
-        """"GPU FFT convolution via CUDA/OpenCL
+@jit(float32[:](float32[:], float32, float32), cache=True, nogil=True)
+def best_epsilon(image, lambd, p=0.5):
+    """
+    Find the minimum acceptable epsilon to avoid a degenerate constant solution
 
-        """
-        Nx1, Nx2 = im.shape
-        NKx1, NKx2, = psf.shape
-        dtype = np.complex64
-
-        # Define the best square fit
-        # square = np.maximum(Nx1, Nx2) + NKx1 -1
-        # im = np.pad(im, ((0, square - Nx1), (0, square - Nx2)), mode="constant", constant_values=0)
-        # psf = np.pad(psf, ((0, square - NKx1), (0, square - NKx2)), mode="constant", constant_values=0)
-
-        im = np.pad(im, ((0, NKx1 - 1), (0, NKx2 - 1)), mode="constant", constant_values=0)
-        psf = np.pad(psf, ((0, Nx1 - 1), (0, Nx2 - 1)), mode="constant", constant_values=0)
-        size = im.shape[0] * im.shape[1]
-
-        fft_inplace(im)
-        im = np.fft.fftshift(im)
-        fft_inplace(psf)
-        psf = np.fft.fftshift(psf)
-
-        result = ifft_inplace(np.fft.fftshift(im * psf)).real.astype(np.float32)
-
-        if domain == "same":
-            return result[np.floor(NKx1 / 2).astype(int):-np.floor(NKx1 / 2).astype(int) - 1,
-                   np.floor(NKx2 / 2).astype(int):-np.floor(NKx2 / 2).astype(int) - 1]
-        elif domain == "valid":
-            return result[NKx1 - 1:-NKx1 + 1, NKx2 - 1:-NKx2 + 1]
-        elif domain == "full":
-            return result
-        else:
-            raise ValueError
-
-except:
-    print("No Cuda support, fallback on CPU")
-    fftconvolve = scipy.signal.fftconvolve
+    Reference : http://www.cvg.unibe.ch/publications/perroneIJCV2015.pdf
+    :param image:
+    :param lambd:
+    :param p:
+    :return:
+    """
+    grad_image = np.gradient(image, edge_order=2)
+    norm_grad_image = np.sqrt(grad_image[0] ** 2 + grad_image[1] ** 2)
+    omega = 2 * lambd * np.amax(image - image.mean()) / (p * image.size)
+    epsilon = np.sqrt(norm_grad_image.mean() / (np.exp(omega) - 1))
+    return np.maximum(epsilon, 1e-31)
 
 
-@jit
-def find_nearest_power(x):
-    return 1 << (x - 1).bit_length()
-
-@jit(float32[:, :](float32[:, :]), cache=True)
-def divTV(image: np.ndarray) -> np.ndarray:
-    """Compute the second-order divergence of the pixel matrix, known as the Total Variation.
+@jit(float32[:](float32[:]), cache=True)
+def divTV(image):
+    """Compute the Total Variation norm
 
     :param ndarray image: Input array of pixels
     :return: div(Total Variation regularization term) as described in [3]
     :rtype: ndarray
 
-    References
-    ----------
+    """
+    grad = np.zeros_like(image)
+
+    # Forward differences
+    # fx = np.roll(image, 1, axis=1) - image
+    fx = np.pad(image, ((0, 0), (1, 0)), mode="edge")[:, 1:] - image
+    # fy = np.roll(image, 1, axis=0) - image
+    fy = np.pad(image, ((1, 0), (0, 0)), mode="edge")[1:, :] - image
+    grad += (fx + fy) / np.maximum(1e-3, np.sqrt(fx ** 2 + fy ** 2))
+
+    # Backward x and crossed y differences
+    # fx = image - np.roll(image, -1, axis=1)
+    fx = np.pad(image, ((0, 0), (0, 1)), mode="edge")[:, :-1] - image
+    # fy = np.roll(image, (-1, 1), axis=(0, 1)) - np.roll(image, -1, axis=0)
+    fy = np.pad(image, ((0, 1), (1, 0)), mode="edge")[:-1, 1:] - np.pad(image, ((1, 0), (0, 0)), mode="edge")[1:, :]
+    grad -= fx / np.maximum(1e-3, np.sqrt(fx ** 2 + fy ** 2))
+
+    # Backward y and crossed x differences
+    # fy = image - np.roll(image, -1, axis=0)
+    fy = np.pad(image, ((0, 1), (0, 0)), mode="edge")[:-1, :] - image
+    # fx = np.roll(image, (1, -1), axis=(0, 1)) - np.roll(image, -1, axis=1)
+    fx = np.pad(image, ((1, 0), (0, 1)), mode="edge")[1:, :-1] - np.pad(image, ((0, 0), (0, 1)), mode="edge")[:, 1:]
+    grad -= fy / np.maximum(1e-3, np.sqrt(fy ** 2 + fx ** 2))
+
+    return grad.astype(np.float32)
+
+
+@jit(float32[:](float32[:], float32, float32, float32, float32), cache=True, nogil=True)
+def center_diff(u, dx, dy, epsilon, p):
+    # Centered local difference
+    ux = np.roll(u, (dx, 0), axis=(1, 0)) - np.roll(u, (0, 0), axis=(1, 0))
+    uy = np.roll(u, (0, dy)) - np.roll(u, (0, 0))
+    TV = (np.abs(ux) ** p + np.abs(uy) ** p + epsilon) ** (1 / p)
+    du = - ux - uy
+
+    return TV, du
+
+
+@jit(float32[:](float32[:], float32, float32, float32, float32), cache=True, nogil=True)
+def x_diff(u, dx, dy, epsilon, p):
+    # x-shifted local difference
+    ux = np.roll(u, (0, 0), axis=(1, 0)) - np.roll(u, (-dx, 0), axis=(1, 0))
+    uy = np.roll(u, (-dx, dy), axis=(1, 0)) - np.roll(u, (-dx, 0), axis=(1, 0))
+    TV = (np.abs(ux) ** p + np.abs(uy) ** p + epsilon) ** (1 / p)
+    du = ux
+
+    return TV, du
+
+
+@jit(float32[:](float32[:], float32, float32, float32, float32), cache=True, nogil=True)
+def y_diff(u, dx, dy, epsilon, p):
+    # y shifted local difference
+    ux = np.roll(u, (dx, -dy), axis=(1, 0)) - np.roll(u, (0, -dy), axis=(1, 0))
+    uy = np.roll(u, (0, 0), axis=(1, 0)) - np.roll(u, (0, -dy), axis=(1, 0))
+    TV = (np.abs(ux) ** p + np.abs(uy) ** p + epsilon) ** (1 / p)
+    du = uy
+
+    return TV, du
+
+
+@jit(float32[:](float32[:], float32[:], float32, float32, float32), cache=True, nogil=True)
+def gradTVEM(u, ut, epsilon=1e-3, tau=1e-1, p=0.5):
+    """Compute the Total Variation norm of the Minimization-Maximization problem
+
+    :param ndarray image: Input array of pixels
+    :return: div(Total Variation regularization term) as described in [3]
+    :rtype: ndarray
+
+    We use general P-norm instead : https://www.elen.ucl.ac.be/Proceedings/esann/esannpdf/es2014-153.pdf
+
+    0.5-norm shows better representation of discontinuities : https://link.springer.com/chapter/10.1007/978-3-319-14612-6_10
 
     """
-    grad = np.array(np.gradient(image, edge_order=2))
-    grad = np.sqrt(grad[0] ** 2 + grad[1] ** 2)
-    grad = grad / np.amax(grad)
-    return np.ascontiguousarray(grad, np.float32)
 
+    # Displacement vectors of the shifted differences
+    deltas = np.array([[1, 1],
+                       [-1, 1],
+                       [1, -1],
+                       [-1, -1]])
 
-@jit(cache=True)
+    # 2-axis shifts
+    u_copy = np.zeros_like(u)
+    shifts = np.array([u_copy,  # Centered
+                       u_copy,  # x shifted
+                       u_copy  # y shifted
+                       ])
+
+    # Methods for local differences calculation
+    diffs = [center_diff, x_diff, y_diff]
+
+    # Initialization of the outputs
+    du = np.array([shifts, shifts, shifts, shifts])
+    TV = du.copy()
+    TVt = du.copy()
+
+    dx = 0
+    dy = 0
+
+    for i in prange(4):
+        # for each displacement vector
+        dx = deltas[i, 0]
+        dy = deltas[i, 1]
+
+        for step in prange(3):
+            # for each axial shift
+            TV[i, step], du[i, step] = diffs[step](u, dy, dy, epsilon, p)
+            TVt[i, step], void = diffs[step](ut, dx, dy, epsilon, p)
+
+    grad = np.sum(du / TV / (tau + TVt), axis=(0, 1))  # This is the vectorized equivalent to :
+
+    """
+    grad = np.zeros_like(u)
+    for channel in prange(3):
+        for delta in range(4):
+            for direction in range(3):
+                grad +=  du[delta, direction] / \ 
+                                         TV[delta, direction] /\
+                                                          (TVt[delta, direction] + tau)
+    """
+
+    return grad / 4
+
 def pad_image(image: np.ndarray, pad: tuple, mode="edge"):
+    """
+    Pad an 3D image with a free-boundary condition to avoid ringing along the borders after the FFT
+
+    :param image:
+    :param pad:
+    :param mode:
+    :return:
+    """
     R = np.pad(image[..., 0], pad, mode=mode)
     G = np.pad(image[..., 1], pad, mode=mode)
     B = np.pad(image[..., 2], pad, mode=mode)
     u = np.dstack((R, G, B))
-    return np.ascontiguousarray(u, np.ndarray)
+    return np.ascontiguousarray(u, np.float32)
 
 
-@jit(cache=True)
 def unpad_image(image: np.ndarray, pad: tuple):
     return np.ascontiguousarray(image[pad[0]:-pad[0], pad[1]:-pad[1], ...], np.ndarray)
 
-@jit(float32[:, :](float32[:, :], float32[:, :]), cache=True)
-def trim_mask(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
-    """Trim lines and columns out of the mask
 
-    :param image: masked image with non-zeros values inside the mask and 0 outside
-    :return:
+@jit(cache=True)
+def build_pyramid(psf_size: int, lambd: float, method) -> list:
     """
+    To speed-up the deconvolution, the PSF is estimated successively on smaller images of increasing sizes. This function
+    computes the intermediates sizes and regularization factors
 
-    image = image[mask[0]:mask[1], mask[2]:mask[3]]
-    return image
-
-
-@jit(float32[:, :](float32[:, :], float32[:, :], float32[:, :]), cache=True)
-def convolve_kernel(u, psf, image):
-    return fftconvolve(np.rot90(u, 2), fftconvolve(u, psf, "valid") - image, "valid").astype(np.float32)
-
-
-@jit(float32[:, :](float32[:, :], float32[:, :], float32[:, :]), cache=True)
-def convolve_image(u, psf, image):
-    return fftconvolve(fftconvolve(u, psf, "valid") - image, np.rot90(psf), "full").astype(np.float32)
-
-
-@jit(float32[:, :](float32[:, :], float32[:, :], float32, float32[:, :]), cache=True)
-def update_image(image, u, lambd, psf):
-    """Update one channel only (R, G or B)
-
-    :param image:
-    :param u:
+    :param image_size:
+    :param psf_size:
     :param lambd:
-    :param psf:
+    :param method:
     :return:
     """
-
-    # Total Variation Regularization
-    gradUdata = convolve_image(u, psf, image)
-    gradu = gradUdata - lambd * divTV(u)[:gradUdata.shape[0], :gradUdata.shape[1]]
-    u = update_values(u[:gradUdata.shape[0], :gradUdata.shape[1]],
-                      weight_update(5e-3, u[:gradUdata.shape[0], :gradUdata.shape[1]], gradu), gradu)
-
-    # Normalize for 8 bits RGB values
-    u = np.clip(u, 0.0000001, 255)
-
-    return np.ascontiguousarray(u, np.float32)
-
-
-@jit(float32[:, :](float32[:, :], float32[:, :], int16, float32[:, :], int16), cache=True)
-def loop_update_image(image, u, lambd, psf, iterations):
-    for i in range(iterations):
-        print(" = Iteration :", i, " =")
-        u = update_image(image, u, lambd, psf)
-        lambd = 0.99 * lambd
-
-    return np.ascontiguousarray(u, np.float32)
-
-
-@jit(float32[:, :](int16, float32, float32, float32), cache=True)
-def build_pyramid(psf_size: int, lambd: float, scaling: float = 1.9, max_lambd: float = 1) -> list:
-    # Initialize the pyramid of variables
     lambdas = [lambd]
     images = [1]
     kernels = [psf_size]
 
-    while (lambdas[-1] * scaling < max_lambd and kernels[-1] > 3):
-        lambdas.append(lambdas[-1] * scaling)
-        kernels.append(kernels[-1] - 2)
-        images.append(images[-1] / scaling)
+    if method == richardson_lucy_PAM:
+        image_multiplier = 1.1
+        lambda_multiplier = 1.9
+        lambda_max = 0.5
+
+    elif method == richardson_lucy_MM:
+        image_multiplier = np.sqrt(2)
+        lambda_multiplier = 1 / 2.1
+        lambda_max = 999999
+
+    while kernels[-1] > 3:
+        lambdas.append(min([lambdas[-1] * lambda_multiplier, lambda_max]))
+        kernels.append(int(np.floor(kernels[-1] / image_multiplier)))
+        images.append(images[-1] / image_multiplier)
+
+        if kernels[-1] % 2 == 0:
+            kernels[-1] -= 1
+
+        if kernels[-1] < 3:
+            kernels[-1] = 3
+
+    print(kernels)
 
     return images, kernels, lambdas
 
 
-@jit(float32[:, :](float32[:, :]), cache=True)
-def normalize_kernel(kern: np.ndarray) -> np.ndarray:
+def process_pyramid(pic, u, psf, lambd, method, epsilon=1e-3, quality=1):
+    """
+    To speed-up the deconvolution, the PSF is estimated successively on smaller images of increasing sizes. This function
+    computes the intermediates deblured pictures and PSF.
+
+    :param pic:
+    :param u:
+    :param psf:
+    :param lambd:
+    :param method:
+    :param epsilon:
+    :param quality: the number of iterations performed at each pyramid step will be adjusted by this factor.
+    :return:
+    """
+    Mk, Nk, C = psf.shape
+    images, kernels, lambdas = build_pyramid(Mk, lambd, method)
+    u = ndimage.zoom(u, (images[-1], images[-1], 1))
+    k_prec = Mk
+
+    for i, k, l in zip(reversed(images), reversed(kernels), reversed(lambdas)):
+        print("== Pyramid step", i, "==")
+
+        # Resize blured, deblured images and PSF from previous step
+        if i != 1:
+            im = ndimage.zoom(pic, (i, i, 1))
+        else:
+            im = pic.copy()
+
+        psf = ndimage.zoom(psf, (k / k_prec, k / k_prec, 1))
+        psf = _normalize_kernel(psf)
+        u = ndimage.zoom(u, (im.shape[0] / u.shape[0], im.shape[1] / u.shape[1], 1))
+
+        # Make a blind Richardson-Lucy deconvolution on the RGB signal
+        iterations = int(k ** 2 * quality)
+        u, psf = method(im, u, psf, l, iterations, epsilon=epsilon)
+
+        k_prec = k
+
+    return u, psf
+
+
+def make_preview(image, psf, ratio, mask=None):
+    """
+    Resize the image, the PSF and the mask to preview the settings on a smaller picture to speed-up the tweaking
+
+    :param image:
+    :param psf:
+    :param ratio:
+    :param mask:
+    :return:
+    """
+    image = ndimage.zoom(image, (ratio, ratio, 1))
+
+    MK_source = psf.shape[0]
+    MK = int(MK_source * ratio)
+
+    if MK % 2 == 0:
+        MK += 1
+
+    if MK < 3:
+        MK = 3
+
+    psf = _normalize_kernel(ndimage.zoom(psf, (MK / MK_source, MK / MK_source, 1)))
+
+    if mask:
+        mask = [int(x * ratio) for x in mask]
+
+    return image, psf, mask
+
+
+@jit(float32[:](float32[:]), cache=True, nogil=True)
+def _normalize_kernel(kern):
     kern[kern < 0] = 0
-    return (kern / np.sum(kern)).astype(np.float32)
+    kern /= np.sum(kern, axis=(0, 1))
+    return kern
 
 
-@jit(float32[:, :](float32, float32[:, :], float32[:, :]), cache=True)
-def weight_update(factor: float, array: np.ndarray, grad_array: np.ndarray) -> np.ndarray:
-    return (factor * np.amax(array) / np.maximum(1e-31, np.amax(np.abs(grad_array)))).astype(np.float32)
+@jit(float32[:](float32[:], float32[:], float32[:]), cache=True, nogil=True)
+def _convolve_image(u, image, psf):
+    error = np.ascontiguousarray(convolve(u, psf, "valid"), np.float32)
+    error -= image
+    return convolve(error, np.rot90(psf, 2), "full")
 
 
-@jit(float32[:, :](float32[:, :], float32, float32[:, :]), cache=True)
-def update_values(target: np.ndarray, factor: float, source: np.ndarray) -> np.ndarray:
-    return (target - factor * source).astype(np.float32)
+@jit(float32[:](float32[:], float32[:], float32[:]), cache=True, nogil=True)
+def _convolve_kernel(u, image, psf):
+    error = np.ascontiguousarray(convolve(u, psf, "valid"), np.float32)
+    error -= image
+    return convolve(np.rot90(u, 2), error, "valid")
+
+
+@jit(float32[:](float32[:], float32[:], float32[:], float32, float32), cache=True, nogil=True)
+def _update_image_PAM(u, image, psf, lambd, epsilon=5e-3):
+    gradu, TV = divTV(u)
+    gradu /= TV
+    gradu *= lambd
+    gradu += _convolve_image(u, image, psf)
+    weight = epsilon * np.amax(u) / np.amax(np.abs(gradu))
+    u -= weight * gradu
+    return u
+
+
+@jit(float32[:](float32[:], float32[:], float32[:], float32, int16, float32), cache=True, nogil=True)
+def _loop_update_image_PAM(u, image, psf, lambd, iterations, epsilon):
+    for itt in range(iterations):
+        u = _update_image_PAM(u, image, psf, lambd, epsilon)
+        lambd *= 0.99
+    return u, psf
+
+
+@jit(float32[:](float32[:], float32[:], float32[:], float32), cache=True, nogil=True)
+def _update_kernel_PAM(u, image, psf, epsilon):
+    grad_psf = _convolve_kernel(u, image, psf)
+    weight = epsilon * np.amax(psf) / np.maximum(1e-31, np.amax(np.abs(grad_psf)))
+    psf -= weight * grad_psf
+    psf = _normalize_kernel(psf)
+    return psf
+
+
+@jit(float32[:](float32[:], float32[:], float32[:], float32, int16, float32[:], float32[:], float32), cache=True,
+     nogil=True)
+def _loop_update_both_PAM(u, image, psf, lambd, iterations, mask_u, mask_i, epsilon):
+    """
+    Utility function to launch the actual deconvolution in parallel
+    :param u:
+    :param image:
+    :param psf:
+    :param lambd:
+    :param iterations:
+    :param mask_u:
+    :param mask_i:
+    :param epsilon:
+    :return:
+    """
+    for itt in range(iterations):
+        u = _update_image_PAM(u, image, psf, lambd, epsilon)
+        psf = _update_kernel_PAM(u[mask_u[0]:mask_u[1], mask_u[2]:mask_u[3]],
+                                 image[mask_i[0]:mask_i[1], mask_i[2]:mask_i[3]], psf, epsilon)
+        lambd *= 0.99
+    return u, psf
 
 
 @utils.timeit
-def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: float, iterations: int,
-                    blind: bool = False, mask: np.ndarray = None) -> np.ndarray:
-    """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization.
+def richardson_lucy_PAM(image: np.ndarray,
+                        u: np.ndarray,
+                        psf: np.ndarray,
+                        lambd: float,
+                        iterations: int,
+                        epsilon=1e-3,
+                        mask=None,
+                        blind=True) -> np.ndarray:
+    """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization by Projected Alternating Minimization.
+    This is known to give a close-enough sharp image but never give an accurate sharp image.
 
     Based on Matlab sourcecode of D. Perrone and P. Favaro: "Total Variation Blind Deconvolution:
     The Devil is in the Details", IEEE Conference on Computer Vision
@@ -221,330 +430,412 @@ def richardson_lucy(image: np.ndarray, u: np.ndarray, psf: np.ndarray, lambd: fl
     """
 
     # image dimensions
-    MK, NK = psf.shape
+    MK, NK, CK = psf.shape
     M, N, C = image.shape
-    pad = np.floor(MK / 2).astype(int)
-    pad = (pad, pad)
 
-    u = pad_image(u, pad).astype(np.float32)
+    # Verify the input and scream like a virgin
+    assert (CK == C), "Dimensions of the PSF and of the image don't match !"
+    assert (MK == NK), "The PSF must be square"
+    assert (MK >= 3), "The dimensions of the PSF are too small !"
+    assert (M > MK and N > NK), "The size of the picture is smaller than the PSF !"
+    assert (MK % 2 != 0), "The dimensions of the PSF must be odd !"
+
+    # Prepare the picture for FFT convolution by padding it with pixels that will be removed
+    pad = np.floor(MK / 2).astype(int)
+    u = pad_image(u, (pad, pad))
 
     print("working on image :", u.shape)
 
+    # Adjust the coordinates of the masks with the padding dimensions
+    if mask == None:
+        mask_i = [0, M + 2 * pad, 0, N + 2 * pad]
+        mask_u = [0, M + 2 * pad, 0, N + 2 * pad]
+    else:
+        mask_u = [mask[0] - pad, mask[1] + pad, mask[2] - pad, mask[3] + pad]
+        mask_i = mask
+
+    # Start 3 parallel processes
+    pool = multiprocessing.Pool(processes=CPU)
+
     if blind:
-        # Blind or myopic deconvolution
+        # Blind deconvolution with PSF refinement
+        output = pool.starmap(_loop_update_both_PAM,
+                              [(u[..., 0], image[..., 0], psf[..., 0], lambd, iterations, mask_u, mask_i, epsilon),
+                               (u[..., 1], image[..., 1], psf[..., 1], lambd, iterations, mask_u, mask_i, epsilon),
+                               (u[..., 2], image[..., 2], psf[..., 2], lambd, iterations, mask_u, mask_i, epsilon),
+                               ]
+                              )
 
-        if mask != None:
-            masked_image = trim_mask(image, mask)
-
-        for i in range(iterations):
-            print(" = Iteration :", i, " =")
-
-            with multiprocessing.Pool(processes=CPU) as pool:
-                u = np.dstack(pool.starmap(update_image,
-                                           [(image[..., chan], u[..., chan], lambd, psf) for chan in range(C)])).astype(
-                    np.float32)
-
-            lambd = 0.99 * lambd
-
-            # Extract the portion of the source image and the deconvolved image under the mask
-            if mask != None:
-                masked_u = pad_image(trim_mask(unpad_image(u, pad), mask), pad).astype(np.float32)
-
-            # Update the blur kernel
-            grad_psf = np.zeros_like(psf).astype(np.float32)
-
-            with multiprocessing.Pool(processes=CPU) as pool:
-                if mask != None:
-                    grad_psf = grad_psf + pool.starmap(convolve_kernel,
-                                                       [(masked_u[..., chan], psf, masked_image[..., chan]) for chan in
-                                                        range(C)])[0]
-                else:
-                    grad_psf = grad_psf + pool.starmap(convolve_kernel,
-                                                       [(u[..., chan], psf, image[..., chan]) for chan in range(C)])[0]
-
-            psf = normalize_kernel(update_values(psf, weight_update(1e-3, psf, grad_psf), grad_psf))
+        u = np.dstack((output[0][0], output[1][0], output[2][0]))
+        psf = np.dstack((output[0][1], output[1][1], output[2][1]))
 
     else:
-        # Regular non-blind RL deconvolution
+        # Regular deconvolution without PSF refinement
+        output = pool.starmap(_loop_update_image_PAM,
+                              [(u[..., 0], image[..., 0], psf[..., 0], lambd, iterations, epsilon),
+                               (u[..., 1], image[..., 1], psf[..., 1], lambd, iterations, epsilon),
+                               (u[..., 2], image[..., 2], psf[..., 2], lambd, iterations, epsilon),
+                               ]
+                              )
 
-        # Update sharp image
-        with multiprocessing.Pool(processes=CPU) as pool:
-            u = np.dstack(pool.starmap(loop_update_image,
-                                       [(image[..., chan], u[..., chan], lambd, psf, iterations) for chan in range(C)]))
+        u = np.dstack((output[0][0], output[1][0], output[2][0]))
+        psf = np.dstack((output[0][1], output[1][1], output[2][1]))
 
-    u = unpad_image(u, pad)
+    print(iterations, "iterations")
+    u = unpad_image(u, (pad, pad))
+    pool.close()
+
     return u.astype(np.float32), psf
 
+
+@jit(float32[:](float32[:], float32[:], float32[:], float32, int16, float32[:], float32[:], float32), cache=True,
+     nogil=True)
+def _update_both_MM(u, image, psf, lambd, iterations, mask_u, mask_i, epsilon):
+    """
+    Utility function to launch the actual deconvolution in parallel
+    :param u:
+    :param image:
+    :param psf:
+    :param lambd:
+    :param iterations:
+    :param mask_u:
+    :param mask_i:
+    :param epsilon:
+    :return:
+    """
+    tau = 1e-3
+    lambd = 1 / lambd
+
+    k_step = 1e-3
+    u_step = 1e-3
+
+    for it in range(iterations):
+        ut = u
+        for itt in range(5):
+            # Image update
+            epsilon = best_epsilon(u, lambd) * 1.001
+            gradu = lambd * _convolve_image(u, image, psf) + gradTVEM(u, ut, epsilon, tau)
+            dt = u_step * (np.amax(u) + 1 / u.size) / np.amax(np.abs(gradu) + 1e-31)
+            u -= dt * gradu
+
+            # PSF update
+            gradk = _convolve_kernel(u[mask_u[0]:mask_u[1], mask_u[2]:mask_u[3]],
+                                     image[mask_i[0]:mask_i[1], mask_i[2]:mask_i[3]], psf)
+            alpha = k_step * (np.amax(psf) + 1 / psf.size) / np.amax(np.abs(gradk) + 1e-31)
+            psf -= alpha * gradk
+            psf = _normalize_kernel(psf)
+
+        lambd *= 1.001
+
+    return u.astype(np.float32), psf
+
+
 @utils.timeit
-@jit(cache=True)
-def deblur_module(pic: np.ndarray, filename: str, blur_type: str, quality: int, artifacts_damping: float,
-                  deblur_strength: float, blur_width: int = 3,
-                  blur_strength: int = 1, refine: bool = False, mask: np.ndarray = None, backvsmask_ratio: float = 0,
-                  debug: bool = False, psf: np.ndarray = None):
-    """This mimics a Darktable module inputs where the technical specs are hidden and translated into human-readable parameters.
+def richardson_lucy_MM(image: np.ndarray,
+                       u: np.ndarray,
+                       psf: np.ndarray,
+                       lambd: float,
+                       iterations: int,
+                       epsilon=5e-3,
+                       mask=None,
+                       blind=True) -> np.ndarray:
+    """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization by the Minimization-Maximization
+    algorithm. This is known to give the sharp image in more than 50 % of the cases.
+
+    Based on Matlab sourcecode of :
+
+    Copyright (C) Daniele Perrone, perrone@iam.unibe.ch
+	      Remo Diethelm, remo.diethelm@outlook.com
+	      Paolo Favaro, paolo.favaro@iam.unibe.ch
+	      2014, All rights reserved.
+
+    :param ndarray image : Input 3 channels image.
+    :param ndarray psf : The point spread function.
+    :param int iterations : Number of iterations.
+    :param float lambd : Lambda parameter of the total Variation regularization
+    :param bool blind : Determine if it is a blind deconvolution is launched, thus if the PSF is updated
+        between two iterations
+    :returns ndarray: deconvoluted image
+
+    References
+    ----------
+    .. [1] http://en.wikipedia.org/wiki/Richardson%E2%80%93Lucy_deconvolution
+    .. [2] http://www.cvg.unibe.ch/dperrone/tvdb/perrone2014tv.pdf
+    .. [3] http://hal.archives-ouvertes.fr/docs/00/43/75/81/PDF/preprint.pdf
+    .. [4] http://znah.net/rof-and-tv-l1-denoising-with-primal-dual-algorithm.html
+    .. [5] http://www.cs.sfu.ca/~pingtan/Papers/pami10_deblur.pdf
+    """
+
+    # image dimensions
+    MK, NK, C = psf.shape
+    M, N, C = image.shape
+    pad = np.floor(MK / 2).astype(int)
+
+    print("working on image :", u.shape)
+
+    u = pad_image(u, (pad, pad))
+
+    if mask == None:
+        mask_i = [0, M + 2 * pad, 0, N + 2 * pad]
+        mask_u = [0, M + 2 * pad, 0, N + 2 * pad]
+    else:
+        mask_u = [mask[0] - pad, mask[1] + pad, mask[2] - pad, mask[3] + pad]
+        mask_i = mask
+
+    iterations = int(np.maximum(iterations / 5, 2))
+
+    try:
+        pool = multiprocessing.Pool(processes=CPU)
+        output = pool.starmap(_update_both_MM,
+                              [(u[..., 0], image[..., 0], psf[..., 0], lambd, iterations, mask_u, mask_i, epsilon),
+                               (u[..., 1], image[..., 1], psf[..., 1], lambd, iterations, mask_u, mask_i, epsilon),
+                               (u[..., 2], image[..., 2], psf[..., 2], lambd, iterations, mask_u, mask_i, epsilon),
+                               ]
+                              )
+
+        u = np.dstack((output[0][0], output[1][0], output[2][0]))
+        psf = np.dstack((output[0][1], output[1][1], output[2][1]))
+        pool.close()
+
+    except MemoryError:
+        pool = multiprocessing.Pool(processes=1)
+
+        output = pool.starmap(_update_both_MM,
+                              [(u[..., 0], image[..., 0], psf[..., 0], lambd, iterations, mask_u, mask_i, epsilon),
+                               (u[..., 1], image[..., 1], psf[..., 1], lambd, iterations, mask_u, mask_i, epsilon),
+                               (u[..., 2], image[..., 2], psf[..., 2], lambd, iterations, mask_u, mask_i, epsilon),
+                               ]
+                              )
+
+        u = np.dstack((output[0][0], output[1][0], output[2][0]))
+        psf = np.dstack((output[0][1], output[1][1], output[2][1]))
+        pool.close()
+
+    u = unpad_image(u, (pad, pad))
+    print(iterations * 5, "iterations")
+    return u.astype(np.float32), psf
+
+
+@utils.timeit
+@jit(float32[:](float32[:],
+                int8,
+                int8,
+                int8,
+                int16,
+                float32,
+                float32,
+                int16,
+                float32,
+                float32,
+                boolean,
+                int16,
+                int16[:],
+                float32,
+                boolean,
+                float32,
+                float32,
+                float32[:],
+                boolean,
+                int8),
+     parallel=True)
+def deblur_module(pic: np.ndarray,
+                  filename: str,
+                  dest_path: str,
+                  blur_type: str,
+                  blur_width: int,
+                  noise_damping: float,
+                  deblur_strength: int,
+                  blur_strength: int = 1,
+                  auto_quality=1,
+                  epsilon=1e-3,
+                  refine: bool = False,
+                  refine_quality=0,
+                  mask: np.ndarray = None,
+                  backvsmask_ratio: float = 0,
+                  debug: bool = False,
+                  effect_strength=1,
+                  preview=1,
+                  psf: np.ndarray = None,
+                  denoise: bool = False,
+                  method="fast"):
+    """
+    This mimics a Darktable module inputs where the technical specs are hidden and translated into human-readable parameters.
 
     It's an interface between the regular user and the geeky actual deconvolution parameters
 
-    :param pic: Blured image in RGB 8 bits
-    :param filename: File name to save the sharp picture
-    :param blur_type: kind of blur or "auto" to perform a blind deconvolution. Use "auto" for motion blur or composite blur
-    :param blur_width: the width of the blur in px
+    :param pic: Blured image in RGB 8 bits as a 3D array where the last dimension is the RGB channel
+    :param filename: File name to use to save the deblured picture
+    :param destpath: The destination path to save the picture
+    :param blur_type: kind of blur or "auto" to perform a blind deconvolution. Use "auto" for motion blur or composite blur.
+    Other parameters : `poisson`, `gaussian`, `kaiser`
+    :param blur_width: the width of the blur in px - must be an odd integer
     :param blur_strength: the strength of the blur, thus the standard deviation of the blur kernel
-    :param quality: the quality of the refining (ie the total number of iterations to compute). (10 to 100)
-    :param artifacts_damping: the noise and artifacts reduction factor lambda. Typically between 0.00003 and 1. Increase it if smudges, noise, or ringing appear
-    :param deblur_strength: the number of debluring iterations to perform,
+    :param auto_quality: when the `blur_type` is `auto`, the number of iterations of the initial blur estimation is half the
+    square of the PSF size. The `auto_quality` parameter is a factor that allows you to reduce the number of iteration to speed up the process.
+    Default : 1. Recommended values : between 0.25 and 2.
+    :param noise_damping: the noise  reduction factor lambda. Typically between 0.00003 and 0.5. Increase it if smudges or noise appear
     :param refine: True or False, decide if the blur kernel should be refined through myopic deconvolution
+    :param refine_quality: the number of iterations to perform during the refinement step
     :param mask: the coordinates of the rectangular mask to apply on the image to refine the blur kernel from the top-left corner of the image
         in list [y_top, y_bottom, x_left, x_right]
     :param backvsmask_ratio: when a mask is used, the ratio  of weights of the whole image / the masked zone.
         0 means only the masked zone is used, 1 means the masked zone is ignored and only the whole image is taken. 0 is
         runs faster, 1 runs much slower.
+    :param preview: If you want to fast preview your setting on a smaller picture size, set the downsampling ratio in `previem`. Default : 1
+    :param psf: if you already know the PSF kernel, enter it here as an 3D array where the last dimension is the RGB component
+    :param denoise: True or False. Perform an initial denoising by Total Variation - Chambolle algorithm before deconvoluting
+    :param method: `fast` or `best`. Set the method to deconvolute.
     :return:
     """
-    # ! TODO : refocus
+    # TODO : refocus http://web.media.mit.edu/~bandy/refocus/PG07refocus.pdf
+    # TODO : extract foreground only https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_grabcut/py_grabcut.html#grabcut
 
+
+    # Verify the input and scream like a virgin
+    assert (blur_width >= 3), "The PSF kernel is too small !"
+    assert (blur_width % 2 != 0), "The dimensions of the PSF must be odd !"
+    assert (backvsmask_ratio <= 1), "The background/mask ratio must be between 0 and 1"
+
+    # Backup ICC color profile
+    icc_profile = pic.info.get("icc_profile")
     pic = np.ascontiguousarray(pic, np.float32)
 
-    if blur_type == "auto":
-        print("\n===== KERNEL INIT =====")
+    methods_collection = {
+        "fast": richardson_lucy_PAM,
+        "best": richardson_lucy_MM
+    }
 
-        images, kernels, lambdas = build_pyramid(blur_width, artifacts_damping)
+    richardson_lucy = methods_collection[method]
 
-        u = pic.copy(order="C")
-        psf = utils.uniform_kernel(kernels[-1]).astype(np.float32)
-        runs = 1
-        iterations = np.maximum(np.ceil(quality / len(kernels)), kernels[-1]).astype(int)
+    if psf == None:
+        blur_collection = {
+            "gaussian": utils.gaussian_kernel(blur_width, blur_strength),
+            "kaiser": utils.kaiser_kernel(blur_width, blur_strength),
+            "auto": utils.uniform_kernel(blur_width),
+            "poisson": utils.poisson_kernel(blur_width, blur_strength),
+        }
 
-        for i, k, l in zip(reversed(images), reversed(kernels), reversed(lambdas)):
+        # TODO http://yehar.com/blog/?p=1495
 
-            print("==== Pyramid level", runs, " ====")
+        psf = blur_collection[blur_type]
 
-            # Scale the previous deblured image to the dimensions of i
-            new_size = (round(i * pic.shape[0]) + k - 1, round(i * pic.shape[1]) + k - 1)
-            if i != 1:
-                # For some reasons, rescaling by 1 gives weird sizes
-                im = np.ascontiguousarray(misc.imresize(pic, new_size, interp="lanczos", mode="RGB"), np.float32)
-            else:
-                im = pic.copy(order="C")
+    psf = np.dstack((psf, psf, psf))
 
-            u = np.ascontiguousarray(misc.imresize(u, im.shape, interp="lanczos"), np.float32)
+    if preview != 1:
+        print("\nWorking on a scaled picture")
+        pic, psf, mask = make_preview(pic, psf, preview, mask)
 
-            # Scale the PSF
-            if k != kernels[-1]:
-                psf = normalize_kernel(misc.imresize(psf, (k, k), interp="lanczos"))
-
-            # Make a blind Richardson- Lucy deconvolution on the RGB signal
-            u, psf = richardson_lucy(im, u, psf, l, iterations, blind=True)
-
-            runs = runs + 1
-
-        print("-> Kernel init done")
+    if denoise:
+        # TODO : http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6572468
+        u = denoise_tv_chambolle(pic, weight=noise_damping, multichannel=True)
     else:
         u = pic.copy()
 
-    if blur_type == "gaussian":
-        psf = utils.gaussian_kernel(blur_strength, blur_width)
+    iter_background = 0
+    iter_mask = 0
 
-    if blur_type == "kaiser":
-        psf = utils.kaiser_kernel(blur_strength, blur_width)
+    if blur_type == "auto":
+        print("\n===== BLIND ESTIMATION OF BLUR =====")
+        u, psf = process_pyramid(pic, u, psf, noise_damping, richardson_lucy, epsilon=epsilon, quality=auto_quality)
 
     if refine:
         if mask:
-            # Masked blind or myopic deconvolution
             print("\n===== BLIND MASKED REFINEMENT =====")
-            iter_background = np.round(quality * backvsmask_ratio).astype(int)
-            iter_mask = np.round(quality - iter_background).astype(int)
+            iter_background = int(round(refine_quality * backvsmask_ratio))
+            iter_mask = int(round(refine_quality - iter_background))
 
-            u, psf = richardson_lucy(pic, u, psf, artifacts_damping, iter_mask, blind=True, mask=mask)
-            print("-> Masked blind deconv done")
+            u, psf = richardson_lucy(pic, u, psf, noise_damping, iter_mask, mask=mask, epsilon=epsilon)
 
-            if iter_background != 0:
+            if backvsmask_ratio != 0:
                 print("\n===== BLIND UNMASKED REFINEMENT =====")
-                u, psf = richardson_lucy(pic, u, psf, artifacts_damping, iter_background, blind=True)
-                print("-> Unmasked blind deconv done")
+                u, psf = richardson_lucy(pic, u, psf, noise_damping, iter_background, epsilon=epsilon)
+
         else:
-            # Unmasked blind or myopic deconvolution
             print("\n===== BLIND UNMASKED REFINEMENT =====")
-            u, psf = richardson_lucy(pic, u, psf, artifacts_damping, quality, blind=True)
-            print(" -> Unmasked blind deconv done")
+            u, psf = richardson_lucy(pic, u, psf, noise_damping, iter_background, epsilon=epsilon)
 
-        if deblur_strength > 0:
-            # Apply a last round of non-blind optimization to enhance the sharpness
-            print("\n===== REGULAR DECONVOLUTION =====")
-            u, psf = richardson_lucy(pic, u, psf, artifacts_damping, deblur_strength)
-            print("-> Regular deconv done")
+    if deblur_strength > 0:
+        print("\n===== REGULAR DECONVOLUTION =====")
+        u, psf = richardson_lucy_PAM(pic, u, psf, noise_damping, deblur_strength, blind=False, epsilon=epsilon)
 
-    else:
-        # Regular Richardson-Lucy deconvolution
-        u, psf = richardson_lucy(pic, u, psf, artifacts_damping, deblur_strength)
+    np.clip(u, epsilon, 255 - epsilon, out=u)
 
-    if debug:
+    u = pic - effect_strength * (pic - u)
+
+    if debug and mask:
         # Print the mask in debug mode
-        save(u, filename, mask)
+        utils.save(u, filename, dest_path, mask=mask, icc_profile=icc_profile)
     else:
-        save(u, filename)
+        utils.save(u, filename, dest_path, icc_profile=icc_profile)
 
     return u, psf
 
 
-@utils.timeit
-@jit(float32[:, :](float32[:, :]), cache=True)
-def processing_FAST(pic):
-    # Open the picture
-    pic = np.array(pic).astype(np.float32)
-
-    # Generate a blur kernel as point spread function
-    psf = utils.kaiser_kernel(11, 8)
-
-    # Make a non-blind Richardson- Lucy deconvolution on the RGB signal
-    pic, psf = richardson_lucy(pic, psf, 0.05, 50, blind=False)
-
-    save(pic, "fast-v3")
-
-    return pic.astype(np.uint8)
-
-
-@utils.timeit
-@jit(float32[:, :](float32[:, :]), cache=True)
-def processing_BLIND(pic):
-    # Open the picture
-    pic = np.array(pic).astype(np.float32)
-    pic_copy = pic.copy()
-
-    # Generate a dumb blur kernel as point spread function
-    size = 3
-    psf = np.ones((size, size))
-    psf /= np.sum(psf)
-
-    # Draw a 255×255 pixels mask beginning at the coordinate [252, 680] (top-left corner)
-    mask = [150, 150 + 256, 600, 600 + 256]
-
-    # Initialize the blur kernel
-    for i in [16, 8, 4, 2, 1]:
-        ratio = (size + 2) / size
-
-        # Downscale the picture
-        if i != 1:
-            pic_copy = misc.imresize(pic, 1.0 / i, interp="lanczos", mode="RGB").astype(float)
-        else:
-            pic_copy = pic
-
-        # Make a blind Richardson- Lucy deconvolution on the RGB signal
-        pic_copy, psf = richardson_lucy(pic_copy, psf, 0.005 * i, 5 * i, blind=True)
-
-        # Upscale the PSF
-        if i != 1:
-            psf = misc.imresize(psf, ratio, interp="lanczos")
-            size += 2
-
-    pic, psf = richardson_lucy(pic_copy, psf, 0.005, 20, blind=True, mask=mask)
-    pic, psf = richardson_lucy(pic_copy, psf, 0.0005, 10, blind=True)
-    pic, psf = richardson_lucy(pic, psf, 0.5, 10)
-
-    # Draw the mask
-    save(pic, "blind-v5", mask)
-
-    return pic.astype(np.uint8)
-
-
-@utils.timeit
-@jit(float32[:, :](float32[:, :]), cache=True)
-def processing_MYOPE(pic):
-    # Open the picture
-    pic = np.array(pic).astype(np.float32)
-
-    # Generate a guessed blur kernel as point spread function
-    psf = utils.kaiser_kernel(11, 8)
-
-    # Draw a 255×255 pixels mask beginning at the coordinate [252, 680] (top-left corner)
-    mask = [150, 150 + 256, 600, 600 + 256]
-
-    # Make a blind Richardson- Lucy deconvolution on the RGB signal
-    pic, psf = richardson_lucy(pic, psf, 1, 46, blind=True, mask=mask)
-    pic, psf = richardson_lucy(pic, psf, 0.005, 4, blind=True)
-    pic, psf = richardson_lucy(pic, psf, 0.5, 5)
-
-    # Draw the mask
-    save(pic, "myope-v5", mask)
-
-    return pic.astype(np.uint8)
-
-
-def interpolated(pic, filename):
-    u_top, psf = deblur_module(pic, "blind-v6-top", "auto", 1000, 0.1, 0, mask=[150, 150 + 256, 600, 600 + 256],
-                               refine=True,
-                               backvsmask_ratio=0.1, blur_width=7, debug=True)
-
-    grad_top = divTV(u_top)
-    weight_top = 1 / weight_update(3, u_top, grad_top)
-
-    u_middle, psf = deblur_module(pic, "blind-v6-middle", "auto", 1000, 0.005, 0, mask=[150, 150 + 256, 600, 600 + 256],
-                                  refine=True,
-                                  backvsmask_ratio=0.1, debug=True, blur_width=9)
-
-    grad_middle = divTV(u_middle)
-    weight_middle = 1 / weight_update(3, u_middle, grad_middle)
-
-    u_bottom, psf = deblur_module(pic, "blind-v6-bottom", "auto", 1000, 0.005, 2, mask=[150, 150 + 256, 600, 600 + 256],
-                                  refine=True,
-                                  backvsmask_ratio=0.1, debug=True, blur_width=11)
-
-    grad_bottom = divTV(u_bottom)
-    weight_bottom = 1 / weight_update(3, u_bottom, grad_bottom)
-
-    u = (weight_top * u_top + weight_middle * u_middle + weight_bottom * u_bottom) / (
-    weight_top + weight_middle + weight_top)
-
-    u = np.clip(u, 0.00001, 255)
-
-    save(u, "interpolated")
-
-
-def save(pic, name, mask=False):
-    with Image.fromarray(pic.astype(np.uint8)) as output:
-        if mask:
-            draw = ImageDraw.Draw(output)
-            draw.rectangle([(mask[2], mask[0]), (mask[3], mask[1])], fill=None, outline=128)
-
-        output.save(join(dest_path, picture + "-" + name + ".jpg"),
-                    format="jpeg",
-                    optimize=True,
-                    progressive=True,
-                    quality=90)
-
-
 if __name__ == '__main__':
-
     source_path = "img"
     dest_path = "img/richardson-lucy-deconvolution"
 
-    images = ["blured.jpg"]
+    picture = "blured.jpg"
+    with Image.open(join(source_path, picture)) as pic:
+        # deblur_module(pic, "fast-v4", "kaiser", 0, 0.05, 50, blur_width=11, blur_strength=8)
 
-    for picture in images:
-        with Image.open(join(source_path, picture)) as pic:
-            """
-            The "BEST" algorithm resamples the image × 2, applies the deconvolution and
-            then sample it back. It's good to dilute the noise on low res images.
+        # deblur_module(pic, "myope-v4", "kaiser", 10, 0.05, 50, blur_width=11, blur_strength=8, mask=[150, 150 + 256, 600, 600 + 256], refine=True,)
+        """
+        deblur_module(pic, picture + "-blind-v10-best", dest_path, "auto", 5, 0.0005, 0,
+                      mask=[150, 150 + 512, 600, 600 + 512],
+                      refine=True,
+                      refine_quality=50,
+                      auto_quality=2,
+                      backvsmask_ratio=0,
+                      method="best",
+                      epsilon=5e-1,
+                      debug=True)
+        """
 
-            The "FAST" algorithm is a direct method, more suitable for high res images
-            that will be resized anyway. It's twice as fast and almost as good.
-            """
+        """
+        deblur_module(pic, picture + "-blind-v10-fast", dest_path, "auto", 5, 0.05, 0,
+                      mask=[150, 150 + 512, 600, 600 + 512],
+                      refine=True,
+                      refine_quality=50,
+                      auto_quality=2,
+                      backvsmask_ratio=0,
+                      method="fast",
+                      debug=True)
+                      
+        """
+        pass
 
-            # pic_fast = processing_FAST(pic)
-            #deblur_module(pic, "fast-v4", "kaiser", 0, 0.05, 50, blur_width=11, blur_strength=8)
+    picture = "Shoot-Sienna-Hayes-0042-_DSC0284-sans-PHOTOSHOP-WEB.jpg"
+    with Image.open(join(source_path, picture)) as pic:
+        """
+        deblur_module(pic, picture + "test-v7", dest_path, "auto", 9, 0.00005, 0,
+                      mask=[318, 357 + 800, 357, 357 + 440],
+                      denoise=False,
+                      refine=False,
+                      refine_quality=50,
+                      auto_quality=1,
+                      backvsmask_ratio=0,
+                      preview=1,
+                      debug=True,
+                      method="best",
+                      )
 
-            # pic_myope = processing_MYOPE(pic)
-            #deblur_module(pic, "myope-v4", "kaiser", 10, 0.05, 50, blur_width=11, blur_strength=8, mask=[150, 150 + 256, 600, 600 + 256], refine=True,)
+        """
+        pass
 
-            # pic_blind = processing_BLIND(pic)
-            deblur_module(pic, "blind-v6-middle", "auto", 40, 0.005, 10, mask=[150, 150 + 256, 600, 600 + 256],
-                          refine=True,
-                          backvsmask_ratio=0.2, debug=True, blur_width=9)
+    picture = "DSC1168.jpg"
+    with Image.open(join(source_path, picture)) as pic:
+        mask = [1143, 1143 + 512, 3338, 3338 + 512]
 
-            interpolated(pic, "interpolated")
-
-
-    with Image.open(join(source_path, "DSC_1168_test.jpg")) as pic:
-
-        # deblur_module(pic, "test-v6", "auto", 5, 0.005, 5, mask=[1271, 1271 + 256, 3466, 3466 + 256], refine=False, backvsmask_ratio=0, blur_width=15)
+        deblur_module(pic, picture + "test-v7-gradient-alternatif-3", dest_path, "auto", 13, 0.004, 0,
+                      mask=mask,
+                      denoise=False,
+                      refine=True,
+                      refine_quality=500,
+                      auto_quality=1,
+                      backvsmask_ratio=0,
+                      preview=0.5,
+                      debug=True,
+                      method="best",
+                      )
         pass

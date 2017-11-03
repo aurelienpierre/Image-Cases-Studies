@@ -53,18 +53,18 @@ are in `img` subfolders. The built-in functions are in the `lib.utils` module.
 
 ### What may come one day
 
-    * Refocusing : 
-        * http://web.media.mit.edu/~bandy/refocus/PG07refocus.pdf
-        * http://manao.inria.fr/perso/~ihrke/Publications/wscg12.pdf
-        * https://users.soe.ucsc.edu/~milanfar/publications/journal/dbe_tip_final.pdf
-    * TV denoise : http://scikit-image.org/docs/dev/auto_examples/filters/plot_denoise.html
-    * Markov-chain Monte-Carlo denoise : http://www.sciencedirect.com/science/article/pii/S016516841100096X
-    * Lens PSF calibration : 
-        * http://www.cim.mcgill.ca/~langer/MY_PAPERS/MannanLanger-CRV16-DFDCalib.pdf
-        * http://people.csail.mit.edu/yichangshih/lensEnhancement/lensFittingEccv_camera_ready.pdf
-        * http://people.csail.mit.edu/sparis/publi/2011/iccp_blur/Kee_11_Optical_Blur.pdf
-        * http://wwwuser.gwdg.de/~uboehm/images/25.pdf
-        * http://www.cs.ubc.ca/labs/imager/tr/2013/SimpleLensImaging/SimpleLensImaging_Heide2013.pdf
+* Refocusing : 
+    * http://web.media.mit.edu/~bandy/refocus/PG07refocus.pdf
+    * http://manao.inria.fr/perso/~ihrke/Publications/wscg12.pdf
+    * https://users.soe.ucsc.edu/~milanfar/publications/journal/dbe_tip_final.pdf
+* TV denoise : http://scikit-image.org/docs/dev/auto_examples/filters/plot_denoise.html
+* Markov-chain Monte-Carlo denoise : http://www.sciencedirect.com/science/article/pii/S016516841100096X
+* Lens PSF calibration : 
+    * http://www.cim.mcgill.ca/~langer/MY_PAPERS/MannanLanger-CRV16-DFDCalib.pdf
+    * http://people.csail.mit.edu/yichangshih/lensEnhancement/lensFittingEccv_camera_ready.pdf
+    * http://people.csail.mit.edu/sparis/publi/2011/iccp_blur/Kee_11_Optical_Blur.pdf
+    * http://wwwuser.gwdg.de/~uboehm/images/25.pdf
+    * http://www.cs.ubc.ca/labs/imager/tr/2013/SimpleLensImaging/SimpleLensImaging_Heide2013.pdf
     
 ### Current prototypes
 
@@ -92,16 +92,17 @@ This takes in input an user-defined PSF guessed by trial and error but will refi
 (drawn in red here).
 ![alt text](img/richardson-lucy-deconvolution/blured-myope-v5.jpg)
 
-##### After (blind algorithm - 106 s - 100 iterations - Blind):
+##### After (blind algorithm, PAM method - 106 s - 99 iterations - Blind):
 This takes no input and will build the SPF along from scratch. 
 A balance between the masked zone weight and the whole image weight in the computation can be adjusted.
 ![alt text](img/richardson-lucy-deconvolution/blured-blind-v8.jpg)
 
-##### After (blind algorithm - 2h 05 min - 6000 iterations - Blind):
-This extreme test case takes 3 different PSF sizes, optimize them separately in 3 layers
-and blend them with a weight proportional to their gradient norm L2. The algorithm
-is pushed to its limits to show the border effects and artifacts generated.
-![alt text](img/richardson-lucy-deconvolution/blured-extrapolated.jpg)
+
+##### After (blind algorithm, MM method - 10 min - 450 iterations - Blind):
+This is the implementation of the Majorization-Minimisation algorithm proposed by Perrone & Favaro in 2015.
+The computations are much slower although they can be parallelized but you see less artifacts and a better contrast.
+![alt text](img/richardson-lucy-deconvolution/blured-blind-v9.jpg)
+
 
 
 ## Installation

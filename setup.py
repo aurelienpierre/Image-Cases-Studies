@@ -1,7 +1,8 @@
-from Cython.Distutils import build_ext
+import os
 from distutils.core import setup
 from distutils.extension import Extension
-import os
+
+from Cython.Distutils import build_ext
 
 
 def scandir(dir, files=[]):
@@ -21,9 +22,10 @@ def makeExtension(extName):
         [extPath],
         # your include_dirs must contains the '.' for setup to search all the
         # subfolder of the codeRootFolder
-        include_dirs=['.']
+        include_dirs=['.'],
+        extra_compile_args=["-O3", "-fopenmp", "-ffast-math"],
+        extra_link_args=['-fopenmp']
     )
-
 
 extNames = scandir('lib')
 

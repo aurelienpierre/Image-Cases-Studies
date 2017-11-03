@@ -9,12 +9,14 @@ Source : https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3166524/
 import os
 import time
 import warnings
+from os.path import join
 from threading import Thread
 
 import numpy as np
 import scipy.signal
 import scipy.sparse
-from numba import jit, float32, int16, vectorize
+from PIL import Image, ImageDraw
+from numba import jit, float32, int16
 from scipy import interpolate
 from sympy import *
 from sympy.matrices import *
@@ -160,7 +162,7 @@ def poisson_kernel(radius, tau):
     return kern
 
 
-@jit(cache=True)
+@jit(cache=True, nopython=True)
 def bilateral_differences(source, filtered_image, W, thread, radius, pad, std_i, std_s):
     """
     Perform the bilateral differences and weighting on the (i, j) neighbour.
@@ -289,3 +291,98 @@ def blending(upx, lpx, type):
     types = {"overlay": overlay}
 
     return types[type](upx, lpx)
+
+
+def save(pic, name, dest_path, mask=False, icc_profile=None):
+    with Image.fromarray(pic.astype(np.uint8)) as output:
+        if mask:
+            draw = ImageDraw.Draw(output)
+            draw.rectangle([(mask[2], mask[0]), (mask[3], mask[1])], fill=None, outline=128)
+
+        output.save(join(dest_path, name + ".jpg"),
+                    format="jpeg",
+                    optimize=True,
+                    progressive=True,
+                    quality=90,
+                    icc_profile=icc_profile)
+
+
+"""
+Backup old functions
+"""
+
+
+@jit(float32[:](float32[:], float32, float32), cache=True, nogil=True)
+def divTV(u, epsilon=1e-31, p=0.5):
+    gradu = np.zeros_like(u)
+    TV = np.zeros_like(u) + epsilon
+
+    # # Gradient x
+    gradx = np.zeros_like(u)
+    # Center of matrix
+    gradx[:, 1:-1] += (- u[:, :-2] - u[:, 2:] + 2 * u[:, 1:-1])
+    # First column
+    gradx[:, 0] += u[:, 0] - u[:, 1]
+    # Last column
+    gradx[:, -1] += u[:, -1] - u[:, -2]
+
+    gradu += gradx
+    TV += np.abs(gradx) ** p
+
+    # # Gradient y
+    grady = np.zeros_like(u)
+    # Center of matrix
+    grady[1:-1, :] += (- u[:-2, :] - u[2:, :] + 2 * u[1:-1, :])
+    # First row
+    grady[0, :] += u[0, :] - u[1, :]
+    # Last row
+    grady[-1, :] += u[-1, :] - u[-2, :]
+
+    gradu -= grady
+    TV += np.abs(grady) ** p
+
+    """
+    # # Gradient along the first diagonal (++)
+    gradX1 = np.zeros_like(u)
+    # Center of matrix
+    gradX1[1:-1, 1:-1] += (- u[:-2, :-2] - u[2:, 2:] + 2 * u[1:-1, 1:-1]) / (np.sqrt(2))
+    # First column
+    gradX1[:-1, 0] += (- u[1:, 1] + u[:-1, 0]) / (np.sqrt(2))
+    # First row
+    gradX1[0, :-1] += (- u[1, 1:] + u[0, :-1]) / (np.sqrt(2))
+    # Last column
+    gradX1[1:, -1] += (- u[:-1, -2] + u[1:, -1]) / (np.sqrt(2))
+    # Last row
+    gradX1[-1, 1:] += (- u[-2, :-1] + u[-1, 1:]) / (np.sqrt(2))
+
+    gradu += gradX1
+    TV += np.abs(gradX1) ** p
+
+    # # Gradient along the second diagonal (+-)
+    gradX2 = np.zeros_like(u)
+    # Center of matrix
+    gradX2[1:-1, 1:-1] += (- u[:-2, 2:] - u[2:, :-2] + 2 * u[1:-1, 1:-1]) / (np.sqrt(2))
+    # First row
+    gradX2[0, 1:] += (- u[1, :-1] + u[0, 1:]) / (np.sqrt(2))
+    # First column
+    gradX2[1:, 0] += (- u[:-1, 1] + u[1:, 0] ) / (np.sqrt(2))
+    # Last row
+    gradX2[-1, :-1] += (- u[-2, 1:] + u[-1, :-1]) / (np.sqrt(2))
+    # Last column
+    gradX2[1:, -1] += (- u[:-1, -2] + u[1:, -1]) / (np.sqrt(2))
+
+    gradu += gradX2
+    TV += np.abs(gradX2) ** p
+    """
+
+    TV = TV ** (1 / p)
+
+    return - gradu, TV
+
+
+@jit(float32[:](float32[:], float32[:], float32, float32, float32), cache=True, nogil=True)
+def gradTVEM(u, ut, epsilon=1e-3, tau=1e-1, p=0.5):
+    gradu, TVt = divTV(ut, epsilon=epsilon, p=p)
+    gradu, TV = divTV(u, epsilon=epsilon, p=p)
+    gradu = TV / (tau + TVt)
+    return gradu
