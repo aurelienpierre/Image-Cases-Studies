@@ -514,7 +514,7 @@ def _update_both_MM(u, image, psf, lambd, iterations, mask_u, mask_i, epsilon):
         for itt in range(5):
             # Image update
             epsilon = best_epsilon(u, lambd) * 1.001
-            gradu = lambd * _convolve_image(u, image, psf) + gradTVEM(u, ut, epsilon, tau)
+            gradu = lambd * _convolve_image(u, image, psf) + utils.gradTVEM(u, ut, epsilon, tau)
             dt = u_step * (np.amax(u) + 1 / u.size) / np.amax(np.abs(gradu) + 1e-31)
             u -= dt * gradu
 
@@ -698,7 +698,9 @@ def deblur_module(pic: np.ndarray,
 
     # Backup ICC color profile
     icc_profile = pic.info.get("icc_profile")
-    pic = np.ascontiguousarray(pic, np.float32)
+
+    # Assuming 8 bits input, we rescale the RGB values betweem 0 and 1
+    pic = np.ascontiguousarray(pic, np.float32) / 255
 
     methods_collection = {
         "fast": richardson_lucy_PAM,
@@ -727,9 +729,9 @@ def deblur_module(pic: np.ndarray,
 
     if denoise:
         # TODO : http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6572468
-        u = denoise_tv_chambolle(pic, weight=noise_damping, multichannel=True)
-    else:
-        u = pic.copy()
+        pic = denoise_tv_chambolle(pic, weight=noise_damping, multichannel=True)
+
+    u = pic.copy()
 
     iter_background = 0
     iter_mask = 0
@@ -758,9 +760,14 @@ def deblur_module(pic: np.ndarray,
         print("\n===== REGULAR DECONVOLUTION =====")
         u, psf = richardson_lucy_PAM(pic, u, psf, noise_damping, deblur_strength, blind=False, epsilon=epsilon)
 
-    np.clip(u, epsilon, 255 - epsilon, out=u)
+    np.clip(u, 0, 1, out=u)
 
-    u = pic - effect_strength * (pic - u)
+    if denoise:
+        # TODO : http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6572468
+        u = denoise_tv_chambolle(pic, weight=noise_damping, multichannel=True)
+
+    # Convert back into 8 bits RGB
+    u = (pic - effect_strength * (pic - u)) * 255
 
     if debug and mask:
         # Print the mask in debug mode
@@ -825,9 +832,9 @@ if __name__ == '__main__':
 
     picture = "DSC1168.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        mask = [1143, 1143 + 512, 3338, 3338 + 512]
+        mask = [631 + 512, 631 + 512 + 1024, 2826 + 512, 2826 + 512 + 1024]
 
-        deblur_module(pic, picture + "test-v7-gradient-alternatif-3", dest_path, "auto", 13, 0.004, 0,
+        deblur_module(pic, picture + "test-v7-gradient-alternatif-3-2", dest_path, "auto", 13, 0.05, 0,
                       mask=mask,
                       denoise=False,
                       refine=True,
