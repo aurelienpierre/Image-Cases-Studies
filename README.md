@@ -41,7 +41,7 @@ For now, we have :
     * Richardson-Lucy blind and non-blind deconvolution with Total Variation regularization
         * method TV-PAM : http://www.cvg.unibe.ch/dperrone/tvdb/index.html
         * method TV-PD (work in progress) : http://www.cvg.unibe.ch/dperrone/logtv/index.html
-        * method TV-MM (work en progress) : ibid.
+        * method TV-MM : ibid.
 * Windows/Kernels : (*for convolution and frequential analysis*)
     * Poisson/exponential
     * Kaiser-Bessel
@@ -49,7 +49,7 @@ For now, we have :
     * Uniform
     
 A collection of test pictures is in `img` directory and the converted pictures
-are in `img` subfolders. The built-in functions are in the `lib.utils` module.
+are in `img` subfolders. The built-in generic functions are in the `lib.utils` module.
 
 ### What may come one day
 
@@ -76,34 +76,58 @@ know the [*Point spread function*](https://en.wikipedia.org/wiki/Point_spread_fu
 of their maker. In practice, we can only estimate it.
 One of the means to do so is the [Richardson-Lucy deconvolution](https://en.wikipedia.org/wiki/Richardson%E2%80%93Lucy_deconvolution).
 
-The Richardson-Lucy algorithm used here is  modified to implement [Total Variation regularization
-](http://www.cs.sfu.ca/~pingtan/Papers/pami10_deblur.pdf). It can be run in a non-blind fashion (when the PSF is known)
-or in a blind one to determine the PSF iteratively from an initial guess.
+Deconvolution differs from usual sharpness filters : while high-pass filters and unsharp masks increase the local contrast
+(thus the *percieved* sharpness), deconvolution actually recovers the stiffness of the edges. Said otherwise, sharpness filters
+plays on luminance values, deconvolution plays on spatial distribution of the pixels.
+
+The main drawback of this method is the creation of artifacts in the deblured picture, such as ringing and periodic 
+replication of the edges. The Richardson-Lucy algorithm used here is  modified to implement [Total Variation regularization
+](http://www.cs.sfu.ca/~pingtan/Papers/pami10_deblur.pdf). It can run in a blind or non-blind fashion, meaning that the 
+PSF can be passed as an user-input or estimated from scratch using bayesian statistics and refined during the process.
+
+These algorithms are all auto-adaptative, meaning that all the regularization parameters are
+estimated by the algorithm based on statistical assumptions. However, as stats don't always represent
+the reality, the user can still force his own parameters.
+
+They have been slightly modified to be able to run parallelized, with RGB each channel on a single process. 
 
 ##### Blurred original :
 ![alt text](img/blured.jpg)
 
-##### After (fast algorithm - 35 s - 50 iterations - Non blind):
-This takes in input an user-defined PSF guessed by trial and error.
+The tests have been done on a laptop with an Intel® Core™ i7-2670QM CPU @ 2.20GHz running 3 processes.
+
+
+##### After (fast algorithm, PAM method - 35 s - 50 iterations - Non blind):
+This takes as input an user-defined PSF guessed by trial and error. While the cost quality/computation is
+interesting, the algorithm can quickely diverge if too many iterations are performed with a 
+poorly defined blur PSF and lead to ringing. It's especially not suitable for motion blur.
 ![alt text](img/richardson-lucy-deconvolution/blured-fast-v3.jpg)
 
-##### After (myope algorithm - 73 s - 50 iterations - Semi-Blind refinement):
-This takes in input an user-defined PSF guessed by trial and error but will refine it every iteration on a 256×256 px sampling patch.
-(drawn in red here).
+##### After (myopic algorithm, PAM method - 73 s - 50 iterations - Semi-Blind refinement):
+This takes as input an user-defined PSF guessed by trial and error but will refine it every iteration on a 256×256 px sampling patch.
+(drawn in red here). This is a good compromise as long as the blur is simple (homogenous lens blur).
 ![alt text](img/richardson-lucy-deconvolution/blured-myope-v5.jpg)
 
 ##### After (blind algorithm, PAM method - 106 s - 99 iterations - Blind):
-This takes no input and will build the SPF along from scratch. 
+This takes no input and will guess the PSF along from scratch. 
 A balance between the masked zone weight and the whole image weight in the computation can be adjusted.
+This takes a fair amount of time but can recover large blurs blurs. It's the implementation of the Projected Alternating Minimization 
+algorithm proposed by Perrone & Favaro in 2014.
 ![alt text](img/richardson-lucy-deconvolution/blured-blind-v8.jpg)
 
-
-##### After (blind algorithm, MM method - 10 min - 450 iterations - Blind):
-This is the implementation of the Majorization-Minimisation algorithm proposed by Perrone & Favaro in 2015.
+##### After (blind algorithm, MM method - 3 min 45 - 30 iterations of majorization, 150 total iterations - Blind):
+This is the implementation of the Majorization-Minimisation algorithm proposed by [Perrone & Favaro in 2015](http://www.cvg.unibe.ch/dperrone/logtv/index.html).
 The computations are much slower although they can be parallelized but you see less artifacts and a better contrast.
-![alt text](img/richardson-lucy-deconvolution/blured-blind-v9.jpg)
+The additional time comes from the fact that every majorization iteration contains
+5 minimization iterations, so it's 5 times the computations needed for the PAM method, but the result is more robust.
+This method has found the sharp picture at a margin of error of 5 % in more than 50 % of the tests. The PAM method never reaches
+the sharp picture, but comes close enough.
+![alt text](img/richardson-lucy-deconvolution/blured-blind-v11-best.jpg)
 
-
+This method deblurs by recovering the sharpness of the edges. However, it does not recover the local contrast. here is 
+an example of further edition of the above picture with local contrast added through an unsharp mask, wavelets high-pass filter
+and a laplacian filter.
+![alt text](img/richardson-lucy-deconvolution/blured-blind-v11-best-DT-edit.jpg)
 
 ## Installation
 

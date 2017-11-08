@@ -16,7 +16,7 @@ import numpy as np
 import scipy.signal
 import scipy.sparse
 from PIL import Image, ImageDraw
-from numba import jit, float32, int16
+from numba import jit, float32
 from scipy import interpolate
 from sympy import *
 from sympy.matrices import *
@@ -131,14 +131,12 @@ def gaussian(x, sigma):
     return (1.0 / (2 * np.pi * (sigma ** 2))) * np.exp(- (x ** 2) / (2 * sigma ** 2))
 
 
-@jit(float32[:, :](int16), cache=True)
 def uniform_kernel(size):
     kern = np.ones((size, size))
     kern /= np.sum(kern)
     return kern
 
 
-@jit(float32[:, :](int16, float32), cache=True)
 def gaussian_kernel(radius, std):
     window = scipy.signal.gaussian(radius, std=std)
     kern = np.outer(window, window)
@@ -146,7 +144,6 @@ def gaussian_kernel(radius, std):
     return kern
 
 
-@jit(float32[:, :](int16, float32), cache=True)
 def kaiser_kernel(radius, beta):
     window = np.kaiser(radius, beta)
     kern = np.outer(window, window)
@@ -154,7 +151,6 @@ def kaiser_kernel(radius, beta):
     return kern
 
 
-@jit(float32[:, :](int16, float32), cache=True)
 def poisson_kernel(radius, tau):
     window = scipy.signal.exponential(radius, tau=tau)
     kern = np.outer(window, window)
@@ -162,7 +158,6 @@ def poisson_kernel(radius, tau):
     return kern
 
 
-@jit(cache=True, nopython=True)
 def bilateral_differences(source, filtered_image, W, thread, radius, pad, std_i, std_s):
     """
     Perform the bilateral differences and weighting on the (i, j) neighbour.
@@ -312,77 +307,132 @@ Backup old functions
 """
 
 
-@jit(float32[:](float32[:], float32, float32), cache=True, nogil=True)
-def divTV(u, epsilon=1e-31, p=0.5):
-    gradu = np.zeros_like(u)
-    TV = np.zeros_like(u) + epsilon
+@jit(float32[:](float32[:]), cache=True)
+def divTV(image):
+    """Compute the Total Variation norm
 
-    # # Gradient x
-    gradx = np.zeros_like(u)
-    # Center of matrix
-    gradx[:, 1:-1] += (- u[:, :-2] - u[:, 2:] + 2 * u[:, 1:-1])
-    # First column
-    gradx[:, 0] += u[:, 0] - u[:, 1]
-    # Last column
-    gradx[:, -1] += u[:, -1] - u[:, -2]
-
-    gradu += gradx
-    TV += np.abs(gradx) ** p
-
-    # # Gradient y
-    grady = np.zeros_like(u)
-    # Center of matrix
-    grady[1:-1, :] += (- u[:-2, :] - u[2:, :] + 2 * u[1:-1, :])
-    # First row
-    grady[0, :] += u[0, :] - u[1, :]
-    # Last row
-    grady[-1, :] += u[-1, :] - u[-2, :]
-
-    gradu -= grady
-    TV += np.abs(grady) ** p
+    :param ndarray image: Input array of pixels
+    :return: div(Total Variation regularization term) as described in [3]
+    :rtype: ndarray
 
     """
-    # # Gradient along the first diagonal (++)
-    gradX1 = np.zeros_like(u)
-    # Center of matrix
-    gradX1[1:-1, 1:-1] += (- u[:-2, :-2] - u[2:, 2:] + 2 * u[1:-1, 1:-1]) / (np.sqrt(2))
-    # First column
-    gradX1[:-1, 0] += (- u[1:, 1] + u[:-1, 0]) / (np.sqrt(2))
-    # First row
-    gradX1[0, :-1] += (- u[1, 1:] + u[0, :-1]) / (np.sqrt(2))
-    # Last column
-    gradX1[1:, -1] += (- u[:-1, -2] + u[1:, -1]) / (np.sqrt(2))
-    # Last row
-    gradX1[-1, 1:] += (- u[-2, :-1] + u[-1, 1:]) / (np.sqrt(2))
+    grad = np.zeros_like(image)
 
-    gradu += gradX1
-    TV += np.abs(gradX1) ** p
+    # Forward differences
+    # fx = np.roll(image, 1, axis=1) - image
+    fx = np.pad(image, ((0, 0), (1, 0)), mode="edge")[:, 1:] - image
+    # fy = np.roll(image, 1, axis=0) - image
+    fy = np.pad(image, ((1, 0), (0, 0)), mode="edge")[1:, :] - image
+    grad += (fx + fy) / np.maximum(1e-3, np.sqrt(fx ** 2 + fy ** 2))
 
-    # # Gradient along the second diagonal (+-)
-    gradX2 = np.zeros_like(u)
-    # Center of matrix
-    gradX2[1:-1, 1:-1] += (- u[:-2, 2:] - u[2:, :-2] + 2 * u[1:-1, 1:-1]) / (np.sqrt(2))
-    # First row
-    gradX2[0, 1:] += (- u[1, :-1] + u[0, 1:]) / (np.sqrt(2))
-    # First column
-    gradX2[1:, 0] += (- u[:-1, 1] + u[1:, 0] ) / (np.sqrt(2))
-    # Last row
-    gradX2[-1, :-1] += (- u[-2, 1:] + u[-1, :-1]) / (np.sqrt(2))
-    # Last column
-    gradX2[1:, -1] += (- u[:-1, -2] + u[1:, -1]) / (np.sqrt(2))
+    # Backward x and crossed y differences
+    # fx = image - np.roll(image, -1, axis=1)
+    fx = np.pad(image, ((0, 0), (0, 1)), mode="edge")[:, :-1] - image
+    # fy = np.roll(image, (-1, 1), axis=(0, 1)) - np.roll(image, -1, axis=0)
+    fy = np.pad(image, ((0, 1), (1, 0)), mode="edge")[:-1, 1:] - np.pad(image, ((1, 0), (0, 0)), mode="edge")[1:, :]
+    grad -= fx / np.maximum(1e-3, np.sqrt(fx ** 2 + fy ** 2))
 
-    gradu += gradX2
-    TV += np.abs(gradX2) ** p
-    """
+    # Backward y and crossed x differences
+    # fy = image - np.roll(image, -1, axis=0)
+    fy = np.pad(image, ((0, 1), (0, 0)), mode="edge")[:-1, :] - image
+    # fx = np.roll(image, (1, -1), axis=(0, 1)) - np.roll(image, -1, axis=1)
+    fx = np.pad(image, ((1, 0), (0, 1)), mode="edge")[1:, :-1] - np.pad(image, ((0, 0), (0, 1)), mode="edge")[:, 1:]
+    grad -= fy / np.maximum(1e-3, np.sqrt(fy ** 2 + fx ** 2))
 
-    TV = TV ** (1 / p)
+    return grad.astype(np.float32)
 
-    return - gradu, TV
+
+@jit(float32[:](float32[:], float32, float32, float32, float32), cache=True, nogil=True)
+def center_diff(u, dx, dy, epsilon, p):
+    # Centered local difference
+    ux = np.roll(u, (dx, 0), axis=(1, 0)) - np.roll(u, (0, 0), axis=(1, 0))
+    uy = np.roll(u, (0, dy)) - np.roll(u, (0, 0))
+    TV = (np.abs(ux) ** p + np.abs(uy) ** p + epsilon) ** (1 / p)
+    du = - ux - uy
+
+    return TV, du
+
+
+@jit(float32[:](float32[:], float32, float32, float32, float32), cache=True, nogil=True)
+def x_diff(u, dx, dy, epsilon, p):
+    # x-shifted local difference
+    ux = np.roll(u, (0, 0), axis=(1, 0)) - np.roll(u, (-dx, 0), axis=(1, 0))
+    uy = np.roll(u, (-dx, dy), axis=(1, 0)) - np.roll(u, (-dx, 0), axis=(1, 0))
+    TV = (np.abs(ux) ** p + np.abs(uy) ** p + epsilon) ** (1 / p)
+    du = ux
+
+    return TV, du
+
+
+@jit(float32[:](float32[:], float32, float32, float32, float32), cache=True, nogil=True)
+def y_diff(u, dx, dy, epsilon, p):
+    # y shifted local difference
+    ux = np.roll(u, (dx, -dy), axis=(1, 0)) - np.roll(u, (0, -dy), axis=(1, 0))
+    uy = np.roll(u, (0, 0), axis=(1, 0)) - np.roll(u, (0, -dy), axis=(1, 0))
+    TV = (np.abs(ux) ** p + np.abs(uy) ** p + epsilon) ** (1 / p)
+    du = uy
+
+    return TV, du
 
 
 @jit(float32[:](float32[:], float32[:], float32, float32, float32), cache=True, nogil=True)
 def gradTVEM(u, ut, epsilon=1e-3, tau=1e-1, p=0.5):
-    gradu, TVt = divTV(ut, epsilon=epsilon, p=p)
-    gradu, TV = divTV(u, epsilon=epsilon, p=p)
-    gradu = TV / (tau + TVt)
-    return gradu
+    """Compute the Total Variation norm of the Minimization-Maximization problem
+
+    :param ndarray image: Input array of pixels
+    :return: div(Total Variation regularization term) as described in [3]
+    :rtype: ndarray
+
+    We use general P-norm instead : https://www.elen.ucl.ac.be/Proceedings/esann/esannpdf/es2014-153.pdf
+
+    0.5-norm shows better representation of discontinuities : https://link.springer.com/chapter/10.1007/978-3-319-14612-6_10
+
+    """
+
+    # Displacement vectors of the shifted differences
+    deltas = np.array([[1, 1],
+                       [-1, 1],
+                       [1, -1],
+                       [-1, -1]])
+
+    # 2-axis shifts
+    u_copy = np.zeros_like(u)
+    shifts = np.array([u_copy,  # Centered
+                       u_copy,  # x shifted
+                       u_copy  # y shifted
+                       ])
+
+    # Methods for local differences calculation
+    diffs = [center_diff, x_diff, y_diff]
+
+    # Initialization of the outputs
+    du = np.array([shifts, shifts, shifts, shifts])
+    TV = du.copy()
+    TVt = du.copy()
+
+    dx = 0
+    dy = 0
+
+    for i in prange(4):
+        # for each displacement vector
+        dx = deltas[i, 0]
+        dy = deltas[i, 1]
+
+        for step in prange(3):
+            # for each axial shift
+            TV[i, step], du[i, step] = diffs[step](u, dy, dy, epsilon, p)
+            TVt[i, step], void = diffs[step](ut, dx, dy, epsilon, p)
+
+    grad = np.sum(du / TV / (tau + TVt), axis=(0, 1))  # This is the vectorized equivalent to :
+
+    """
+    grad = np.zeros_like(u)
+    for channel in prange(3):
+        for delta in range(4):
+            for direction in range(3):
+                grad +=  du[delta, direction] / \ 
+                                         TV[delta, direction] /\
+                                                          (TVt[delta, direction] + tau)
+    """
+
+    return grad / 4
