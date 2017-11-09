@@ -71,6 +71,8 @@ are in `img` subfolders. The built-in generic functions are in the `lib.utils` m
 
 #### Richardson-Lucy deconvolution
 
+### Overview
+
 In theory, blurred and noisy pictures can be perfectly sharpened if we perfectly 
 know the [*Point spread function*](https://en.wikipedia.org/wiki/Point_spread_function) 
 of their maker. In practice, we can only estimate it.
@@ -78,7 +80,7 @@ One of the means to do so is the [Richardson-Lucy deconvolution](https://en.wiki
 
 Deconvolution differs from usual sharpness filters : while high-pass filters and unsharp masks increase the local contrast
 (thus the *percieved* sharpness), deconvolution actually recovers the stiffness of the edges. Said otherwise, sharpness filters
-plays on luminance values, deconvolution plays on spatial distribution of the pixels.
+play on luminance values, deconvolution plays on spatial distribution of the pixels.
 
 The main drawback of this method is the creation of artifacts in the deblured picture, such as ringing and periodic 
 replication of the edges. The Richardson-Lucy algorithm used here is  modified to implement [Total Variation regularization
@@ -90,6 +92,23 @@ estimated by the algorithm based on statistical assumptions. However, as stats d
 the reality, the user can still force his own parameters.
 
 They have been slightly modified to be able to run parallelized, with RGB each channel on a single process. 
+
+#### Math details
+
+Let the blurry image be the convolution product of a sharp image and a kernel (the PSF) plus a noise matrix.
+The method used hire aims at finding the sharp image by a gradient descend method, following the Richardson-Lucy algorithm.
+However, both the PSF and the sharp image are unknown, leading to an ill-posed problem. The challenge is yet
+to find a convex problem to solve this problem in a Sobolev space.
+
+Perrone & Favaro base their method on assuming that a sharp image has the logarithms of its gradients following a
+Cauchy distribution. Therefore, at every step of the gradient descent, it is possible to compute a penalty for
+every pixel not following this law, and attenuate these pixels from the intermediate solution. This penalty is such as 
+the L-1 anisotropic norm of the Total Variation is minimized at every iteration, leading to noise and ringing
+attenuation. In the blind setup, the initial PSF is assumed to be an uniform blur, and then refined at every step along with the image.
+
+While the theory says that minimizing gradients cannot bring back a sharper image (whose gradients are maximum), the practice shows
+that it actually works. The actual implementation relies on 3 different solvers : the Projected Alternating Minimization,
+the Primal-Dual method (similar to A. Chambolle's TV denoising), and the Majorization-Minimizatiom.
 
 ##### Blurred original :
 ![alt text](img/blured.jpg)
