@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 '''
 Created on 27 avr. 2017
 
@@ -72,10 +74,10 @@ def Lagrange_interpolation(points, variable=None):
         Y = Y(variable)
 
     except:
-        warnings.warn(
-            "No input variable given - polynomial evaluation skipped")
+        warnings.warn("No input variable given - polynomial evaluation skipped")
 
     return P, Y
+
 
 def grey_point(src, amount):
     """
@@ -126,9 +128,20 @@ def auto_vibrance(src):
     return src
 
 
-@vectorize()
 def gaussian(x, sigma):
     return (1.0 / (2 * np.pi * (sigma ** 2))) * np.exp(- (x ** 2) / (2 * sigma ** 2))
+
+
+def disc_blur(x):
+    half = [1 / (np.pi * x ** 2) for x in range(1, int(x / 2) + 1)]
+    return half
+
+
+def lens_blur(size):
+    window = disc_blur(size)
+    kern = np.outer(window, window)
+    kern = kern / kern.sum()
+    return kern
 
 
 def uniform_kernel(size):

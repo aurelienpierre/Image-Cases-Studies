@@ -127,6 +127,7 @@ This takes as input an user-defined PSF guessed by trial and error but will refi
 (drawn in red here). This is a good compromise as long as the blur is simple (homogenous lens blur).
 ![alt text](img/richardson-lucy-deconvolution/blured-myope-v5.jpg)
 
+
 ##### After (blind algorithm, PAM method - 106 s - 99 iterations - Blind):
 This takes no input and will guess the PSF along from scratch. 
 A balance between the masked zone weight and the whole image weight in the computation can be adjusted.
@@ -159,7 +160,8 @@ On Linux systems, if you have Python 2 and 3 interpreters installed together, yo
 
     python3 setup.py build_ext --inplace
     
-The Python interpreter should be in the 3.x serie (3.5 is best).
+The Python interpreter should be in the 3.x serie. Python 2 will trigger `ZeroDivisionError` since it performs
+integer divisions by default.
     
 Unfortunately, the setup file has been reported defective so in most cases, the dependencies will
 not be automatically installed.

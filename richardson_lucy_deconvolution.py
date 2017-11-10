@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 Created on 30 avr. 2017
 
@@ -89,7 +90,7 @@ def gradTVEM(u, ut, epsilon=1e-3, tau=1e-3, p=1):
     return TV / (tau + TVt)
 
 
-def pad_image(image: np.ndarray, pad: tuple, mode="edge"):
+def pad_image(image, pad, mode="edge"):
     """
     Pad an 3D image with a free-boundary condition to avoid ringing along the borders after the FFT
 
@@ -105,12 +106,12 @@ def pad_image(image: np.ndarray, pad: tuple, mode="edge"):
     return np.ascontiguousarray(u, np.float32)
 
 
-def unpad_image(image: np.ndarray, pad: tuple):
+def unpad_image(image, pad):
     return np.ascontiguousarray(image[pad[0]:-pad[0], pad[1]:-pad[1], ...], np.ndarray)
 
 
 @jit(cache=True)
-def build_pyramid(psf_size: int, lambd: float, method) -> list:
+def build_pyramid(psf_size, lambd, method):
     """
     To speed-up the deconvolution, the PSF is estimated successively on smaller images of increasing sizes. This function
     computes the intermediates sizes and regularization factors
@@ -140,6 +141,7 @@ def build_pyramid(psf_size: int, lambd: float, method) -> list:
         if kernels[-1] < 3:
             kernels[-1] = 3
 
+    print(images, kernels, lambdas)
     return images, kernels, lambdas
 
 
@@ -159,17 +161,29 @@ def process_pyramid(pic, u, psf, lambd, method, epsilon, quality=1):
     """
     Mk, Nk, C = psf.shape
     images, kernels, lambdas = build_pyramid(Mk, lambd, method)
+
+    # Prepare the biggest version
     u = ndimage.zoom(u, (images[-1], images[-1], 1))
     k_prec = Mk
-    iterations = quality * 10
+    iterations = int(quality * 10)
 
     for i, k, l in zip(reversed(images), reversed(kernels), reversed(lambdas)):
         print("== Pyramid step", i, "==")
+        odd_vert = False
+        odd_hor = False
 
         # Resize blured, deblured images and PSF from previous step
         if i != 1:
-            # TODO : pad the picture to make its dimensions odd
             im = ndimage.zoom(pic, (i, i, 1))
+
+            # Make the picture dimensions odd to avoid ringing on the border of even pictures. We just replicate the last row/column
+            if pic.shape[0] % 2 == 0:
+                pic = pad_image(pic, ((1, 0), (0, 0)))
+                odd_vert = True
+
+            if pic.shape[1] % 2 == 0:
+                pic = pad_image(pic, ((0, 0), (1, 0)))
+                odd_hor = True
         else:
             im = pic.copy()
 
@@ -180,7 +194,13 @@ def process_pyramid(pic, u, psf, lambd, method, epsilon, quality=1):
         # Make a blind Richardson-Lucy deconvolution on the RGB signal
         u, psf = method(im, u, psf, l, iterations, epsilon)
 
-        # TODO : unpad the picture
+        # if the picture has been padded to make it odd, unpad it to get the original size
+        if odd_hor:
+            u = u[:, 1:, ...]
+
+        if odd_vert:
+            u = u[1:, :, ...]
+
         k_prec = k
 
     return u, psf
@@ -217,7 +237,9 @@ def make_preview(image, psf, ratio, mask=None):
 
 @jit(float32[:](float32[:]), cache=True, nogil=True)
 def _normalize_kernel(kern):
+    # Make the negative values = 0
     kern[kern < 0] = 0
+    # Make the sum of the kernel elements = 1
     kern /= np.sum(kern, axis=(0, 1))
     return kern
 
@@ -249,7 +271,7 @@ def _update_image_PAM(u, image, psf, lambd, epsilon=5e-3):
 
 
 @jit(float32[:](float32[:], float32[:], float32[:], float32, int16, float32), cache=True, nogil=True)
-def _loop_update_image_PAM(u, image, psf, lambd, iterations, epsilon):
+def _loop_update_image_PAM(u, image, psf, lambd, iterations, epsilon, ):
     for itt in range(iterations):
         u = _update_image_PAM(u, image, psf, lambd, epsilon)
         lambd *= 0.99
@@ -265,9 +287,9 @@ def _update_kernel_PAM(u, image, psf, epsilon):
     return psf
 
 
-@jit(float32[:](float32[:], float32[:], float32[:], float32, int16, float32[:], float32[:], float32), cache=True,
-     nogil=True)
-def _loop_update_both_PAM(u, image, psf, lambd, iterations, mask_u, mask_i, epsilon):
+@jit(float32[:](float32[:], float32[:], float32[:], float32, int16, float32[:], float32[:], float32, boolean),
+     cache=True, nogil=True)
+def _update_both_PAM(u, image, psf, lambd, iterations, mask_u, mask_i, epsilon, blind):
     """
     Utility function to launch the actual deconvolution in parallel
     :param u:
@@ -289,14 +311,7 @@ def _loop_update_both_PAM(u, image, psf, lambd, iterations, mask_u, mask_i, epsi
 
 
 @utils.timeit
-def richardson_lucy_PAM(image: np.ndarray,
-                        u: np.ndarray,
-                        psf: np.ndarray,
-                        lambd: float,
-                        iterations: int,
-                        epsilon=1e-3,
-                        mask=None,
-                        blind=True) -> np.ndarray:
+def richardson_lucy_PAM(image, u, psf, lambd, iterations, epsilon=1e-3, mask=None, blind=True):
     """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization by Projected Alternating Minimization.
     This is known to give a close-enough sharp image but never give an accurate sharp image.
 
@@ -429,15 +444,8 @@ def _update_both_MM(u, image, psf, lambd, iterations, mask_u, mask_i, epsilon, b
     return u.astype(np.float32), psf
 
 
-@utils.timeit
-def richardson_lucy_MM(image: np.ndarray,
-                       u: np.ndarray,
-                       psf: np.ndarray,
-                       lambd: float,
-                       iterations: int,
-                       epsilon,
-                       mask=None,
-                       blind=True) -> np.ndarray:
+# @utils.timeit
+def richardson_lucy_MM(image, u, psf, lambd, iterations, epsilon, mask=None, blind=True):
     """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization by the Minimization-Maximization
     algorithm. This is known to give the sharp image in more than 50 % of the cases.
 
@@ -498,26 +506,11 @@ def richardson_lucy_MM(image: np.ndarray,
     return u.astype(np.float32), psf
 
 
-@utils.timeit
-def deblur_module(pic: np.ndarray,
-                  filename: str,
-                  dest_path: str,
-                  blur_type: str,
-                  blur_width: int,
-                  noise_reduction_factor: float,
-                  deblur_strength: int,
-                  blur_strength: int = 1,
-                  auto_quality=1,
-                  ringing_factor=1e-3,
-                  refine: bool = False,
-                  refine_quality=0,
-                  mask: np.ndarray = None,
-                  debug: bool = False,
-                  effect_strength=1,
-                  preview=1,
-                  psf: np.ndarray = None,
-                  denoise: bool = False,
-                  method="fast"):
+# @utils.timeit
+def deblur_module(pic, filename, dest_path, blur_type, blur_width, noise_reduction_factor, deblur_strength,
+                  blur_strength=1,
+                  auto_quality=1, ringing_factor=1e-3, refine=False, refine_quality=0, mask=None, debug=False,
+                  effect_strength=1, preview=1, refocus=False, psf=None, denoise=False, method="fast"):
     """
     This mimics a Darktable module inputs where the technical specs are hidden and translated into human-readable parameters.
 
@@ -533,7 +526,8 @@ def deblur_module(pic: np.ndarray,
     :param auto_quality: when the `blur_type` is `auto`, the number of iterations of the initial blur estimation is half the
     square of the PSF size. The `auto_quality` parameter is a factor that allows you to reduce the number of iteration to speed up the process.
     Default : 1. Recommended values : between 0.25 and 2.
-    :param noise_reduction_factor: the noise reduction factor lambda. For the `best` method, default is 1000, use 12000 to 30000 to speed up the convergence. Lower values don't help to reduce the noise, decrease the `ringing_facter` instead.
+    :param noise_reduction_factor: the noise reduction factor lambda. For the `best` method, default is 1000, use 12000
+        to 30000 to speed up the convergence. Lower values don't help to reduce the noise, decrease the `ringing_facter` instead.
         for the `fast` method, default is 0.0006, increase up to 0.05 to reduce the noise. This unconsistency must be corrected soon.
     :param ringing_factor: the iterations factor. Typically 1e-3, reduce it to 5e-4 or ever 1e-4 if you see ringing or periodic edges appear.
     :param refine: True or False, decide if the blur kernel should be refined through myopic deconvolution
@@ -552,25 +546,12 @@ def deblur_module(pic: np.ndarray,
 
     # Verify the input and scream like a virgin
     assert (blur_width >= 3), "The PSF kernel is too small !"
-    assert (blur_width % 2 != 0), "The dimensions of the PSF must be odd !"
 
     # Backup ICC color profile
     icc_profile = pic.info.get("icc_profile")
 
     # Assuming 8 bits input, we rescale the RGB values betweem 0 and 1
     pic = np.ascontiguousarray(pic, np.float32) / 255
-
-    # Make the picture dimensions odd to avoid ringing on the border of even pictures. We just replicate the last row/column
-    odd_vert = False
-    odd_hor = False
-
-    if pic.shape[0] % 2 == 0:
-        pic = pad_image(pic, ((1, 0), (0, 0)))
-        odd_vert = True
-
-    if pic.shape[1] % 2 == 0:
-        pic = pad_image(pic, ((0, 0), (0, 1)))
-        odd_hor = True
 
     # Choose the RL method
     methods_collection = {
@@ -586,7 +567,9 @@ def deblur_module(pic: np.ndarray,
             "gaussian": utils.gaussian_kernel(blur_width, blur_strength),
             "kaiser": utils.kaiser_kernel(blur_width, blur_strength),
             "auto": utils.uniform_kernel(blur_width),
+            "uniform": utils.uniform_kernel(blur_width),
             "poisson": utils.poisson_kernel(blur_width, blur_strength),
+            "lens": utils.lens_blur(blur_width)
         }
 
         # TODO http://yehar.com/blog/?p=1495
@@ -599,9 +582,23 @@ def deblur_module(pic: np.ndarray,
         print("\nWorking on a scaled picture")
         pic, psf, mask = make_preview(pic, psf, preview, mask)
 
+    # Make the picture dimensions odd to avoid ringing on the border of even pictures. We just replicate the last row/column
+    odd_vert = False
+    odd_hor = False
+
+    if pic.shape[0] % 2 == 0:
+        pic = pad_image(pic, ((1, 0), (0, 0)))
+        odd_vert = True
+        print("Padded vertically")
+
+    if pic.shape[1] % 2 == 0:
+        pic = pad_image(pic, ((0, 0), (1, 0)))
+        odd_hor = True
+        print("Padded horizontally")
+
     if denoise:
         # TODO : http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6572468
-        u = denoise_tv_chambolle(pic, weight=noise_reduction_factor, multichannel=True)
+        u = denoise_tv_chambolle(pic, weight=1 / noise_reduction_factor, multichannel=True)
     else:
         u = pic.copy()
 
@@ -610,18 +607,22 @@ def deblur_module(pic: np.ndarray,
         u, psf = process_pyramid(pic, u, psf, noise_reduction_factor, richardson_lucy, ringing_factor,
                                  quality=auto_quality)
 
+    print(psf)
+
     if refine:
         if mask:
             print("\n===== BLIND MASKED REFINEMENT =====")
-            u, psf = richardson_lucy(pic, u, psf, noise_reduction_factor, 10 * refine_quality, ringing_factor, mask=mask)
+            u, psf = richardson_lucy(pic, u, psf, noise_reduction_factor, int(10 * refine_quality), ringing_factor,
+                                     mask=mask)
 
         else:
             print("\n===== BLIND UNMASKED REFINEMENT =====")
-            u, psf = richardson_lucy(pic, u, psf, noise_reduction_factor, 10 * refine_quality, ringing_factor)
+            u, psf = richardson_lucy(pic, u, psf, noise_reduction_factor, int(10 * refine_quality), ringing_factor)
 
     if deblur_strength > 0:
         print("\n===== REGULAR DECONVOLUTION =====")
-        u, psf = richardson_lucy(pic, u, psf, noise_reduction_factor, deblur_strength * 10, ringing_factor, blind=False)
+        u, psf = richardson_lucy(pic, u, psf, noise_reduction_factor, int(deblur_strength * 10), ringing_factor,
+                                 blind=False)
 
 
     # Convert back into 8 bits RGB
@@ -629,10 +630,10 @@ def deblur_module(pic: np.ndarray,
 
     # if the picture has been padded to make it odd, unpad it to get the original size
     if odd_hor:
-        u = u[:, :-1, ...]
+        u = u[:, 1:, ...]
 
     if odd_vert:
-        u = u[:-1, :, ...]
+        u = u[1:, :, ...]
 
     if debug and mask:
         # Print the mask in debug mode
@@ -640,13 +641,15 @@ def deblur_module(pic: np.ndarray,
     else:
         utils.save(u, filename, dest_path, icc_profile=icc_profile)
 
+    return u, psf
+
 
 if __name__ == '__main__':
     source_path = "img"
     dest_path = "img/richardson-lucy-deconvolution"
 
     # Uncomment the following line if you run into a memory error
-    # CPU = 1
+    CPU = 1
 
     picture = "blured.jpg"
     with Image.open(join(source_path, picture)) as pic:
@@ -699,18 +702,19 @@ if __name__ == '__main__':
 
     picture = "DSC1168.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        mask = [631 + 512, 631 + 512 + 512, 2826 + 512, 2826 + 512 + 512]
+        """
+        mask = [631+256, 631 + 1024+256, 2826, 2826 + 1024]
 
-        deblur_module(pic, picture + "test-v7-gradient-alternatif-3-3", dest_path, "auto", 19, 30000, 0,
+        deblur_module(pic, picture + "test-v7", dest_path, "auto", i, 10000, 0,
                       mask=mask,
                       refine=True,
-                      refine_quality=2,
+                      refine_quality=1,
                       auto_quality=1,
                       preview=0.5,
                       debug=True,
                       method="best",
                       )
-
+        """
         pass
 
     picture = "IMG_9584-900.jpg"
@@ -718,7 +722,6 @@ if __name__ == '__main__':
         """
         mask = [201, 201+128, 167, 167+128]
         deblur_module(pic, picture + "test-v7-2", dest_path, "auto", 3, 30000, 0,
-                      denoise=False,
                       mask=mask,
                       refine=True,
                       refine_quality=2,
@@ -729,15 +732,16 @@ if __name__ == '__main__':
         """
         pass
 
-    picture = "153412.jpg"
+    picture = "153412-blur.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        """
-        deblur_module(pic, picture + "-blind-v11-best", dest_path, "auto", 5, 0.25, 1,
-                      refine=False,
-                      refine_quality=2,
-                      auto_quality=1,
-                      ringing_factor=1e-3,
+        mask = [3228, 3228 + 256, 1484, 1484 + 256]
+        deblur_module(pic, picture + "-blind-v11-best-2", dest_path, "auto", 33, 15000, 0,
+                      # mask=mask,
+                      refine=True,
+                      # refine_quality=1,
+                      preview=1,
+                      auto_quality=2,
                       method="best",
                       debug=True)
-        """
+
         pass
