@@ -5,19 +5,16 @@ Created on 29 oct. 2017
 
 '''
 
+import multiprocessing
 from os.path import join
 
 import numpy as np
-import pyfftw
-import scipy
 from PIL import Image
-from scipy.signal import convolve
+from numba import jit, float32, int16
 from skimage.restoration import denoise_tv_chambolle
 
-pyfftw.interfaces.cache.enable()
-scipy.signal.signaltools.fftn = pyfftw.interfaces.scipy_fftpack.fftn
-scipy.signal.signaltools.ifftn = pyfftw.interfaces.scipy_fftpack.ifftn
-scipy.fftpack = pyfftw.interfaces.scipy_fftpack
+import richardson_lucy_deconvolution as rl
+from lib import utils
 
 
 def auto_denoise(image, k, b):
@@ -31,7 +28,7 @@ def auto_denoise(image, k, b):
     """
     # Normalized for 8 bits JPGS
     image = np.ascontiguousarray(image, np.float32) / 255
-    TV = divTV(image)
+    TV = rl.divTV(image)
     MTV = np.linalg.norm(TV / TV.size)
 
     sigma = estimate_sigma(image, multichannel=True)
@@ -118,30 +115,63 @@ for k = 1:Nit
     cost(k) = 0.5*sum(abs(x-y).^2) + lam*sum(abs(Dx)); % cost function value
 end"""
 
+
+@jit(float32[:](float32[:], float32, int16), cache=True, nogil=True)
+def _denoise_MM(image, lambd, iterations):
+    # http://ai2-s2-pdfs.s3.amazonaws.com/1d84/0981a4623bcd26985300e6aa922266dab7d5.pdf
+    tau = 1e-4
+    u = image.copy()
+
+    for it in range(iterations):
+        ut = u.copy()
+        eps = rl.best_param(u)
+
+        for itt in range(5):
+            # Image update
+            gradu = lambd / 2 * np.abs(image - u) + rl.gradTVEM(u, ut, eps, tau)
+            dt = 1e-3 * (np.amax(u)) / np.amax(np.abs(gradu) + 1e-31)
+            u -= gradu * dt
+            np.clip(u, 0, 1, out=u)
+
+    return image
+
+
+@utils.timeit
+@jit(cache=True)
+def denoise_module(pic: np.ndarray, filename: str, dest_path: str, lambd, iterations, effect_strength=1):
+    # Backup ICC color profile
+    icc_profile = pic.info.get("icc_profile")
+
+    # Assuming 8 bits input, we rescale the RGB values betweem 0 and 1
+    image = np.ascontiguousarray(pic, np.float32) / 255
+
+    pool = multiprocessing.Pool(processes=3)
+    output = pool.starmap(_denoise_MM,
+                          [(image[..., 0], lambd, iterations),
+                           (image[..., 1], lambd, iterations),
+                           (image[..., 2], lambd, iterations),
+                           ]
+                          )
+
+    u = np.dstack((output[0], output[1], output[2]))
+    pool.close()
+
+    # Convert back into 8 bits RGB
+    u = (image - effect_strength * (image - u)) * 255
+
+    utils.save(u, filename, dest_path, icc_profile=icc_profile)
+
+
 if __name__ == '__main__':
     source_path = "img"
     dest_path = "img/TV-denoise"
 
     picture = "Shoot-Sienna-Hayes-0042-_DSC0284-sans-PHOTOSHOP-WEB.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        # deblur_module(pic, "test-v6", "auto", 19, 0.005, 0, 3,
-        #               #mask=[318, 357 + 800, 357, 357 + 440],
-        #               refine=True,
-        #               backvsmask_ratio=0,
-        #               debug=True,
-        #               iterations_damping=1.2,
-        #               amplify_factor=1
-        #               )
+        # denoise_module(pic, picture + "test-v7-noise", dest_path, 0.005, 100000)
         pass
 
     picture = "DSC1168.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        # deblur_module(pic, "test-v6", "auto", 0, 0.005, 5, 33,
-        # mask=[1143, 1143 + 512, 3338, 3338 + 512],
-        #              refine=False,
-        # backvsmask_ratio=0,
-        # denoise=True,
-        # debug=True)
-
-        # image, lambd = auto_denoise(pic, 0.6, 0.001)
+        denoise_module(pic, picture + "test-v7-noise", dest_path, 0.00001, 100000)
         pass

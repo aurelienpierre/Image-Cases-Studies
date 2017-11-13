@@ -1,260 +1,420 @@
-mport
-scipy
-from scipy.signal import convolve
+# cython: boundscheck=False
+# cython: cdivision=True
+# cython: wraparound=False
+# cython: profile=False
 
-import numpy as np
-cimport numpy as np
+from __future__ import division
 
 cimport
-
 numpy as np
 import numpy as np
-import scipy
-from cython.parallel import parallel, prange
-from scipy.signal import convolve
+import scipy.signal
+from cython.parallel cimport
+
+parallel, prange
 
 try:
     import pyfftw
-
     pyfftw.interfaces.cache.enable()
     scipy.fftpack = pyfftw.interfaces.scipy_fftpack
-
+    a = np.empty((900, 600))
+    print("Profiling the system for performance…")
+    pyfftw.builders.rfft2(a, s=(900, 600), overwrite_input=True, planner_effort='FFTW_MEASURE', threads=8,
+                          auto_align_input=True, auto_contiguous=True, avoid_copy=False)
+    print("Profiling done !")
 except:
     pass
+
+
+cdef extern from "stdlib.h":
+    float abs(float x) nogil
+
 
 DTYPE = np.float32
 ctypedef np.float32_t DTYPE_t
 
-cdef best_epsilon(image, lambd, p=0.5):
-    """
-    Find the minimum acceptable epsilon to avoid a degenerate constant solution
 
-    Reference : http://www.cvg.unibe.ch/publications/perroneIJCV2015.pdf
-    :param image:
-    :param lambd:
-    :param p:
-    :return:
-    """
-    grad_image = np.gradient(image, edge_order=2)
-    norm_grad_image = np.sqrt(grad_image[0] ** 2 + grad_image[1] ** 2)
-    omega = 2 * lambd * np.amax(image - image.mean()) / (p * image.size)
-    epsilon = np.sqrt(norm_grad_image.mean() / (np.exp(omega) - 1))
-    return np.maximum(epsilon, 1e-31)
+cdef void shift(float[:, :] u, float[:, :] us, int dy, int dx) nogil:
+    cdef int M = u.shape[0]
+    cdef int N = u.shape[1]
 
-cdef center_diff(np.ndarray[DTYPE_t, ndim=2] u, int dx, int dy, DTYPE_t epsilon, DTYPE_t p):
+    cdef int i_min = max([-dy, 0])
+    cdef int i_max = min([M, M-dy])
+
+    cdef int j_min = max([-dx, 0])
+    cdef int j_max = min([N, N-dx])
+
+    cdef int i_min_1 = max([dy, 0])
+    cdef int i_max_1 = min([dy+M, M])
+
+    cdef int j_min_1 = max([dx, 0])
+    cdef int j_max_1 = min([dx+N, N])
+
+    cdef float[:, :] begin = u[i_min_1:i_max_1, j_min_1:j_max_1]
+    cdef float[:, :] end = u[i_min:i_max, j_min:j_max]
+    cdef float[:, :] diff = us[i_min:i_max, j_min:j_max]
+
+    M = diff.shape[0]
+    N = diff.shape[1]
+
+    cdef int i, j
+
+    with parallel(num_threads=8):
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                diff[i, j] = begin[i, j] - end[i, j]
+
+
+cdef void TV_norm_p(float[:, :] ux, float[:, :] uy, float[:, :] output, float epsilon, float p) nogil:
+    cdef int M = ux.shape[0]
+    cdef int N = ux.shape[1]
+    cdef int i, j
+    cdef float inv_p = 1./p
+    cdef float eps = epsilon**p
+
+    with parallel(num_threads=8):
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                output[i, j] += (abs(ux[i, j])** p + abs(uy[i, j])** p + eps) **inv_p
+
+
+cdef void TV_norm_one(float[:, :] ux, float[:, :] uy, float[:, :] output, float epsilon) nogil:
+    cdef int M = ux.shape[0]
+    cdef int N = ux.shape[1]
+    cdef int i, j
+
+    with parallel(num_threads=8):
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                output[i, j] += abs(ux[i, j]) + abs(uy[i, j]) + epsilon
+
+
+cdef void TV_norm(float[:, :] ux, float[:, :] uy, float[:, :] output, float epsilon, float p) nogil:
+    if p == 1:
+        TV_norm_one(ux, uy, output, epsilon)
+    else:
+        TV_norm_p(ux, uy, output, epsilon, p)
+
+
+cpdef void center_diff(float[:, :] u, float[:, :] TV, int di, int dj, float epsilon, float p):
     # Centered local difference
-    cdef np.ndarray ux, uy, TV, du
-    ux = np.roll(u, (dx, 0), axis=(1, 0)) - np.roll(u, (0, 0), axis=(1, 0))
-    uy = np.roll(u, (0, dy)) - np.roll(u, (0, 0))
-    TV = (np.abs(ux) ** p + np.abs(uy) ** p + epsilon) ** (1 / p)
-    du = - ux - uy
+    cdef float[:, :]  ux =  np.zeros_like(u)
+    cdef float[:, :]  uy =  np.zeros_like(u)
+    cdef int M = u.shape[0]
+    cdef int N = u.shape[1]
+    cdef int i, j
 
-    return [TV, du]
+    with nogil, parallel(num_threads=8):
 
-cdef x_diff(np.ndarray[DTYPE_t, ndim=2] u, int dx, int dy, DTYPE_t epsilon, DTYPE_t p):
-    # x-shifted local difference
-    cdef np.ndarray ux, uy, TV, du
-    ux = np.roll(u, (0, 0), axis=(1, 0)) - np.roll(u, (-dx, 0), axis=(1, 0))
-    uy = np.roll(u, (-dx, dy), axis=(1, 0)) - np.roll(u, (-dx, 0), axis=(1, 0))
-    TV = (np.abs(ux) ** p + np.abs(uy) ** p + epsilon) ** (1 / p)
-    du = ux
+        shift(u, ux, di, 0)
+        shift(u, uy, 0, dj)
 
-    return [TV, du]
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                ux[i, j] -= u[i, j]
 
-cdef y_diff(np.ndarray[DTYPE_t, ndim=2] u, int dx, int dy, DTYPE_t epsilon, DTYPE_t p):
-    # y shifted local difference
-    cdef np.ndarray ux, uy, TV, du
-    ux = np.roll(u, (dx, -dy), axis=(1, 0)) - np.roll(u, (0, -dy), axis=(1, 0))
-    uy = np.roll(u, (0, 0), axis=(1, 0)) - np.roll(u, (0, -dy), axis=(1, 0))
-    TV = (np.abs(ux) ** p + np.abs(uy) ** p + epsilon) ** (1 / p)
-    du = uy
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                uy[i, j] -= u[i, j]
 
-    return [TV, du]
+        # for i in prange(M, schedule="guided"):
+        #     for j in range(N):
+        #         du[i, j] -= ux[i, j] + uy[i, j]
 
-cpdef np.ndarray[DTYPE_t, ndim=2] gradTVEM(np.ndarray[DTYPE_t, ndim=2] u, np.ndarray[DTYPE_t, ndim=2] ut,
-                                           DTYPE_t epsilon=1e-3, DTYPE_t tau=1e-1, DTYPE_t p=0.5):
-    """Compute the Total Variation norm of the Minimization-Maximization problem
+        TV_norm(ux, uy, TV, epsilon, p)
 
-    :param ndarray image: Input array of pixels
-    :return: div(Total Variation regularization term) as described in [3]
-    :rtype: ndarray
 
-    We use general P-norm instead : https://www.elen.ucl.ac.be/Proceedings/esann/esannpdf/es2014-153.pdf
+cpdef void i_diff(float[:, :]  u, float[:, :] TV, int di, int dj, float epsilon, float p):
+    # line-shifted local difference
+    cdef float[:, :]  ux =  np.zeros_like(u)
+    cdef float[:, :]  uy =  np.zeros_like(u)
+    cdef int M = u.shape[0]
+    cdef int N = u.shape[1]
+    cdef int i, j
 
-    0.5-norm shows better representation of discontinuities : https://link.springer.com/chapter/10.1007/978-3-319-14612-6_10
+    with nogil, parallel(num_threads=8):
 
+        shift(u, ux, -di, 0)
+        shift(u, uy, -di, dj)
+
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                uy[i, j] -= ux[i, j]
+
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                ux[i, j] = u[i, j] - ux[i, j]
+
+        # for i in prange(M, schedule="guided"):
+        #     for j in range(N):
+        #         du[i, j] += ux[i, j]
+
+        TV_norm(ux, uy, TV, epsilon, p)
+
+
+cpdef void j_diff(float[:, :]  u, float[:, :] TV, int di, int dj, float epsilon, float p):
+    # column-shifted local difference
+    cdef float[:, :]  ux =  np.zeros_like(u)
+    cdef float[:, :]  uy =  np.zeros_like(u)
+    cdef int M = u.shape[0]
+    cdef int N = u.shape[1]
+    cdef int i, j
+
+    with nogil, parallel(num_threads=8):
+
+        shift(u, uy, 0, -dj)
+        shift(u, ux, di, -dj)
+
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                ux[i, j] -= uy[i, j]
+
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                uy[i, j] = u[i, j] - uy[i, j]
+
+        # for i in prange(M, schedule="guided"):
+        #     for j in range(N):
+        #         du[i, j] += uy[i, j]
+
+        TV_norm(ux, uy, TV, epsilon, p)
+
+
+cdef void divTV(float[:, :] u, float[:, :] TV, float epsilon=0, float p=1):
+    # cdef float[:, :] TV = np.zeros_like(u)
+    # cdef float[:, :] du = np.zeros_like(u)
+    cdef int i, j, di, dj
+    cdef list shifts = [[1, 1, center_diff],
+                    [-1, 1, center_diff],
+                    [1,-1, center_diff],
+                    [-1, -1, center_diff],
+                    [1, 1, i_diff],
+                    [-1, 1, i_diff],
+                    [1,-1, i_diff],
+                    [-1, -1, i_diff],
+                    [1, 1, j_diff],
+                    [-1, 1, j_diff],
+                    [1,-1, j_diff],
+                    [-1, -1, j_diff]
+                   ]
+
+    with nogil, parallel(num_threads=8):
+        for i in prange(12, schedule="guided"):
+            with gil:
+                di = shifts[i][0]
+                dj = shifts[i][1]
+                method = shifts[i][2]
+                method(u, TV, di, dj, epsilon, p)
+
+    # return TV
+
+
+cdef float[:, :] gradTVEM(float[:, :] u, float[:, :] ut, float epsilon=1e-3, float tau=1e-3, float p=1):
+    cdef float[:, :] out
+    cdef float[:, :] TV = np.zeros_like(u)
+    # cdef float[:, :] TV, du
+    cdef int M = u.shape[0]
+    cdef int N = u.shape[1]
+    cdef int i, j
+
+    divTV(u, TV, epsilon=epsilon, p=p)
+    out = TV
+
+    # with nogil, parallel(num_threads=64):
+    #     for i in prange(M, schedule="guided"):
+    #         for j in range(N):
+    #             out[i, j] += du[i, j] / TV[i, j]
+
+    divTV(ut, TV, epsilon=epsilon, p=p)
+
+    with nogil, parallel(num_threads=8):
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                out[i, j] /= (TV[i, j] + tau)
+                # out[i, j] /= 4
+
+
+    return out
+
+
+cdef float best_param(np.ndarray[DTYPE_t, ndim=2] image, float lambd, float p=1):
+    """
+    Determine by a statistical method the best lambda parameter. [1]
+
+    Find the minimum acceptable epsilon to avoid a degenerate constant solution [2]
+
+    Reference :
+    .. [1] https://pdfs.semanticscholar.org/1d84/0981a4623bcd26985300e6aa922266dab7d5.pdf
+    .. [2] http://www.cvg.unibe.ch/publications/perroneIJCV2015.pdf
+
+    :param image:
+    :return:
     """
 
-    # Displacement vectors of the shifted differences
-    cdef np.ndarray deltas
-    deltas = np.array([[1, 1],
-                       [-1, 1],
-                       [1, -1],
-                       [-1, -1]])
+    cdef list grad = np.gradient(image)
+    cdef float grad_std = np.linalg.norm(image - image.mean()) / image.size
+    cdef float grad_mean = np.linalg.norm(grad) / image.size
 
-    # 2-axis shifts
-    cdef np.ndarray u_copy = np.zeros_like(u)
-    cdef np.ndarray shifts
-    shifts = np.array([u_copy,  # Centered
-                       u_copy,  # x shifted
-                       u_copy  # y shifted
-                       ])
+    # lambd = noise_reduction_factor * np.sum(np.sqrt(divTV(image, p=1)))**2 / (-np.log(np.std(image)**2) * * 2 * np.pi)
 
-    # Methods for local differences calculation
-    diffs = [center_diff, x_diff, y_diff]
+    cdef float omega = 2 * lambd * grad_std / p
+    cdef float epsilon = np.sqrt(grad_mean / (np.exp(omega) - 1))
 
-    # Initialization of the outputs
-    cdef np.ndarray du = np.array([shifts, shifts, shifts, shifts])
-    cdef np.ndarray TV = du.copy()
-    cdef np.ndarray TVt = du.copy()
+    # print(lambd, epsilon, p)
+    return epsilon * 1.001
 
-    cdef int dx, dy, step, i
 
-    with nogil, parallel():
-        for i in prange(4):
-            # for each displacement vector
-            for step in prange(3):
-                # for each axial shift
-                with gil:
-                    dx = deltas[i, 0]
-                    dy = deltas[i, 1]
-                    TV[i, step], du[i, step] = diffs[step](u, dy, dy, epsilon, p)
-                    TVt[i, step], void = diffs[step](ut, dx, dy, epsilon, p)
-
-    grad = np.sum(du / TV / (tau + TVt), axis=(0, 1))
-
-    return grad / 4
-
-def divTV(image):
-    """Compute the Total Variation norm
-
-    :param ndarray image: Input array of pixels
-    :return: div(Total Variation regularization term) as described in [3]
-    :rtype: ndarray
-
+cpdef np.ndarray _normalize_kernel(np.ndarray kern):
     """
-    grad = np.zeros_like(image)
-
-    # Forward differences
-    # fx = np.roll(image, 1, axis=1) - image
-    fx = np.pad(image, ((0, 0), (1, 0)), mode="edge")[:, 1:] - image
-    # fy = np.roll(image, 1, axis=0) - image
-    fy = np.pad(image, ((1, 0), (0, 0)), mode="edge")[1:, :] - image
-    grad += (fx + fy) / np.maximum(1e-3, np.sqrt(fx ** 2 + fy ** 2))
-
-    # Backward x and crossed y differences
-    # fx = image - np.roll(image, -1, axis=1)
-    fx = np.pad(image, ((0, 0), (0, 1)), mode="edge")[:, :-1] - image
-    # fy = np.roll(image, (-1, 1), axis=(0, 1)) - np.roll(image, -1, axis=0)
-    fy = np.pad(image, ((0, 1), (1, 0)), mode="edge")[:-1, 1:] - np.pad(image, ((1, 0), (0, 0)), mode="edge")[1:, :]
-    grad -= fx / np.maximum(1e-3, np.sqrt(fx ** 2 + fy ** 2))
-
-    # Backward y and crossed x differences
-    #fy = image - np.roll(image, -1, axis=0)
-    fy = np.pad(image, ((0, 1), (0, 0)), mode="edge")[:-1, :] - image
-    #fx = np.roll(image, (1, -1), axis=(0, 1)) - np.roll(image, -1, axis=1)
-    fx = np.pad(image, ((1, 0), (0, 1)), mode="edge")[1:, :-1] - np.pad(image, ((0, 0), (0, 1)), mode="edge")[:, 1:]
-    grad -= fy / np.maximum(1e-3, np.sqrt(fy ** 2 + fx ** 2))
-
-    return grad.astype(np.float32)
-
-def _normalize_kernel(kern):
+    This function is not Cythonized since it can take 2D and 3D outputs and works on small kernels
+    
+    :param kern: 
+    :return: 
+    """
+    # Make the negative values = 0
     kern[kern < 0] = 0
+    # Make the sum of the kernel elements = 1
     kern /= np.sum(kern, axis=(0, 1))
-    return kern
+    return kern.astype(np.float32)
 
-def _convolve_image(u, image, psf):
-    error = np.ascontiguousarray(convolve(u, psf, "valid"), np.float32)
-    error -= image
-    return convolve(error, np.rot90(psf, 2), "full")
 
-def _convolve_kernel(u, image, psf):
-    error = np.ascontiguousarray(convolve(u, psf, "valid"), np.float32)
-    error -= image
-    return convolve(np.rot90(u, 2), error, "valid")
+from pyfftw.builders import rfft2, irfft2
 
-def _update_image_PAM(u, image, psf, lambd, epsilon=5e-3):
-    gradu, TV = divTV(u)
-    gradu /= TV
-    gradu *= lambd
-    gradu += _convolve_image(u, image, psf)
-    weight = epsilon * np.amax(u) / np.amax(np.abs(gradu))
-    u -= weight * gradu
-    return u
+cdef np.ndarray[DTYPE_t, ndim=2] ftconvolve(np.ndarray[DTYPE_t, ndim=2] a, np.ndarray[DTYPE_t, ndim=2] b, str domain):
+    cdef int MK =  b.shape[0]
+    cdef int NK = b.shape[1]
+    cdef int M = a.shape[0]
+    cdef int N = b.shape[1]
 
-def _loop_update_image_PAM(u, image, psf, lambd, iterations, epsilon):
-    for itt in range(iterations):
-        u = _update_image_PAM(u, image, psf, lambd, epsilon)
-        lambd *= 0.99
-    return u, psf
+    cdef np.ndarray[np.complex64_t, ndim=2] ahat, bhat, chat
+    cdef np.ndarray[DTYPE_t, ndim=2] c
 
-def _update_kernel_PAM(u, image, psf, epsilon):
-    grad_psf = _convolve_kernel(u, image, psf)
-    weight = epsilon * np.amax(psf) / np.maximum(1e-31, np.amax(np.abs(grad_psf)))
-    psf -= weight * grad_psf
-    psf = _normalize_kernel(psf)
-    return psf
+    ahat = rfft2(a, s=(M + MK -1, N + NK -1), threads=8).output_array
+    bhat = rfft2(a, s=(M + MK -1, N + NK -1), threads=8).output_array
+    chat = ahat * bhat
 
-def _loop_update_both_PAM(u, image, psf, lambd, iterations, mask_u, mask_i, epsilon):
-    """
-    Utility function to launch the actual deconvolution in parallel
-    :param u:
-    :param image:
-    :param psf:
-    :param lambd:
-    :param iterations:
-    :param mask_u:
-    :param mask_i:
-    :param epsilon:
-    :return:
-    """
-    for itt in range(iterations):
-        u = _update_image_PAM(u, image, psf, lambd, epsilon)
-        psf = _update_kernel_PAM(u[mask_u[0]:mask_u[1], mask_u[2]:mask_u[3]],
-                                 image[mask_i[0]:mask_i[1], mask_i[2]:mask_i[3]], psf, epsilon)
-        lambd *= 0.99
-    return u, psf
+    cdef int Y, X
 
-def _update_both_MM(u, image, psf, lambd, iterations, mask_u, mask_i, epsilon):
-    """
-    Utility function to launch the actual deconvolution in parallel
-    :param u:
-    :param image:
-    :param psf:
-    :param lambd:
-    :param iterations:
-    :param mask_u:
-    :param mask_i:
-    :param epsilon:
-    :return:
-    """
-    tau = 1e-3
-    lambd = 1 / lambd
+    if domain =="same":
+        Y = M
+        X = N
+    elif domain == "valid":
+        Y = M - MK
+        X = N - NK
 
-    k_step = 1e-3
-    u_step = 1e-3
+    print(chat)
+
+    c = (irfft2(chat, s=(Y, X), threads=8).output_array).astype(DTYPE)
+
+    return c
+
+cdef convolve = scipy.signal.fftconvolve
+
+cdef np.ndarray[DTYPE_t, ndim=2] _convolve_image(np.ndarray[DTYPE_t, ndim=2] u, np.ndarray[DTYPE_t, ndim=2] image, np.ndarray[DTYPE_t, ndim=2] psf):
+
+    cdef np.ndarray[DTYPE_t, ndim=2] error
+    error = convolve(u, psf, "valid").astype(DTYPE)
+
+    cdef int M = image.shape[0]
+    cdef int N = image.shape[1]
+    cdef int i, j
+
+    with nogil, parallel(num_threads=8):
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                error[i, j] -= image[i, j]
+
+    error = convolve(error, np.rot90(psf, 2), "full").astype(DTYPE)
+
+    return error
+
+
+cdef np.ndarray[DTYPE_t, ndim=2] _convolve_kernel(np.ndarray[DTYPE_t, ndim=2] u, np.ndarray[DTYPE_t, ndim=2] image, np.ndarray[DTYPE_t, ndim=2] psf):
+
+    cdef np.ndarray[DTYPE_t, ndim=2] error
+    error = convolve(u, psf, "valid").astype(DTYPE)
+
+    cdef int M = image.shape[0]
+    cdef int N = image.shape[1]
+    cdef int i, j
+
+    with nogil, parallel(num_threads=8):
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                error[i, j] -= image[i, j]
+
+    error = convolve(np.rot90(u, 2), error, "valid").astype(DTYPE)
+
+    return error
+
+
+cdef void _update_both_MM(np.ndarray[DTYPE_t, ndim=2] u, np.ndarray[DTYPE_t, ndim=2] image, np.ndarray[DTYPE_t, ndim=2] psf,
+                    float lambd, int iterations, list mask_u, list mask_i, float epsilon, int blind, float p):
+
+    cdef float k_step = epsilon
+    cdef float u_step = epsilon
+
+    cdef np.ndarray[DTYPE_t, ndim=2] u_masked = u[mask_u[0]:mask_u[1], mask_u[2]:mask_u[3]]
+    cdef np.ndarray[DTYPE_t, ndim=2] im_masked = image[mask_i[0]:mask_i[1], mask_i[2]:mask_i[3]]
+
+    cdef np.ndarray[DTYPE_t, ndim=2] ut
+    cdef float eps, dt, alpha, max_gradu, abs_gradu
+
+    cdef np.ndarray[DTYPE_t, ndim=2] gradu, gradk, im_convo
+    cdef float[:, :] gradV
+    gradk = np.zeros_like(psf)
+
+    cdef int M = image.shape[0]
+    cdef int N = image.shape[1]
+    cdef int MK = psf.shape[0]
+    cdef int NK = psf.shape[1]
+    cdef int i, j
 
     for it in range(iterations):
-        ut = u
+        ut = u.copy()
+        lambd = min([lambd, 50000])
+        eps = best_param(u, lambd, p=p)
+
         for itt in range(5):
             # Image update
-            epsilon = best_epsilon(u, lambd) * 1.001
-            gradu = lambd * _convolve_image(u, image, psf) + gradTVEM(u, ut, epsilon, tau)
-            dt = u_step * (np.amax(u) + 1 / u.size) / np.amax(np.abs(gradu) + 1e-31)
-            u -= dt * gradu
+            lambd = min([lambd, 50000])
 
-            # PSF update
-            gradk = _convolve_kernel(u[mask_u[0]:mask_u[1], mask_u[2]:mask_u[3]],
-                                     image[mask_i[0]:mask_i[1], mask_i[2]:mask_i[3]], psf)
-            alpha = k_step * (np.amax(psf) + 1 / psf.size) / np.amax(np.abs(gradk) + 1e-31)
-            psf -= alpha * gradk
-            psf = _normalize_kernel(psf)
+            gradV = gradTVEM(u, ut, eps, eps, p=p)
+            im_convo = _convolve_image(u, image, psf)
+            gradu = np.zeros_like(u)
+            max_gradu = 0
 
-        lambd *= 1.001
+            with nogil, parallel(num_threads=8):
+                for i in prange(M, schedule="guided"):
+                    for j in range(N):
+                        gradu[i, j] = lambd * im_convo[i, j] + gradV[i, j]
 
-    return u.astype(np.float32), psf
+            dt = u_step * (np.amax(u) + 1 / (M*N)) / (np.amax(np.abs(gradu)) + 1e-31)
 
-def pad_image(image: np.ndarray, pad: tuple, mode="edge"):
+            with nogil, parallel(num_threads=8):
+                for i in prange(M, schedule="guided"):
+                    for j in range(N):
+                        u[i, j] -= dt * gradu[i, j]
+
+                        # Clipping of out-of-range values
+                        if u[i, j] > 1:
+                            u[i, j] = 1
+
+                        elif u[i, j] < 0:
+                            u[i, j] = 0
+
+            if blind:
+                # PSF update
+                gradk = _convolve_kernel(u_masked, im_masked, psf)
+                alpha = k_step * (np.amax(psf) + 1 / (MK*NK)) / np.amax(np.abs(gradk) + 1e-31)
+                psf -= alpha * gradk
+                psf = _normalize_kernel(psf)
+
+            lambd *= 1.001
+
+        print("%i/%i iterations completed" % (it * 5, iterations*5))
+
+cpdef pad_image(image, pad, mode="edge"):
     """
     Pad an 3D image with a free-boundary condition to avoid ringing along the borders after the FFT
 
@@ -269,104 +429,13 @@ def pad_image(image: np.ndarray, pad: tuple, mode="edge"):
     u = np.dstack((R, G, B))
     return np.ascontiguousarray(u, np.float32)
 
-def unpad_image(image: np.ndarray, pad: tuple):
+
+cpdef unpad_image(image, pad):
     return np.ascontiguousarray(image[pad[0]:-pad[0], pad[1]:-pad[1], ...], np.ndarray)
 
-def richardson_lucy_PAM(image: np.ndarray,
-                        u: np.ndarray,
-                        psf: np.ndarray,
-                        lambd: float,
-                        iterations: int,
-                        epsilon=1e-3,
-                        mask=None,
-                        blind=True) -> np.ndarray:
-    """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization by Projected Alternating Minimization.
-    This is known to give a close-enough sharp image but never give an accurate sharp image.
 
-    Based on Matlab sourcecode of D. Perrone and P. Favaro: "Total Variation Blind Deconvolution:
-    The Devil is in the Details", IEEE Conference on Computer Vision
-    and Pattern Recognition (CVPR), 2014: http://www.cvg.unibe.ch/dperrone/tvdb/
-
-    :param ndarray image : Input 3 channels image.
-    :param ndarray psf : The point spread function.
-    :param int iterations : Number of iterations.
-    :param float lambd : Lambda parameter of the total Variation regularization
-    :param bool blind : Determine if it is a blind deconvolution is launched, thus if the PSF is updated
-        between two iterations
-    :returns ndarray: deconvoluted image
-
-    References
-    ----------
-    .. [1] http://en.wikipedia.org/wiki/Richardson%E2%80%93Lucy_deconvolution
-    .. [2] http://www.cvg.unibe.ch/dperrone/tvdb/perrone2014tv.pdf
-    .. [3] http://hal.archives-ouvertes.fr/docs/00/43/75/81/PDF/preprint.pdf
-    .. [4] http://znah.net/rof-and-tv-l1-denoising-with-primal-dual-algorithm.html
-    .. [5] http://www.cs.sfu.ca/~pingtan/Papers/pami10_deblur.pdf
-    """
-
-    # image dimensions
-    MK, NK, CK = psf.shape
-    M, N, C = image.shape
-
-    # Verify the input and scream like a virgin
-    assert (CK == C), "Dimensions of the PSF and of the image don't match !"
-    assert (MK == NK), "The PSF must be square"
-    assert (MK >= 3), "The dimensions of the PSF are too small !"
-    assert (M > MK and N > NK), "The size of the picture is smaller than the PSF !"
-    assert (MK % 2 != 0), "The dimensions of the PSF must be odd !"
-
-    # Prepare the picture for FFT convolution by padding it with pixels that will be removed
-    pad = np.floor(MK / 2).astype(int)
-    u = pad_image(u, (pad, pad))
-
-    print("working on image :", u.shape)
-
-    # Adjust the coordinates of the masks with the padding dimensions
-    if mask == None:
-        mask_i = [0, M + 2 * pad, 0, N + 2 * pad]
-        mask_u = [0, M + 2 * pad, 0, N + 2 * pad]
-    else:
-        mask_u = [mask[0] - pad, mask[1] + pad, mask[2] - pad, mask[3] + pad]
-        mask_i = mask
-
-    if blind:
-        # Blind deconvolution with PSF refinement
-        output = _loop_update_both_PAM,
-        [(u[..., 0], image[..., 0], psf[..., 0], lambd, iterations, mask_u, mask_i, epsilon),
-         (u[..., 1], image[..., 1], psf[..., 1], lambd, iterations, mask_u, mask_i, epsilon),
-         (u[..., 2], image[..., 2], psf[..., 2], lambd, iterations, mask_u, mask_i, epsilon),
-         ]
-        )
-
-        u = np.dstack((output[0][0], output[1][0], output[2][0]))
-        psf = np.dstack((output[0][1], output[1][1], output[2][1]))
-
-        else:
-        # Regular deconvolution without PSF refinement
-        output = pool.starmap(_loop_update_image_PAM,
-        [(u[..., 0], image[..., 0], psf[..., 0], lambd, iterations, epsilon),
-         (u[..., 1], image[..., 1], psf[..., 1], lambd, iterations, epsilon),
-         (u[..., 2], image[..., 2], psf[..., 2], lambd, iterations, epsilon),
-         ]
-        )
-
-        u = np.dstack((output[0][0], output[1][0], output[2][0]))
-        psf = np.dstack((output[0][1], output[1][1], output[2][1]))
-
-        print(iterations, "iterations")
-        u = unpad_image(u, (pad, pad))
-        pool.close()
-
-return u.astype(np.float32), psf
-
-def richardson_lucy_MM(image: np.ndarray,
-                       u: np.ndarray,
-                       psf: np.ndarray,
-                       lambd: float,
-                       iterations: int,
-                       epsilon=5e-3,
-                       mask=None,
-                       blind=True) -> np.ndarray:
+cdef list _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,
+                              float lambd, int iterations, float epsilon, list mask=None, int blind=True, float p=1):
     """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization by the Minimization-Maximization
     algorithm. This is known to give the sharp image in more than 50 % of the cases.
 
@@ -395,13 +464,15 @@ def richardson_lucy_MM(image: np.ndarray,
     """
 
     # image dimensions
-    MK, NK, C = psf.shape
-    M, N, C = image.shape
-    pad = np.floor(MK / 2).astype(int)
+    cdef int MK = psf.shape[0]
+    cdef int NK = psf.shape[1]
 
-    print("working on image :", u.shape)
+    cdef M = image.shape[0]
+    cdef N = image.shape[1]
 
-    u = pad_image(u, (pad, pad))
+    cdef int pad = np.floor(MK / 2).astype(int)
+
+    u = pad_image(u, (pad, pad)).astype(np.float32)
 
     if mask == None:
         mask_i = [0, M + 2 * pad, 0, N + 2 * pad]
@@ -410,16 +481,16 @@ def richardson_lucy_MM(image: np.ndarray,
         mask_u = [mask[0] - pad, mask[1] + pad, mask[2] - pad, mask[3] + pad]
         mask_i = mask
 
-    iterations = int(np.maximum(iterations / 5, 2))
-
     cdef int i
 
-    with nogil, parallel():
-        for i in prange(30):
+    with nogil, parallel(num_threads=3):
+        for i in prange(3, schedule="guided"):
             with gil:
-                u[..., i], spf[..., i] = _update_both_MM(u[..., i], image[..., i], psf[..., i], lambd, iterations,
-                                                         mask_u, mask_i, epsilon)
+                _update_both_MM(u[..., i], image[..., i], psf[..., i], lambd, iterations, mask_u, mask_i, epsilon, blind, p)
 
-    u = unpad_image(u, (pad, pad))
-    print(iterations * 5, "iterations")
-    return u.astype(np.float32), psf
+    u = u[pad:-pad, pad:-pad, ...]
+
+    return [u.astype(np.float32), psf]
+
+def richardson_lucy_MM(image, u, psf, lambd, iterations, epsilon, mask=None, blind=True, p=1):
+    return  _richardson_lucy_MM(image, u, psf, lambd, iterations, epsilon, mask=None, blind=True, p=1)

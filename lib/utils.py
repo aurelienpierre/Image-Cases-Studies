@@ -355,37 +355,7 @@ def divTV(image):
     return grad.astype(np.float32)
 
 
-@jit(float32[:](float32[:], float32, float32, float32, float32), cache=True, nogil=True)
-def center_diff(u, dx, dy, epsilon, p):
-    # Centered local difference
-    ux = np.roll(u, (dx, 0), axis=(1, 0)) - np.roll(u, (0, 0), axis=(1, 0))
-    uy = np.roll(u, (0, dy)) - np.roll(u, (0, 0))
-    TV = (np.abs(ux) ** p + np.abs(uy) ** p + epsilon) ** (1 / p)
-    du = - ux - uy
 
-    return TV, du
-
-
-@jit(float32[:](float32[:], float32, float32, float32, float32), cache=True, nogil=True)
-def x_diff(u, dx, dy, epsilon, p):
-    # x-shifted local difference
-    ux = np.roll(u, (0, 0), axis=(1, 0)) - np.roll(u, (-dx, 0), axis=(1, 0))
-    uy = np.roll(u, (-dx, dy), axis=(1, 0)) - np.roll(u, (-dx, 0), axis=(1, 0))
-    TV = (np.abs(ux) ** p + np.abs(uy) ** p + epsilon) ** (1 / p)
-    du = ux
-
-    return TV, du
-
-
-@jit(float32[:](float32[:], float32, float32, float32, float32), cache=True, nogil=True)
-def y_diff(u, dx, dy, epsilon, p):
-    # y shifted local difference
-    ux = np.roll(u, (dx, -dy), axis=(1, 0)) - np.roll(u, (0, -dy), axis=(1, 0))
-    uy = np.roll(u, (0, 0), axis=(1, 0)) - np.roll(u, (0, -dy), axis=(1, 0))
-    TV = (np.abs(ux) ** p + np.abs(uy) ** p + epsilon) ** (1 / p)
-    du = uy
-
-    return TV, du
 
 
 @jit(float32[:](float32[:], float32[:], float32, float32, float32), cache=True, nogil=True)
