@@ -5,13 +5,17 @@
 
 from __future__ import division
 
-cimport
-numpy as np
-import numpy as np
-import scipy.signal
-from cython.parallel cimport
 
-parallel, prange
+import numpy as np
+cimport numpy as np
+cimport cython
+from cython.parallel cimport parallel, prange
+import scipy.signal
+import multiprocessing
+
+
+cdef int CPU = multiprocessing.cpu_count()
+
 
 try:
     import pyfftw
@@ -19,7 +23,7 @@ try:
     scipy.fftpack = pyfftw.interfaces.scipy_fftpack
     a = np.empty((900, 600))
     print("Profiling the system for performance…")
-    pyfftw.builders.rfft2(a, s=(900, 600), overwrite_input=True, planner_effort='FFTW_MEASURE', threads=8,
+    pyfftw.builders.rfft2(a, s=(900, 600), overwrite_input=True, planner_effort='FFTW_MEASURE', threads=CPU,
                           auto_align_input=True, auto_contiguous=True, avoid_copy=False)
     print("Profiling done !")
 except:
