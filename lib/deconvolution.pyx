@@ -63,7 +63,7 @@ cdef void shift(float[:, :] u, float[:, :] us, int dy, int dx) nogil:
 
     cdef int i, j
 
-    with parallel(num_threads=8):
+    with parallel(num_threads=CPU):
         for i in prange(M, schedule="guided"):
             for j in range(N):
                 diff[i, j] = begin[i, j] - end[i, j]
@@ -76,7 +76,7 @@ cdef void TV_norm_p(float[:, :] ux, float[:, :] uy, float[:, :] output, float ep
     cdef float inv_p = 1./p
     cdef float eps = epsilon**p
 
-    with parallel(num_threads=8):
+    with parallel(num_threads=CPU):
         for i in prange(M, schedule="guided"):
             for j in range(N):
                 output[i, j] += (abs(ux[i, j])** p + abs(uy[i, j])** p + eps) **inv_p
@@ -87,7 +87,7 @@ cdef void TV_norm_one(float[:, :] ux, float[:, :] uy, float[:, :] output, float 
     cdef int N = ux.shape[1]
     cdef int i, j
 
-    with parallel(num_threads=8):
+    with parallel(num_threads=CPU):
         for i in prange(M, schedule="guided"):
             for j in range(N):
                 output[i, j] += abs(ux[i, j]) + abs(uy[i, j]) + epsilon
@@ -108,7 +108,7 @@ cpdef void center_diff(float[:, :] u, float[:, :] TV, int di, int dj, float epsi
     cdef int N = u.shape[1]
     cdef int i, j
 
-    with nogil, parallel(num_threads=8):
+    with nogil, parallel(num_threads=CPU):
 
         shift(u, ux, di, 0)
         shift(u, uy, 0, dj)
@@ -136,7 +136,7 @@ cpdef void i_diff(float[:, :]  u, float[:, :] TV, int di, int dj, float epsilon,
     cdef int N = u.shape[1]
     cdef int i, j
 
-    with nogil, parallel(num_threads=8):
+    with nogil, parallel(num_threads=CPU):
 
         shift(u, ux, -di, 0)
         shift(u, uy, -di, dj)
@@ -164,7 +164,7 @@ cpdef void j_diff(float[:, :]  u, float[:, :] TV, int di, int dj, float epsilon,
     cdef int N = u.shape[1]
     cdef int i, j
 
-    with nogil, parallel(num_threads=8):
+    with nogil, parallel(num_threads=CPU):
 
         shift(u, uy, 0, -dj)
         shift(u, ux, di, -dj)
@@ -202,7 +202,7 @@ cdef void divTV(float[:, :] u, float[:, :] TV, float epsilon=0, float p=1):
                     [-1, -1, j_diff]
                    ]
 
-    with nogil, parallel(num_threads=8):
+    with nogil, parallel(num_threads=CPU):
         for i in prange(12, schedule="guided"):
             with gil:
                 di = shifts[i][0]
@@ -231,7 +231,7 @@ cdef float[:, :] gradTVEM(float[:, :] u, float[:, :] ut, float epsilon=1e-3, flo
 
     divTV(ut, TV, epsilon=epsilon, p=p)
 
-    with nogil, parallel(num_threads=8):
+    with nogil, parallel(num_threads=CPU):
         for i in prange(M, schedule="guided"):
             for j in range(N):
                 out[i, j] /= (TV[i, j] + tau)
@@ -293,8 +293,8 @@ cdef np.ndarray[DTYPE_t, ndim=2] ftconvolve(np.ndarray[DTYPE_t, ndim=2] a, np.nd
     cdef np.ndarray[np.complex64_t, ndim=2] ahat, bhat, chat
     cdef np.ndarray[DTYPE_t, ndim=2] c
 
-    ahat = rfft2(a, s=(M + MK -1, N + NK -1), threads=8).output_array
-    bhat = rfft2(a, s=(M + MK -1, N + NK -1), threads=8).output_array
+    ahat = rfft2(a, s=(M + MK -1, N + NK -1), threads=CPU).output_array
+    bhat = rfft2(a, s=(M + MK -1, N + NK -1), threads=CPU).output_array
     chat = ahat * bhat
 
     cdef int Y, X
@@ -308,7 +308,7 @@ cdef np.ndarray[DTYPE_t, ndim=2] ftconvolve(np.ndarray[DTYPE_t, ndim=2] a, np.nd
 
     print(chat)
 
-    c = (irfft2(chat, s=(Y, X), threads=8).output_array).astype(DTYPE)
+    c = (irfft2(chat, s=(Y, X), threads=CPU).output_array).astype(DTYPE)
 
     return c
 
@@ -323,7 +323,7 @@ cdef np.ndarray[DTYPE_t, ndim=2] _convolve_image(np.ndarray[DTYPE_t, ndim=2] u, 
     cdef int N = image.shape[1]
     cdef int i, j
 
-    with nogil, parallel(num_threads=8):
+    with nogil, parallel(num_threads=CPU):
         for i in prange(M, schedule="guided"):
             for j in range(N):
                 error[i, j] -= image[i, j]
@@ -342,7 +342,7 @@ cdef np.ndarray[DTYPE_t, ndim=2] _convolve_kernel(np.ndarray[DTYPE_t, ndim=2] u,
     cdef int N = image.shape[1]
     cdef int i, j
 
-    with nogil, parallel(num_threads=8):
+    with nogil, parallel(num_threads=CPU):
         for i in prange(M, schedule="guided"):
             for j in range(N):
                 error[i, j] -= image[i, j]
@@ -388,14 +388,14 @@ cdef void _update_both_MM(np.ndarray[DTYPE_t, ndim=2] u, np.ndarray[DTYPE_t, ndi
             gradu = np.zeros_like(u)
             max_gradu = 0
 
-            with nogil, parallel(num_threads=8):
+            with nogil, parallel(num_threads=CPU):
                 for i in prange(M, schedule="guided"):
                     for j in range(N):
                         gradu[i, j] = lambd * im_convo[i, j] + gradV[i, j]
 
             dt = u_step * (np.amax(u) + 1 / (M*N)) / (np.amax(np.abs(gradu)) + 1e-31)
 
-            with nogil, parallel(num_threads=8):
+            with nogil, parallel(num_threads=CPU):
                 for i in prange(M, schedule="guided"):
                     for j in range(N):
                         u[i, j] -= dt * gradu[i, j]
