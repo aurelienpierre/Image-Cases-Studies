@@ -44,8 +44,7 @@ from lib import deconvolution as dc
 
 CPU = multiprocessing.cpu_count()
 
-
-@jit(cache=True, nogil=True)
+@jit(cache=True)
 def build_pyramid(psf_size, lambd, method):
     """
     To speed-up the deconvolution, the PSF is estimated successively on smaller images of increasing sizes. This function
@@ -79,8 +78,7 @@ def build_pyramid(psf_size, lambd, method):
     print(images, kernels, lambdas)
     return images, kernels, lambdas
 
-
-@jit(cache=True, nogil=True)
+@jit(cache=True)
 def process_pyramid(pic, u, psf, lambd, method, epsilon, quality=1):
     """
     To speed-up the deconvolution, the PSF is estimated successively on smaller images of increasing sizes. This function
@@ -140,7 +138,6 @@ def process_pyramid(pic, u, psf, lambd, method, epsilon, quality=1):
         k_prec = k
 
     return u, psf
-
 
 @jit(cache=True)
 def make_preview(image, psf, ratio, mask=None):
@@ -310,6 +307,7 @@ def richardson_lucy_PAM(image, u, psf, lambd, iterations, epsilon=1e-3, mask=Non
 
 
 @utils.timeit
+@jit(cache=True)
 def deblur_module(pic, filename, dest_path, blur_type, blur_width, noise_reduction_factor, deblur_strength,
                   blur_strength=1,
                   auto_quality=1, ringing_factor=1e-3, refine=False, refine_quality=0, mask=None, debug=False,
@@ -497,21 +495,21 @@ if __name__ == '__main__':
                       method="best",
                       )
 
-        """
 
+        """
         pass
 
     picture = "DSC1168.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        """
-        mask = [631+256, 631 + 1024+256, 2826, 2826 + 1024]
 
-        deblur_module(pic, picture + "test-v7", dest_path, "auto", i, 10000, 0,
+        mask = [631+256, 631 + 1024+256, 2826, 2826 + 1024]
+        """
+        deblur_module(pic, picture + "test-v7", dest_path, "auto", 9, 5000, 0,
                       mask=mask,
                       refine=True,
                       refine_quality=1,
                       auto_quality=1,
-                      preview=0.5,
+                      preview=1,
                       debug=True,
                       method="best",
                       )
@@ -520,22 +518,23 @@ if __name__ == '__main__':
 
     picture = "IMG_9584-900.jpg"
     with Image.open(join(source_path, picture)) as pic:
-
+        """
         mask = [201, 201+128, 167, 167+128]
-        deblur_module(pic, picture + "test-v7-2-gradient-2", dest_path, "auto", 3, 4000, 1,
+        deblur_module(pic, picture + "test-v7-2-2", dest_path, "auto", 3, 30000, 0,
+                      denoise=False,
                       mask=mask,
-                      refine=False,
+                      refine=True,
                       refine_quality=2,
                       auto_quality=2,
                       preview=1,
-                      method="best",
-                      )
-
+                      method="best"
+        )
+        """
         pass
 
     picture = "153412-blur.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        """
+
         mask = [3228, 3228 + 256, 1484, 1484 + 256]
         deblur_module(pic, picture + "-blind-v11-best-2", dest_path, "auto", 33, 15000, 0,
                       # mask=mask,
@@ -545,6 +544,8 @@ if __name__ == '__main__':
                       auto_quality=2,
                       method="best",
                       debug=True)
-        """
+
+
+
 
         pass

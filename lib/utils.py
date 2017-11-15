@@ -11,8 +11,11 @@ Source : https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3166524/
 import os
 import time
 import warnings
+import pyfftw
 from os.path import join
 from threading import Thread
+import pyfftw, multiprocessing
+
 
 import numpy as np
 import scipy.signal
@@ -419,3 +422,33 @@ def gradTVEM(u, ut, epsilon=1e-3, tau=1e-1, p=0.5):
     """
 
     return grad / 4
+
+
+@jit(cache=True)
+def convolve(a, b, domain):
+
+    CPU = 1#int(multiprocessing.cpu_count()/2)
+
+    MK =  b.shape[0]
+    NK = b.shape[1]
+    M = a.shape[0]
+    N = a.shape[1]
+
+    if domain =="same":
+        Y = M
+        X = N
+    elif domain == "valid":
+        Y = M - MK + 1
+        X = N - NK + 1
+    elif domain == "full":
+        Y = M + MK - 1
+        X = N + NK - 1
+    else:
+        raise SyntaxError
+
+    a_build = pyfftw.builders.rfft2(a, s=(M + MK -1, N + NK -1), threads=CPU, auto_align_input=True, auto_contiguous=True, planner_effort='FFTW_ESTIMATE' )
+    b_build = pyfftw.builders.rfft2(b, s=(M + MK -1, N + NK -1), threads=CPU, auto_align_input=True, auto_contiguous=True, planner_effort='FFTW_ESTIMATE' )
+    c_temp = a_build(a) * b_build(b)
+
+    c_build = pyfftw.builders.irfft2(c_temp, (Y, X), threads=CPU, auto_align_input=True, auto_contiguous=True, planner_effort='FFTW_ESTIMATE' )
+    return c_build(c_temp)
