@@ -7728,7 +7728,7 @@ static __Pyx_memviewslice __pyx_f_3lib_13deconvolution_conv3(PyArrayObject *__py
  *         for i in prange(M, schedule="guided"):
  *             for j in range(N):             # <<<<<<<<<<<<<<
  *                 for k in range(C):
- *                     out[i, j, k+2] += vect_three[0] * u_conv[i, j, k]
+ *                     out[i, j, k] += vect_three[0] * u_conv[i, j, k]
  */
                                 __pyx_t_15 = __pyx_v_N;
                                 for (__pyx_t_16 = 0; __pyx_t_16 < __pyx_t_15; __pyx_t_16+=1) {
@@ -7738,8 +7738,8 @@ static __Pyx_memviewslice __pyx_f_3lib_13deconvolution_conv3(PyArrayObject *__py
  *         for i in prange(M, schedule="guided"):
  *             for j in range(N):
  *                 for k in range(C):             # <<<<<<<<<<<<<<
- *                     out[i, j, k+2] += vect_three[0] * u_conv[i, j, k]
- *                     out[i, j, k+2] += vect_three[1] * u_conv[i, j, k+1]
+ *                     out[i, j, k] += vect_three[0] * u_conv[i, j, k]
+ *                     out[i, j, k] += vect_three[1] * u_conv[i, j, k+1]
  */
                                   __pyx_t_17 = __pyx_v_C;
                                   for (__pyx_t_18 = 0; __pyx_t_18 < __pyx_t_17; __pyx_t_18+=1) {
@@ -7748,9 +7748,9 @@ static __Pyx_memviewslice __pyx_f_3lib_13deconvolution_conv3(PyArrayObject *__py
                                     /* "lib/deconvolution.pyx":254
  *             for j in range(N):
  *                 for k in range(C):
- *                     out[i, j, k+2] += vect_three[0] * u_conv[i, j, k]             # <<<<<<<<<<<<<<
- *                     out[i, j, k+2] += vect_three[1] * u_conv[i, j, k+1]
- *                     out[i, j, k+2] += vect_three[2] * u_conv[i, j, k+2]
+ *                     out[i, j, k] += vect_three[0] * u_conv[i, j, k]             # <<<<<<<<<<<<<<
+ *                     out[i, j, k] += vect_three[1] * u_conv[i, j, k+1]
+ *                     out[i, j, k] += vect_three[2] * u_conv[i, j, k+2]
  */
                                     __pyx_t_67 = 0;
                                     __pyx_t_68 = __pyx_v_i;
@@ -7758,14 +7758,14 @@ static __Pyx_memviewslice __pyx_f_3lib_13deconvolution_conv3(PyArrayObject *__py
                                     __pyx_t_70 = __pyx_v_k;
                                     __pyx_t_71 = __pyx_v_i;
                                     __pyx_t_72 = __pyx_v_j;
-                                    __pyx_t_73 = (__pyx_v_k + 2);
+                                    __pyx_t_73 = __pyx_v_k;
                                     *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_71 * __pyx_v_out.strides[0]) ) + __pyx_t_72 * __pyx_v_out.strides[1]) ) + __pyx_t_73 * __pyx_v_out.strides[2]) )) += ((*((float *) ( /* dim=0 */ (__pyx_v_vect_three.data + __pyx_t_67 * __pyx_v_vect_three.strides[0]) ))) * (*__Pyx_BufPtrStrided3d(__pyx_t_3lib_13deconvolution_DTYPE_t *, __pyx_pybuffernd_u_conv.rcbuffer->pybuffer.buf, __pyx_t_68, __pyx_pybuffernd_u_conv.diminfo[0].strides, __pyx_t_69, __pyx_pybuffernd_u_conv.diminfo[1].strides, __pyx_t_70, __pyx_pybuffernd_u_conv.diminfo[2].strides)));
 
                                     /* "lib/deconvolution.pyx":255
  *                 for k in range(C):
- *                     out[i, j, k+2] += vect_three[0] * u_conv[i, j, k]
- *                     out[i, j, k+2] += vect_three[1] * u_conv[i, j, k+1]             # <<<<<<<<<<<<<<
- *                     out[i, j, k+2] += vect_three[2] * u_conv[i, j, k+2]
+ *                     out[i, j, k] += vect_three[0] * u_conv[i, j, k]
+ *                     out[i, j, k] += vect_three[1] * u_conv[i, j, k+1]             # <<<<<<<<<<<<<<
+ *                     out[i, j, k] += vect_three[2] * u_conv[i, j, k+2]
  * 
  */
                                     __pyx_t_74 = 1;
@@ -7774,13 +7774,13 @@ static __Pyx_memviewslice __pyx_f_3lib_13deconvolution_conv3(PyArrayObject *__py
                                     __pyx_t_77 = (__pyx_v_k + 1);
                                     __pyx_t_78 = __pyx_v_i;
                                     __pyx_t_79 = __pyx_v_j;
-                                    __pyx_t_80 = (__pyx_v_k + 2);
+                                    __pyx_t_80 = __pyx_v_k;
                                     *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_78 * __pyx_v_out.strides[0]) ) + __pyx_t_79 * __pyx_v_out.strides[1]) ) + __pyx_t_80 * __pyx_v_out.strides[2]) )) += ((*((float *) ( /* dim=0 */ (__pyx_v_vect_three.data + __pyx_t_74 * __pyx_v_vect_three.strides[0]) ))) * (*__Pyx_BufPtrStrided3d(__pyx_t_3lib_13deconvolution_DTYPE_t *, __pyx_pybuffernd_u_conv.rcbuffer->pybuffer.buf, __pyx_t_75, __pyx_pybuffernd_u_conv.diminfo[0].strides, __pyx_t_76, __pyx_pybuffernd_u_conv.diminfo[1].strides, __pyx_t_77, __pyx_pybuffernd_u_conv.diminfo[2].strides)));
 
                                     /* "lib/deconvolution.pyx":256
- *                     out[i, j, k+2] += vect_three[0] * u_conv[i, j, k]
- *                     out[i, j, k+2] += vect_three[1] * u_conv[i, j, k+1]
- *                     out[i, j, k+2] += vect_three[2] * u_conv[i, j, k+2]             # <<<<<<<<<<<<<<
+ *                     out[i, j, k] += vect_three[0] * u_conv[i, j, k]
+ *                     out[i, j, k] += vect_three[1] * u_conv[i, j, k+1]
+ *                     out[i, j, k] += vect_three[2] * u_conv[i, j, k+2]             # <<<<<<<<<<<<<<
  * 
  *     return out[2:2+M, 2:2+N, 0:3]
  */
@@ -7790,7 +7790,7 @@ static __Pyx_memviewslice __pyx_f_3lib_13deconvolution_conv3(PyArrayObject *__py
                                     __pyx_t_84 = (__pyx_v_k + 2);
                                     __pyx_t_85 = __pyx_v_i;
                                     __pyx_t_86 = __pyx_v_j;
-                                    __pyx_t_87 = (__pyx_v_k + 2);
+                                    __pyx_t_87 = __pyx_v_k;
                                     *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_85 * __pyx_v_out.strides[0]) ) + __pyx_t_86 * __pyx_v_out.strides[1]) ) + __pyx_t_87 * __pyx_v_out.strides[2]) )) += ((*((float *) ( /* dim=0 */ (__pyx_v_vect_three.data + __pyx_t_81 * __pyx_v_vect_three.strides[0]) ))) * (*__Pyx_BufPtrStrided3d(__pyx_t_3lib_13deconvolution_DTYPE_t *, __pyx_pybuffernd_u_conv.rcbuffer->pybuffer.buf, __pyx_t_82, __pyx_pybuffernd_u_conv.diminfo[0].strides, __pyx_t_83, __pyx_pybuffernd_u_conv.diminfo[1].strides, __pyx_t_84, __pyx_pybuffernd_u_conv.diminfo[2].strides)));
                                   }
                                 }
@@ -7827,7 +7827,7 @@ static __Pyx_memviewslice __pyx_f_3lib_13deconvolution_conv3(PyArrayObject *__py
   }
 
   /* "lib/deconvolution.pyx":258
- *                     out[i, j, k+2] += vect_three[2] * u_conv[i, j, k+2]
+ *                     out[i, j, k] += vect_three[2] * u_conv[i, j, k+2]
  * 
  *     return out[2:2+M, 2:2+N, 0:3]             # <<<<<<<<<<<<<<
  * 
@@ -12664,7 +12664,7 @@ static PyObject *__pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject 
  *                             u[i, j, chan] -= dt[chan] * gradu[i, j, chan]
  * 
  *                             if u[i, j, chan] > 1:             # <<<<<<<<<<<<<<
- *                                 u[i, j, chan] = 1
+ *                                 u[i, j, chan] = 0.999999
  * 
  */
                                         __pyx_t_56 = __pyx_v_i;
@@ -12676,30 +12676,30 @@ static PyObject *__pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject 
                                           /* "lib/deconvolution.pyx":476
  * 
  *                             if u[i, j, chan] > 1:
- *                                 u[i, j, chan] = 1             # <<<<<<<<<<<<<<
+ *                                 u[i, j, chan] = 0.999999             # <<<<<<<<<<<<<<
  * 
  *                             elif u[i, j, chan] < 0:
  */
                                           __pyx_t_59 = __pyx_v_i;
                                           __pyx_t_60 = __pyx_v_j;
                                           __pyx_t_61 = __pyx_v_chan;
-                                          *__Pyx_BufPtrStrided3d(__pyx_t_3lib_13deconvolution_DTYPE_t *, __pyx_pybuffernd_u.rcbuffer->pybuffer.buf, __pyx_t_59, __pyx_pybuffernd_u.diminfo[0].strides, __pyx_t_60, __pyx_pybuffernd_u.diminfo[1].strides, __pyx_t_61, __pyx_pybuffernd_u.diminfo[2].strides) = 1.0;
+                                          *__Pyx_BufPtrStrided3d(__pyx_t_3lib_13deconvolution_DTYPE_t *, __pyx_pybuffernd_u.rcbuffer->pybuffer.buf, __pyx_t_59, __pyx_pybuffernd_u.diminfo[0].strides, __pyx_t_60, __pyx_pybuffernd_u.diminfo[1].strides, __pyx_t_61, __pyx_pybuffernd_u.diminfo[2].strides) = 0.999999;
 
                                           /* "lib/deconvolution.pyx":475
  *                             u[i, j, chan] -= dt[chan] * gradu[i, j, chan]
  * 
  *                             if u[i, j, chan] > 1:             # <<<<<<<<<<<<<<
- *                                 u[i, j, chan] = 1
+ *                                 u[i, j, chan] = 0.999999
  * 
  */
                                           goto __pyx_L70;
                                         }
 
                                         /* "lib/deconvolution.pyx":478
- *                                 u[i, j, chan] = 1
+ *                                 u[i, j, chan] = 0.999999
  * 
  *                             elif u[i, j, chan] < 0:             # <<<<<<<<<<<<<<
- *                                 u[i, j, chan] = 0
+ *                                 u[i, j, chan] = 0.000001
  * 
  */
                                         __pyx_t_62 = __pyx_v_i;
@@ -12711,20 +12711,20 @@ static PyObject *__pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject 
                                           /* "lib/deconvolution.pyx":479
  * 
  *                             elif u[i, j, chan] < 0:
- *                                 u[i, j, chan] = 0             # <<<<<<<<<<<<<<
+ *                                 u[i, j, chan] = 0.000001             # <<<<<<<<<<<<<<
  * 
  * 
  */
                                           __pyx_t_65 = __pyx_v_i;
                                           __pyx_t_66 = __pyx_v_j;
                                           __pyx_t_67 = __pyx_v_chan;
-                                          *__Pyx_BufPtrStrided3d(__pyx_t_3lib_13deconvolution_DTYPE_t *, __pyx_pybuffernd_u.rcbuffer->pybuffer.buf, __pyx_t_65, __pyx_pybuffernd_u.diminfo[0].strides, __pyx_t_66, __pyx_pybuffernd_u.diminfo[1].strides, __pyx_t_67, __pyx_pybuffernd_u.diminfo[2].strides) = 0.0;
+                                          *__Pyx_BufPtrStrided3d(__pyx_t_3lib_13deconvolution_DTYPE_t *, __pyx_pybuffernd_u.rcbuffer->pybuffer.buf, __pyx_t_65, __pyx_pybuffernd_u.diminfo[0].strides, __pyx_t_66, __pyx_pybuffernd_u.diminfo[1].strides, __pyx_t_67, __pyx_pybuffernd_u.diminfo[2].strides) = 0.000001;
 
                                           /* "lib/deconvolution.pyx":478
- *                                 u[i, j, chan] = 1
+ *                                 u[i, j, chan] = 0.999999
  * 
  *                             elif u[i, j, chan] < 0:             # <<<<<<<<<<<<<<
- *                                 u[i, j, chan] = 0
+ *                                 u[i, j, chan] = 0.000001
  * 
  */
                                         }

@@ -457,7 +457,7 @@ if __name__ == '__main__':
 
         # deblur_module(pic, "myope-v4", "kaiser", 10, 0.05, 50, blur_width=11, blur_strength=8, mask=[150, 150 + 256, 600, 600 + 256], refine=True,)
 
-
+        """
         deblur_module(pic, picture + "-blind-v14-best", dest_path, "auto", 5, 30000, 1,
                       mask=[150, 150 + 256, 600, 600 + 256],
                       refine=True,
@@ -468,7 +468,7 @@ if __name__ == '__main__':
                       debug=True)
 
 
-
+        """
         """
         deblur_module(pic, picture + "-blind-v10-fast", dest_path, "auto", 5, 0.05, 0,
                       mask=[150, 150 + 512, 600, 600 + 512],
@@ -536,19 +536,19 @@ if __name__ == '__main__':
 
     picture = "153412.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        """
+
         mask = [3228, 3228 + 256, 1484, 1484 + 256]
-        deblur_module(pic, picture + "-blind-v11-best-2", dest_path, "auto", 3, 5000, 0,
+        deblur_module(pic, picture + "-blind-v14-best", dest_path, "auto", 9, 15000, 0,
                       mask=mask,
                       refine=True,
-                      refine_quality=0.5,
-                      preview=0.25,
-                      auto_quality=0.5,
+                      refine_quality=2,
+                      preview=1,
+                      auto_quality=1,
                       method="best",
                       debug=True)
 
 
-        """
+
 
         pass
 

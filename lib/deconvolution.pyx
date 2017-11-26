@@ -251,9 +251,9 @@ cdef float [:, :, :]  conv3(np.ndarray[DTYPE_t, ndim=3] u, int axis_one, int axi
         for i in prange(M, schedule="guided"):
             for j in range(N):
                 for k in range(C):
-                    out[i, j, k+2] += vect_three[0] * u_conv[i, j, k]
-                    out[i, j, k+2] += vect_three[1] * u_conv[i, j, k+1]
-                    out[i, j, k+2] += vect_three[2] * u_conv[i, j, k+2]
+                    out[i, j, k] += vect_three[0] * u_conv[i, j, k]
+                    out[i, j, k] += vect_three[1] * u_conv[i, j, k+1]
+                    out[i, j, k] += vect_three[2] * u_conv[i, j, k+2]
 
     return out[2:2+M, 2:2+N, 0:3]
 
@@ -473,10 +473,10 @@ cdef list _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                             u[i, j, chan] -= dt[chan] * gradu[i, j, chan]
 
                             if u[i, j, chan] > 1:
-                                u[i, j, chan] = 1
+                                u[i, j, chan] = 0.999999
 
                             elif u[i, j, chan] < 0:
-                                u[i, j, chan] = 0
+                                u[i, j, chan] = 0.000001
 
 
             if blind:
