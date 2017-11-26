@@ -135,19 +135,18 @@ This takes a fair amount of time but can recover large blurs blurs. It's the imp
 algorithm proposed by Perrone & Favaro in 2014.
 ![alt text](img/richardson-lucy-deconvolution/blured-blind-v8.jpg)
 
-##### After (blind algorithm, MM method - 3 min 45 - 30 iterations of majorization, 150 total iterations - Blind):
+##### After (blind algorithm, MM method - 7 min 45 - 38 iterations of majorization, 190 total iterations - Blind):
 This is the implementation of the Majorization-Minimisation algorithm proposed by [Perrone & Favaro in 2015](http://www.cvg.unibe.ch/dperrone/logtv/index.html).
 The computations are much slower although they can be parallelized but you see less artifacts and a better contrast.
 The additional time comes from the fact that every majorization iteration contains
 5 minimization iterations, so it's 5 times the computations needed for the PAM method, but the result is more robust.
 This method has found the sharp picture at a margin of error of 5 % in more than 50 % of the tests. The PAM method never reaches
 the sharp picture, but comes close enough.
-![alt text](img/richardson-lucy-deconvolution/blured-blind-v11-best.jpg)
+![alt text](img/richardson-lucy-deconvolution/blured-blind-v14-best.jpg)
 
-This method deblurs by recovering the sharpness of the edges. However, it does not recover the local contrast. here is 
-an example of further edition of the above picture with local contrast added through an unsharp mask, wavelets high-pass filter
-and a laplacian filter.
-![alt text](img/richardson-lucy-deconvolution/blured-blind-v11-best-DT-edit.jpg)
+This method deblurs by recovering the sharpness of the edges. However, it does not recover the local contrast. Further
+edition of the above picture with local contrast added through wavelets high-pass filter
+and a laplacian filter is advised.
 
 ## Installation
 

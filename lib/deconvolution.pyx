@@ -1,10 +1,8 @@
 # cython: boundscheck=False
 # cython: cdivision=True
 # cython: wraparound=False
-# cython: profile=True
-
+# cython: profile=False
 from __future__ import division
-
 import numpy as np
 cimport numpy as np
 import time
@@ -16,7 +14,7 @@ import psutil
 #from scipy.signal import convolve
 import pyfftw
 
-cdef int CPU = multiprocessing.cpu_count()
+cdef int CPU = int(multiprocessing.cpu_count())
 
 cdef extern from "stdlib.h":
     float abs(float x) nogil
@@ -24,195 +22,6 @@ cdef extern from "stdlib.h":
 
 DTYPE = np.float32
 ctypedef np.float32_t DTYPE_t
-
-
-cdef void shift(float[:, :] u, float[:, :] us, int dy, int dx) nogil:
-    cdef int M = u.shape[0]
-    cdef int N = u.shape[1]
-
-    cdef int i_min = max([-dy, 0])
-    cdef int i_max = min([M, M-dy])
-
-    cdef int j_min = max([-dx, 0])
-    cdef int j_max = min([N, N-dx])
-
-    cdef int i_min_1 = max([dy, 0])
-    cdef int i_max_1 = min([dy+M, M])
-
-    cdef int j_min_1 = max([dx, 0])
-    cdef int j_max_1 = min([dx+N, N])
-
-    cdef float[:, :] begin = u[i_min_1:i_max_1, j_min_1:j_max_1]
-    cdef float[:, :] end = u[i_min:i_max, j_min:j_max]
-    cdef float[:, :] diff = us[i_min:i_max, j_min:j_max]
-
-    M = diff.shape[0]
-    N = diff.shape[1]
-
-    cdef int i, j
-
-    with parallel(num_threads=CPU):
-        for i in prange(M, schedule="guided"):
-            for j in range(N):
-                diff[i, j] = begin[i, j] - end[i, j]
-
-
-cdef void TV_norm_p(float[:, :] ux, float[:, :] uy, float[:, :] output, float epsilon, float p) nogil:
-    cdef int M = ux.shape[0]
-    cdef int N = ux.shape[1]
-    cdef int i, j
-    cdef float inv_p = 1./p
-    cdef float eps = epsilon**p
-
-    with parallel(num_threads=CPU):
-        for i in prange(M, schedule="guided"):
-            for j in range(N):
-                output[i, j] += (abs(ux[i, j])** p + abs(uy[i, j])** p + eps) **inv_p
-
-
-cdef void TV_norm_one(float[:, :] ux, float[:, :] uy, float[:, :] output, float epsilon) nogil:
-    cdef int M = ux.shape[0]
-    cdef int N = ux.shape[1]
-    cdef int i, j
-
-    with parallel(num_threads=CPU):
-        for i in prange(M, schedule="guided"):
-            for j in range(N):
-                output[i, j] += abs(ux[i, j]) + abs(uy[i, j]) + epsilon
-
-
-cdef void TV_norm(float[:, :] ux, float[:, :] uy, float[:, :] output, float epsilon, float p) nogil:
-    if p == 1:
-        TV_norm_one(ux, uy, output, epsilon)
-    else:
-        TV_norm_p(ux, uy, output, epsilon, p)
-
-
-cpdef void center_diff(float[:, :]  u, float[:, :] TV, float[:, :] ux, float[:, :] uy, int di, int dj, float epsilon, float p) nogil:
-    # Centered local difference
-    cdef int M = u.shape[0]
-    cdef int N = u.shape[1]
-    cdef int i, j
-
-    with parallel(num_threads=CPU):
-
-        shift(u, ux, di, 0)
-        shift(u, uy, 0, dj)
-
-        for i in prange(M, schedule="guided"):
-            for j in range(N):
-                ux[i, j] -= u[i, j]
-
-        for i in prange(M, schedule="guided"):
-            for j in range(N):
-                uy[i, j] -= u[i, j]
-
-        # for i in prange(M, schedule="guided"):
-        #     for j in range(N):
-        #         du[i, j] -= ux[i, j] + uy[i, j]
-
-        TV_norm(ux, uy, TV, epsilon, p)
-
-
-cpdef void i_diff(float[:, :]  u, float[:, :] TV, float[:, :] ux, float[:, :] uy, int di, int dj, float epsilon, float p) nogil:
-    # line-shifted local difference
-    cdef int M = u.shape[0]
-    cdef int N = u.shape[1]
-    cdef int i, j
-
-    with parallel(num_threads=CPU):
-
-        shift(u, ux, -di, 0)
-        shift(u, uy, -di, dj)
-
-        for i in prange(M, schedule="guided"):
-            for j in range(N):
-                uy[i, j] -= ux[i, j]
-
-        for i in prange(M, schedule="guided"):
-            for j in range(N):
-                ux[i, j] = u[i, j] - ux[i, j]
-
-        # for i in prange(M, schedule="guided"):
-        #     for j in range(N):
-        #         du[i, j] += ux[i, j]
-
-        TV_norm(ux, uy, TV, epsilon, p)
-
-
-cpdef void j_diff(float[:, :]  u, float[:, :] TV, float[:, :] ux, float[:, :] uy, int di, int dj, float epsilon, float p) nogil:
-    # column-shifted local difference
-    cdef int M = u.shape[0]
-    cdef int N = u.shape[1]
-    cdef int i, j
-
-    with parallel(num_threads=CPU):
-
-        shift(u, uy, 0, -dj)
-        shift(u, ux, di, -dj)
-
-        for i in prange(M, schedule="guided"):
-            for j in range(N):
-                ux[i, j] -= uy[i, j]
-
-        for i in prange(M, schedule="guided"):
-            for j in range(N):
-                uy[i, j] = u[i, j] - uy[i, j]
-
-        # for i in prange(M, schedule="guided"):
-        #     for j in range(N):
-        #         du[i, j] += uy[i, j]
-
-        TV_norm(ux, uy, TV, epsilon, p)
-
-
-cdef void divTV(float[:, :] u, float[:, :] TV, float epsilon=0, float p=1):
-    # cdef float[:, :] TV = np.zeros_like(u)
-    # cdef float[:, :] du = np.zeros_like(u)
-    cdef int i, j, di, dj
-    cdef np.ndarray[np.int8_t, ndim=2] shifts = np.array([[1, 1], [-1, 1], [1,-1], [-1, -1]], dtype=np.int8)
-
-    cdef float[:, :]  ux =  np.zeros_like(u)
-    cdef float[:, :]  uy =  np.zeros_like(u)
-
-    with nogil:
-        for i in range(4):
-                di = shifts[i, 0]
-                dj = shifts[i, 1]
-                center_diff(u, TV, ux, uy, di, dj, epsilon, p)
-                i_diff(u, TV, ux, uy, di, dj, epsilon, p)
-                j_diff(u, TV, ux, uy, di, dj, epsilon, p)
-
-    # return TV
-
-
-cdef float[:, :] gradTVEM(float[:, :] u, float[:, :] ut, float epsilon=1e-3, float tau=1e-3, float p=1):
-    cdef float[:, :] out
-    cdef float[:, :] TV = np.zeros_like(u)
-    # cdef float[:, :] TV, du
-    cdef int M = u.shape[0]
-    cdef int N = u.shape[1]
-    cdef int i, j
-
-    divTV(u, TV, epsilon=epsilon, p=p)
-    out = TV
-
-    # with nogil, parallel(num_threads=64):
-    #     for i in prange(M, schedule="guided"):
-    #         for j in range(N):
-    #             out[i, j] += du[i, j] / TV[i, j]
-
-    divTV(ut, TV, epsilon=epsilon, p=p)
-
-    with nogil, parallel(num_threads=CPU):
-        for i in prange(M, schedule="guided"):
-            for j in range(N):
-                out[i, j] /= (TV[i, j] + tau)
-                # out[i, j] /= 4
-
-
-    return out
-
 
 cdef float best_param(np.ndarray[DTYPE_t, ndim=2] image, float lambd, float p=1):
     """
@@ -233,7 +42,6 @@ cdef float best_param(np.ndarray[DTYPE_t, ndim=2] image, float lambd, float p=1)
     cdef list grad = np.gradient(image)
     cdef float grad_mean = np.linalg.norm(grad) / (M*N)
     cdef float grad_std = np.linalg.norm(image - image_mean) / (M*N)
-
 
     # lambd = noise_reduction_factor * np.sum(np.sqrt(divTV(image, p=1)))**2 / (-np.log(np.std(image)**2) * * 2 * np.pi)
 
@@ -260,8 +68,7 @@ cpdef np.ndarray _normalize_kernel(np.ndarray kern):
 
 cdef class convolve:
     cdef object fft_A_obj, fft_B_obj, ifft_obj,  output_array
-    cdef int X, Y, M, N
-    cdef bint lock
+    cdef int X, Y, M, N, offset_X, offset_Y
 
     def __cinit__(self, np.ndarray[DTYPE_t, ndim=2] A, np.ndarray[DTYPE_t, ndim=2] B, str domain):
         cdef int MK =  B.shape[0]
@@ -282,15 +89,20 @@ cdef class convolve:
         self.M = M + MK -1
         self.N = N + NK -1
 
-        print("System profiling…")
-        self.fft_A_obj = pyfftw.builders.rfft2(A, s=(self.M, self.N), threads=CPU, auto_align_input=True, auto_contiguous=True)
-        self.fft_B_obj = pyfftw.builders.rfft2(B, s=(self.M, self.N ), threads=CPU,  auto_align_input=True, auto_contiguous=True)
-        self.ifft_obj = pyfftw.builders.irfft2(self.fft_B_obj.output_array , s=(self.Y, self.X), threads=CPU, auto_align_input=True, auto_contiguous=True)
-        print("Profiling done !")
+        self.offset_Y = int(np.floor((self.M - self.Y)/2))
+        self.offset_X = int(np.floor((self.N - self.X)/2))
+
+        A = np.pad(A, ((0, MK - 1), (0, NK - 1)), mode='constant')
+        B = np.pad(B, ((0, M - 1), (0, N - 1)), mode='constant')
+
+        self.fft_A_obj = pyfftw.builders.rfft2(A, s=(self.M, self.N), threads=CPU, auto_align_input=True,
+                                               auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
+        self.fft_B_obj = pyfftw.builders.rfft2(B, s=(self.M, self.N ), threads=CPU,  auto_align_input=True,
+                                               auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
+        self.ifft_obj = pyfftw.builders.irfft2(self.fft_B_obj.output_array , s=(self.M, self.N), threads=CPU,
+                                               auto_align_input=True, auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
 
         self.output_array = self.ifft_obj.output_array
-
-        self.lock = False
 
     def __call__(self, np.ndarray[DTYPE_t, ndim=2] A, np.ndarray[DTYPE_t, ndim=2] B):
         """
@@ -299,59 +111,157 @@ cdef class convolve:
         :param B:
         :return:
         """
-        cdef np.ndarray[DTYPE_t, ndim=2] R
 
-        if self.lock == False:
-            self.lock = True
-            R = self.ifft_obj(np.fft.ifftshift(np.fft.fftshift(self.fft_A_obj(A)) * np.fft.fftshift(self.fft_B_obj(B))))
-            self.lock = False
-        else:
-            while self.lock == True:
-                time.sleep(0.005)
-                if self.lock == False:
-                    self.lock = True
-                    R = self.ifft_obj(np.fft.ifftshift(np.fft.fftshift(self.fft_A_obj(A)) * np.fft.fftshift(self.fft_B_obj(B))))
-                    self.lock = False
-                    break
+        MK =  B.shape[0]
+        NK = B.shape[1]
+        M = A.shape[0]
+        N = A.shape[1]
+
+        A = np.pad(A, ((0, MK - 1), (0, NK - 1)), mode='constant')
+        B = np.pad(B, ((0, M - 1), (0, N - 1)), mode='constant')
+
+        return self.ifft_obj(self.fft_A_obj(A) * self.fft_B_obj(B))[self.offset_Y:self.offset_Y + self.Y, self.offset_X:self.offset_X + self.X]
 
 
+cdef class convolve3D:
+    cdef object fft_A_obj, fft_B_obj, ifft_obj,  output_array
+    cdef int X, Y, M, N, offset_X, offset_Y
+
+    def __cinit__(self, np.ndarray[DTYPE_t, ndim=3] A, np.ndarray[DTYPE_t, ndim=3] B, str domain):
+        cdef int MK =  B.shape[0]
+        cdef int NK = B.shape[1]
+        cdef int M = A.shape[0]
+        cdef int N = A.shape[1]
+
+        if domain =="same":
+            self.Y = M
+            self.X = N
+        elif domain == "valid":
+            self.Y = M - MK + 1
+            self.X = N - NK + 1
+        elif domain == "full":
+            self.Y = M + MK - 1
+            self.X = N + NK - 1
+
+        self.M = M + MK -1
+        self.N = N + NK -1
+
+        self.offset_Y = int(np.floor((self.M - self.Y)/2))
+        self.offset_X = int(np.floor((self.N - self.X)/2))
+
+
+        A = pad_image(A, ((0, MK - 1), (0, NK - 1)), mode='constant')
+        A = np.dstack([A, np.zeros_like(A[..., 1]), np.zeros_like(A[..., 1])])
+        B = pad_image(B, ((0, M - 1), (0, N - 1)), mode='constant')
+        B = np.dstack([B, np.zeros_like(B[..., 1]), np.zeros_like(B[..., 1])])
+
+        self.fft_A_obj = pyfftw.builders.rfftn(A, s=(self.M, self.N, 5), threads=CPU, auto_align_input=True,
+                                               auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
+        self.fft_B_obj = pyfftw.builders.rfftn(B, s=(self.M, self.N, 5), threads=CPU,  auto_align_input=True,
+                                               auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
+        self.ifft_obj = pyfftw.builders.irfftn(self.fft_B_obj.output_array , s=(self.M, self.N, 5), threads=CPU,
+                                               auto_align_input=True, auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
+
+        self.output_array = self.ifft_obj.output_array
+
+    def __call__(self, np.ndarray[DTYPE_t, ndim=3] A, np.ndarray[DTYPE_t, ndim=3] B):
         """
-        int m, n;      // FFT row and column dimensions might be different
-        int m2, n2;
-        int i, k;
-        complex x[m][n];
-        complex tmp13, tmp24;
-        
-        m2 = m / 2;    // half of row dimension
-        n2 = n / 2;    // half of column dimension
-        
-        // interchange entries in 4 quadrants, 1 <--> 3 and 2 <--> 4
-        
-        for (i = 0; i < m2; i++)
-        {
-             for (k = 0; k < n2; k++)
-             {
-                  tmp13         = x[i][k];
-                  x[i][k]       = x[i+m2][k+n2];
-                  x[i+m2][k+n2] = tmp13;
-        
-                  tmp24         = x[i+m2][k];
-                  x[i+m2][k]    = x[i][k+n2];
-                  x[i][k+n2]    = tmp24;
-             }
-        }
-                
+        The lock mechanism makes it thread-safe
+        :param A:
+        :param B:
+        :return:
         """
 
-        return R
+        MK =  B.shape[0]
+        NK = B.shape[1]
+        M = A.shape[0]
+        N = A.shape[1]
 
-from scipy.signal import fftconvolve
+        A = pad_image(A, ((0, MK - 1), (0, NK - 1)), mode='constant')
+        A = np.dstack([A, np.zeros_like(A[..., 1]), np.zeros_like(A[..., 1])])
+        B = pad_image(B, ((0, M - 1), (0, N - 1)), mode='constant')
+        B = np.dstack([B, np.zeros_like(B[..., 1]), np.zeros_like(B[..., 1])])
 
-#cdef float[:, :] _convolve_image(np.ndarray[DTYPE_t, ndim=2] u, np.ndarray[DTYPE_t, ndim=2] image, np.ndarray[DTYPE_t, ndim=2] psf, convolve FFT_valid, convolve FFT_full):
-cdef float[:, :] _convolve_image(np.ndarray[DTYPE_t, ndim=2] u, np.ndarray[DTYPE_t, ndim=2] image, np.ndarray[DTYPE_t, ndim=2] psf):
+        return self.ifft_obj(self.fft_A_obj(A) * self.fft_B_obj(B))[self.offset_Y:self.offset_Y + self.Y, self.offset_X:self.offset_X + self.X, 1:4]
+
+
+cdef float [:, :, :]  conv3(np.ndarray[DTYPE_t, ndim=3] u, int axis_one, int axis_two, int axis_three):
+    """
+    Convolve a 3D image with a separable kernel representing the 2nd order gradient on the 18 neighbours
+    :param u: 
+    :param axis_one: 
+    :param axis_two: 
+    :param axis_three: 
+    :return: 
+    """
+
+    cdef float[:] first_dim = np.array([1/9, 0, -1/9], dtype=DTYPE)
+    cdef float[:] second_dim = np.array([1/2, 2, 1/2], dtype=DTYPE)
+    cdef float [:] third_dim = np.array([1/4, 1, 1/4], dtype=DTYPE)
+    cdef float [:] vect_one = np.array([1/9, 0, -1/9], dtype=DTYPE)
+    cdef float [:] vect_two = np.array([1/2, 2, 1/2], dtype=DTYPE)
+    cdef float [:] vect_three = np.array([1/4, 1, 1/4], dtype=DTYPE)
+
+
+    cdef np.ndarray[DTYPE_t, ndim=3] u_pad = pad_image(u, (2, 2), "wrap")
+    cdef np.ndarray[DTYPE_t, ndim=3] u_conv = np.dstack((u_pad, u_pad[..., 1], u_pad[..., 0]))
+    del u_pad
+    cdef float [:, :, :] out = np.zeros_like(u_conv)
+
+
+    if axis_one == 1:
+        vect_one = second_dim
+    elif axis_one == 2:
+        vect_one = third_dim
+
+    if axis_two == 0:
+        vect_two = first_dim
+    elif axis_three == 2:
+        vect_two = third_dim
+
+    if axis_three == 0:
+        vect_three = first_dim
+    elif axis_three == 1:
+        vect_three = second_dim
+
+
+    cdef int M = u.shape[0]
+    cdef int N = u.shape[1]
+    cdef int C = u.shape[2]
+
+    cdef int i, j, k
+
+    with nogil, parallel(num_threads=CPU):
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                for k in range(C):
+                    out[i+2, j, k] += vect_one[0] * u_conv[i, j, k]
+                    out[i+2, j, k] += vect_one[1] * u_conv[i+1, j, k]
+                    out[i+2, j, k] += vect_one[2] * u_conv[i+2, j, k]
+                    u_conv[i, j, k] = 0
+
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                for k in range(C):
+                    u_conv[i, j+2, k] += vect_two[0] * out[i, j, k]
+                    u_conv[i, j+2, k] += vect_two[1] * out[i, j+1, k]
+                    u_conv[i, j+2, k] += vect_two[2] * out[i, j+2, k]
+                    out[i, j, k] = 0
+
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                for k in range(C):
+                    out[i, j, k+2] += vect_three[0] * u_conv[i, j, k]
+                    out[i, j, k+2] += vect_three[1] * u_conv[i, j, k+1]
+                    out[i, j, k+2] += vect_three[2] * u_conv[i, j, k+2]
+
+    return out[2:2+M, 2:2+N, 0:3]
+
+
+
+cdef np.ndarray[DTYPE_t, ndim=2] _convolve_image(np.ndarray[DTYPE_t, ndim=2] u, np.ndarray[DTYPE_t, ndim=2] image, np.ndarray[DTYPE_t, ndim=2] psf, convolve FFT_valid, convolve FFT_full):
     cdef np.ndarray[DTYPE_t, ndim=2] error
-    #error = FFT_valid(u, psf)
-    error = fftconvolve(u, psf, "valid").astype(DTYPE)
+    error = FFT_valid(u, psf)
 
     cdef int M = image.shape[0]
     cdef int N = image.shape[1]
@@ -362,16 +272,13 @@ cdef float[:, :] _convolve_image(np.ndarray[DTYPE_t, ndim=2] u, np.ndarray[DTYPE
             for j in range(N):
                 error[i, j] -= image[i, j]
 
-    #return FFT_full(error, np.rot90(psf, 2))
-    return fftconvolve(error, np.rot90(psf, 2), "full").astype(DTYPE)
+    return FFT_full(error, np.rot90(psf, 2))
 
 
-#cdef np.ndarray[DTYPE_t, ndim=2] _convolve_kernel(np.ndarray[DTYPE_t, ndim=2] u, np.ndarray[DTYPE_t, ndim=2] image, np.ndarray[DTYPE_t, ndim=2] psf, convolve FFT_valid, convolve FFT_kern_valid):
-cdef np.ndarray[DTYPE_t, ndim=2] _convolve_kernel(np.ndarray[DTYPE_t, ndim=2] u, np.ndarray[DTYPE_t, ndim=2] image, np.ndarray[DTYPE_t, ndim=2] psf):
+cdef np.ndarray[DTYPE_t, ndim=2] _convolve_kernel(np.ndarray[DTYPE_t, ndim=2] u, np.ndarray[DTYPE_t, ndim=2] image, np.ndarray[DTYPE_t, ndim=2] psf, convolve FFT_valid, convolve FFT_kern_valid):
     cdef np.ndarray[DTYPE_t, ndim=2] error
 
-    #error = FFT_valid(u, psf)
-    error = fftconvolve(u, psf, "valid").astype(DTYPE)
+    error = FFT_valid(u, psf)
 
     cdef int M = image.shape[0]
     cdef int N = image.shape[1]
@@ -382,70 +289,8 @@ cdef np.ndarray[DTYPE_t, ndim=2] _convolve_kernel(np.ndarray[DTYPE_t, ndim=2] u,
             for j in range(N):
                 error[i, j] -= image[i, j]
 
-    #return FFT_kern_valid(np.rot90(u, 2), error)
-    return fftconvolve(np.rot90(u, 2), error, "valid").astype(DTYPE)
+    return FFT_kern_valid(np.rot90(u, 2), error)
 
-
-cdef void _update_both_MM(np.ndarray[DTYPE_t, ndim=2] u, np.ndarray[DTYPE_t, ndim=2] image, np.ndarray[DTYPE_t, ndim=2] psf,
-                    float lambd, int iterations, np.ndarray[DTYPE_t, ndim=2] u_masked, np.ndarray[DTYPE_t, ndim=2] im_masked,
-                          float epsilon, int blind, float p):#, convolve FFT_valid, convolve FFT_full, convolve FFT_kern_valid):
-
-    cdef float k_step = epsilon
-    cdef float u_step = epsilon
-
-    cdef float eps, dt, alpha, max_gradu, abs_gradu
-
-    cdef np.ndarray[DTYPE_t, ndim=2] gradu, gradk
-    cdef float[:, :] gradV, im_convo, ut
-    gradk = np.zeros_like(psf)
-
-    cdef int M = image.shape[0]
-    cdef int N = image.shape[1]
-    cdef int MK = psf.shape[0]
-    cdef int NK = psf.shape[1]
-    cdef int i, j
-
-    for it in range(iterations):
-        ut = u.copy()
-        lambd = min([lambd, 50000])
-        eps = best_param(u, lambd, p=p)
-
-        for itt in range(5):
-            # Image update
-            lambd = min([lambd, 50000])
-
-            gradV = gradTVEM(u, ut, eps, eps, p=p)
-            im_convo = _convolve_image(u, image, psf)#, FFT_valid, FFT_full)
-            gradu = np.zeros_like(u)
-            max_gradu = 0
-
-            with nogil, parallel(num_threads=CPU):
-                for i in prange(M, schedule="guided"):
-                    for j in range(N):
-                        gradu[i, j] = lambd * im_convo[i, j] + gradV[i, j]
-
-            dt = u_step * (np.amax(u) + 1 / (M*N)) / (np.amax(np.abs(gradu)) + 1e-31)
-
-            with nogil, parallel(num_threads=CPU):
-                for i in prange(M, schedule="guided"):
-                    for j in range(N):
-                        u[i, j] -= dt * gradu[i, j]
-
-                        if u[i, j] < 0:
-                            u[i, j] = 0
-                        if u[i, j] > 1:
-                            u[i, j] = 1
-
-            if blind:
-                # PSF update
-                gradk = _convolve_kernel(u_masked, im_masked, psf)#, FFT_valid, FFT_kern_valid)
-                alpha = k_step * (np.amax(psf) + 1 / (MK*NK)) / np.amax(np.abs(gradk) + 1e-31)
-                psf -= alpha * gradk
-                psf = _normalize_kernel(psf)
-
-            lambd *= 1.001
-
-        print("%i/%i iterations completed" % ((it+1) * 5, iterations*5))
 
 cpdef pad_image(image, pad, mode="edge"):
     """
@@ -465,6 +310,42 @@ cpdef pad_image(image, pad, mode="edge"):
 
 cpdef unpad_image(image, pad):
     return np.ascontiguousarray(image[pad[0]:-pad[0], pad[1]:-pad[1], ...], np.ndarray)
+
+
+cdef np.ndarray[DTYPE_t, ndim=3] gradTVEM(np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] ut, np.ndarray[DTYPE_t, ndim=3] gradx, np.ndarray[DTYPE_t, ndim=3] grady, float eps, convolve3D FFT_3D):
+    # https://cdn.intechopen.com/pdfs-wm/39346.pdf
+    # https://www.intechopen.com/books/matlab-a-fundamental-tool-for-scientific-computing-and-engineering-applications-volume-3/convolution-kernel-for-fast-cpu-gpu-computation-of-2d-3d-isotropic-gradients-on-a-square-cubic-latti
+
+    cdef float [:, :, :] gradTVx, gradTVy
+    cdef np.ndarray[DTYPE_t, ndim=3] out = np.zeros_like(u)
+
+    gradTVx = conv3(u, 0, 1, 2)
+    gradTVy = conv3(u, 1, 0, 2)
+
+    cdef int i, j, k, M, N, C
+    M = u.shape[0]
+    N = u.shape[1]
+    C = u.shape[2]
+
+    with nogil, parallel(num_threads=CPU):
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                for k in range(C):
+                    out[i, j, k] = (abs(gradTVx[i, j, k]) + abs(gradTVy[i, j, k]) + eps)
+
+
+    gradTVx = conv3(ut, 0, 1, 2)
+    gradTVy = conv3(ut, 1, 0, 2)
+
+
+    with nogil, parallel(num_threads=CPU):
+        for i in prange(M, schedule="guided"):
+            for j in range(N):
+                for k in range(C):
+                    out[i, j, k] /= abs(gradTVx[i, j, k]) + abs(gradTVy[i, j, k]) + eps
+
+    return out
+
 
 
 cdef list _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,
@@ -499,10 +380,8 @@ cdef list _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
     # image dimensions
     cdef int MK = psf.shape[0]
     cdef int NK = psf.shape[1]
-
-    cdef M = image.shape[0]
-    cdef N = image.shape[1]
-
+    cdef int M = image.shape[0]
+    cdef int N = image.shape[1]
     cdef int pad = np.floor(MK / 2).astype(int)
 
     u = pad_image(u, (pad, pad)).astype(np.float32)
@@ -514,30 +393,110 @@ cdef list _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
         mask_u = [mask[0] - pad, mask[1] + pad, mask[2] - pad, mask[3] + pad]
         mask_i = mask
 
-    cdef np.ndarray[DTYPE_t, ndim=3] u_masked = u[mask_u[0]:mask_u[1], mask_u[2]:mask_u[3], ...]
-    cdef np.ndarray[DTYPE_t, ndim=3] im_masked = image[mask_i[0]:mask_i[1], mask_i[2]:mask_i[3], ...]
+    cdef float k_step = epsilon
+    cdef float u_step = epsilon
+    cdef float eps, alpha, max_gradu, abs_gradu
+    cdef float[:] dt = np.array([0, 0, 0], dtype=DTYPE)
 
-    cdef int i
+    cdef np.ndarray[DTYPE_t, ndim=2] gradk
+    cdef np.ndarray[DTYPE_t, ndim=3] gradV, ut, gradV_bot
+    cdef np.ndarray[DTYPE_t, ndim=3] im_convo = np.zeros_like(u)
+    cdef float[:, :, :] gradu = np.zeros_like(u)
 
-    #cdef convolve FFT_valid = convolve(u[..., 0], psf[..., 0], "valid")
-    #cdef convolve FFT_full = convolve(image[..., 0], psf[..., 0], "full")
-    #cdef convolve FFT_kern_valid = convolve(u[..., 0], image[..., 0], "valid")
+    gradk = np.zeros_like(psf[..., 0])
 
-    # Set the nummber of threads after checking the memory
-    cdef float free_RAM = psutil.virtual_memory()[4]
-    cdef float footprint = (M + MK) * (N + NK) * 32 * 5 # resolution * bit depth * max concurrent copies
-    cdef int threads = np.minimum(np.floor(free_RAM/footprint), CPU)
+    cdef int i, j, chan
+
+    # Compute the 3D gradients with an efficient method. From : https://cdn.intechopen.com/pdfs-wm/39346.pdf
+    cdef float w1 = 2/9
+    cdef float w2 = 1/18
+    cdef float w3 = 1/72
+
+    cdef float [:, :] kernel1, kernel2
+
+    kernel1 = np.array([
+        [-w3, 0, w3],
+        [-w2, 0, w2],
+        [-w3, 0, w3]]).astype(DTYPE)
+
+    kernel2 = np.array([
+        [-w2, 0, w2],
+        [-w1, 0, w1],
+        [-w2, 0, w2]]).astype(DTYPE)
+
+    cdef np.ndarray[DTYPE_t, ndim=3] kern = np.dstack((kernel1, kernel2, kernel1))
+    cdef np.ndarray[DTYPE_t, ndim=3] gradx = - np.transpose(kern, axes=(1, 0, 2))
+    cdef np.ndarray[DTYPE_t, ndim=3] grady = np.transpose(gradx, axes=(1, 0, 2))
+    cdef np.ndarray[DTYPE_t, ndim=3] gradz = np.transpose(gradx, axes=(2, 1, 0))
+
+    # [1/9, 0, -1/9], [1/2, 2, 1/2], [1/4, 1, 1/4]
+
+    print("System profiling…")
+    cdef convolve FFT_valid = convolve(u[..., 0], psf[..., 0], "valid")
+    cdef convolve FFT_full = convolve(image[..., 0], psf[..., 0], "full")
+    cdef convolve FFT_masked_valid = convolve(u[mask_u[0]:mask_u[1], mask_u[2]:mask_u[3], 0], psf[..., 0], "valid")
+    cdef convolve FFT_kern_valid = convolve(u[mask_u[0]:mask_u[1], mask_u[2]:mask_u[3], 0], image[mask_i[0]:mask_i[1], mask_i[2]:mask_i[3], 0], "valid")
+    cdef convolve3D FFT_3D = convolve3D(u, gradx, "same")
+    print("Profiling done !")
 
 
-    with nogil, parallel(num_threads=threads):
-        for i in prange(3):
-            with gil:
-                print("Channel %i - %i main threads" % (i, threads))
-                _update_both_MM(u[..., i], image[..., i], psf[..., i], lambd, iterations, u_masked[..., i], im_masked[..., i], epsilon, blind, p)#, FFT_valid, FFT_full, FFT_kern_valid)
+    for it in range(iterations):
+        ut = u.copy()
+        lambd = min([lambd, 50000])
+        eps = best_param(u.mean(axis=2), lambd, p=1)
+
+        for itt in range(5):
+            # Image update
+            lambd = min([lambd, 50000])
+            gradV = gradTVEM(u, ut, gradx, grady, eps, FFT_3D)
+
+            for chan in range(3):
+                im_convo[..., chan] = _convolve_image(u[..., chan], image[..., chan], psf[..., chan], FFT_valid, FFT_full)
+
+            with nogil, parallel(num_threads=CPU):
+                for i in prange(M, schedule="guided"):
+                    for j in range(N):
+                        for chan in range(3):
+                            gradu[i, j, chan] = lambd *  im_convo[i, j, chan] + gradV[i, j, chan]
+
+
+            with nogil, parallel(num_threads=CPU):
+                for chan in prange(3):
+                    with gil:
+                        dt[chan] = u_step * (np.amax(u[..., chan]) + 1 / (M*N)) / (np.amax(np.abs(gradu)) + 1e-31)
+
+
+            with nogil, parallel(num_threads=CPU):
+                for i in prange(M, schedule="guided"):
+                    for j in range(N):
+                        for chan in range(3):
+                            u[i, j, chan] -= dt[chan] * gradu[i, j, chan]
+
+                            if u[i, j, chan] > 1:
+                                u[i, j, chan] = 1
+
+                            elif u[i, j, chan] < 0:
+                                u[i, j, chan] = 0
+
+
+            if blind:
+                # PSF update
+                for chan in range(3):
+                    gradk = _convolve_kernel(u[mask_u[0]:mask_u[1], mask_u[2]:mask_u[3], chan],
+                                             image[mask_i[0]:mask_i[1], mask_i[2]:mask_i[3], chan],
+                                             psf[..., chan], FFT_masked_valid, FFT_kern_valid)
+                    alpha = k_step * (np.amax(psf[..., chan]) + 1 / (MK*NK)) / np.amax(np.abs(gradk) + 1e-31)
+                    psf[..., chan] -= alpha * gradk
+                    psf[..., chan] = _normalize_kernel(psf[..., chan])
+
+            lambd *= 1.001
+
+        print("%i/%i iterations completed" % ((it+1) * 5, iterations*5))
+
 
     u = u[pad:-pad, pad:-pad, ...]
 
     return [u.astype(np.float32), psf]
 
 def richardson_lucy_MM(image, u, psf, lambd, iterations, epsilon, mask=None, blind=True, p=1):
-    return  _richardson_lucy_MM(image, u, psf, lambd, iterations, epsilon, mask=None, blind=True, p=1)
+    return  _richardson_lucy_MM(image, u, psf, lambd, iterations, epsilon, mask=mask, blind=blind, p=p)
