@@ -27,6 +27,7 @@ from PIL import Image
 from numba import float32, jit, int16, boolean
 from scipy import ndimage
 from skimage.restoration import denoise_tv_chambolle
+from lib import tifffile
 
 try:
     import pyfftw
@@ -44,7 +45,7 @@ from lib import deconvolution as dc
 
 CPU = multiprocessing.cpu_count()
 
-@jit(cache=True)
+#@jit(cache=True)
 def build_pyramid(psf_size, lambd, method):
     """
     To speed-up the deconvolution, the PSF is estimated successively on smaller images of increasing sizes. This function
@@ -78,7 +79,7 @@ def build_pyramid(psf_size, lambd, method):
     print(images, kernels, lambdas)
     return images, kernels, lambdas
 
-@jit(cache=True)
+#@jit(cache=True)
 def process_pyramid(pic, u, psf, lambd, method, epsilon, quality=1):
     """
     To speed-up the deconvolution, the PSF is estimated successively on smaller images of increasing sizes. This function
@@ -97,7 +98,7 @@ def process_pyramid(pic, u, psf, lambd, method, epsilon, quality=1):
     images, kernels, lambdas = build_pyramid(Mk, lambd, method)
 
     # Prepare the biggest version
-    u = ndimage.zoom(u, (images[-1], images[-1], 1))
+    u = ndimage.zoom(u, (images[-1], images[-1], 1)).astype(np.float32)
     k_prec = Mk
     iterations = int(quality * 10)
 
@@ -108,25 +109,25 @@ def process_pyramid(pic, u, psf, lambd, method, epsilon, quality=1):
 
         # Resize blured, deblured images and PSF from previous step
         if i != 1:
-            im = ndimage.zoom(pic, (i, i, 1))
+            im = ndimage.zoom(pic, (i, i, 1)).astype(np.float32)
 
             # Make the picture dimensions odd to avoid ringing on the border of even pictures. We just replicate the last row/column
             if pic.shape[0] % 2 == 0:
-                pic = pad_image(pic, ((1, 0), (0, 0)))
+                pic = dc.pad_image(pic, ((1, 0), (0, 0))).astype(np.float32)
                 odd_vert = True
 
             if pic.shape[1] % 2 == 0:
-                pic = pad_image(pic, ((0, 0), (1, 0)))
+                pic = dc.pad_image(pic, ((0, 0), (1, 0))).astype(np.float32)
                 odd_hor = True
         else:
             im = pic.copy()
 
-        psf = ndimage.zoom(psf, (k / k_prec, k / k_prec, 1))
-        psf = dc._normalize_kernel(psf)
-        u = ndimage.zoom(u, (im.shape[0] / u.shape[0], im.shape[1] / u.shape[1], 1))
+        psf = ndimage.zoom(psf, (k / k_prec, k / k_prec, 1)).astype(np.float32)
+        psf = dc._normalize_kernel(psf).astype(np.float32)
+        u = ndimage.zoom(u, (im.shape[0] / u.shape[0], im.shape[1] / u.shape[1], 1)).astype(np.float32)
 
         # Make a blind Richardson-Lucy deconvolution on the RGB signal
-        u, psf = method(im, u, psf, l, iterations, epsilon)
+        u, psf = method(im, u, psf, l, int(iterations/i), epsilon)
 
         # if the picture has been padded to make it odd, unpad it to get the original size
         if odd_hor:
@@ -139,7 +140,7 @@ def process_pyramid(pic, u, psf, lambd, method, epsilon, quality=1):
 
     return u, psf
 
-@jit(cache=True)
+#@jit(cache=True)
 def make_preview(image, psf, ratio, mask=None):
     """
     Resize the image, the PSF and the mask to preview the settings on a smaller picture to speed-up the tweaking
@@ -150,7 +151,7 @@ def make_preview(image, psf, ratio, mask=None):
     :param mask:
     :return:
     """
-    image = ndimage.zoom(image, (ratio, ratio, 1))
+    image = ndimage.zoom(image, (ratio, ratio, 1)).astype(np.float32)
 
     MK_source = psf.shape[0]
     MK = int(MK_source * ratio)
@@ -161,7 +162,7 @@ def make_preview(image, psf, ratio, mask=None):
     if MK < 3:
         MK = 3
 
-    psf = dc._normalize_kernel(ndimage.zoom(psf, (MK / MK_source, MK / MK_source, 1)))
+    psf = dc._normalize_kernel(ndimage.zoom(psf, (MK / MK_source, MK / MK_source, 1))).astype(np.float32)
 
     if mask:
         mask = [int(x * ratio) for x in mask]
@@ -303,15 +304,15 @@ def richardson_lucy_PAM(image, u, psf, lambd, iterations, epsilon=1e-3, mask=Non
     u = unpad_image(u, (pad, pad))
     pool.close()
 
-    return u.astype(np.float32), psf
+    return u, psf
 
 
 @utils.timeit
-@jit(cache=True)
+#@jit(cache=True)
 def deblur_module(pic, filename, dest_path, blur_type, blur_width, noise_reduction_factor, deblur_strength,
                   blur_strength=1,
                   auto_quality=1, ringing_factor=1e-3, refine=False, refine_quality=0, mask=None, debug=False,
-                  effect_strength=1, preview=1, refocus=False, psf=None, denoise=False, method="fast"):
+                  effect_strength=1, preview=1, refocus=False, psf=None, denoise=False, method="fast", bits=8):
     """
     This mimics a Darktable module inputs where the technical specs are hidden and translated into human-readable parameters.
 
@@ -348,11 +349,11 @@ def deblur_module(pic, filename, dest_path, blur_type, blur_width, noise_reducti
     # Verify the input and scream like a virgin
     assert (blur_width >= 3), "The PSF kernel is too small !"
 
-    # Backup ICC color profile
-    icc_profile = pic.info.get("icc_profile")
+    # Set the bit-depth
+    samples = 2**bits - 1
 
     # Assuming 8 bits input, we rescale the RGB values betweem 0 and 1
-    pic = np.ascontiguousarray(pic, np.float32) / 255
+    pic = np.ascontiguousarray(pic, dtype=np.float32) / samples
 
     # Choose the RL method
     methods_collection = {
@@ -388,25 +389,27 @@ def deblur_module(pic, filename, dest_path, blur_type, blur_width, noise_reducti
     odd_hor = False
 
     if pic.shape[0] % 2 == 0:
-        pic = dc.pad_image(pic, ((1, 0), (0, 0)))
+        pic = dc.pad_image(pic, ((1, 0), (0, 0))).astype(np.float32)
         odd_vert = True
         print("Padded vertically")
 
     if pic.shape[1] % 2 == 0:
-        pic = dc.pad_image(pic, ((0, 0), (1, 0)))
+        pic = dc.pad_image(pic, ((0, 0), (1, 0))).astype(np.float32)
         odd_hor = True
         print("Padded horizontally")
 
     if denoise:
         # TODO : http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6572468
-        u = np.ascontiguousarray(denoise_tv_chambolle(pic, weight=1 / noise_reduction_factor, multichannel=True))
+        u = np.ascontiguousarray(denoise_tv_chambolle(pic, weight=1 / noise_reduction_factor, multichannel=True)).astype(np.float32)
     else:
-        u = np.ascontiguousarray(pic.copy())
+        u = np.ascontiguousarray(pic.copy()).astype(np.float32)
 
     if blur_type == "auto":
         print("\n===== BLIND ESTIMATION OF BLUR =====")
         u, psf = process_pyramid(pic, u, psf, noise_reduction_factor, richardson_lucy, ringing_factor,
                                  quality=auto_quality)
+
+        utils.save(u * (2**16 - 1), filename + "-auto-back", dest_path)
 
     if refine:
         if mask:
@@ -418,14 +421,16 @@ def deblur_module(pic, filename, dest_path, blur_type, blur_width, noise_reducti
             print("\n===== BLIND UNMASKED REFINEMENT =====")
             u, psf = richardson_lucy(pic, u, psf, noise_reduction_factor, int(10 * refine_quality), ringing_factor)
 
+        utils.save(u * (2**16 - 1), filename + "-refine-back", dest_path)
+
     if deblur_strength > 0:
         print("\n===== REGULAR DECONVOLUTION =====")
         u, psf = richardson_lucy(pic, u, psf, noise_reduction_factor, int(deblur_strength * 10), ringing_factor,
                                  blind=False, p=0.8)
 
 
-    # Convert back into 8 bits RGB
-    u = (pic - effect_strength * (pic - u)) * 255
+    # Convert to 16 bits RGB
+    u = u * (2**16 - 1)
 
     # if the picture has been padded to make it odd, unpad it to get the original size
     if odd_hor:
@@ -434,11 +439,7 @@ def deblur_module(pic, filename, dest_path, blur_type, blur_width, noise_reducti
     if odd_vert:
         u = u[1:, :, ...]
 
-    if debug and mask:
-        # Print the mask in debug mode
-        utils.save(u, filename, dest_path, mask=mask, icc_profile=icc_profile)
-    else:
-        utils.save(u, filename, dest_path, icc_profile=icc_profile)
+    utils.save(u, filename, dest_path)
 
     return u, psf
 
@@ -456,8 +457,8 @@ if __name__ == '__main__':
 
         # deblur_module(pic, "myope-v4", "kaiser", 10, 0.05, 50, blur_width=11, blur_strength=8, mask=[150, 150 + 256, 600, 600 + 256], refine=True,)
 
-        """
-        deblur_module(pic, picture + "-blind-v11-best", dest_path, "auto", 5, 10000, 1,
+
+        deblur_module(pic, picture + "-blind-v14-best", dest_path, "auto", 5, 30000, 1,
                       mask=[150, 150 + 256, 600, 600 + 256],
                       refine=True,
                       refine_quality=1,
@@ -466,7 +467,7 @@ if __name__ == '__main__':
                       method="best",
                       debug=True)
 
-        """
+
 
         """
         deblur_module(pic, picture + "-blind-v10-fast", dest_path, "auto", 5, 0.05, 0,
@@ -520,7 +521,7 @@ if __name__ == '__main__':
     with Image.open(join(source_path, picture)) as pic:
         """
         mask = [201, 201+128, 167, 167+128]
-        deblur_module(pic, picture + "test-v7-2-2", dest_path, "auto", 3, 30000, 0,
+        deblur_module(pic, picture + "test-v7-2-3", dest_path, "auto", 3, 30000, 2,
                       denoise=False,
                       mask=mask,
                       refine=True,
@@ -530,22 +531,40 @@ if __name__ == '__main__':
                       method="best"
         )
         """
+
         pass
 
-    picture = "153412-blur.jpg"
+    picture = "153412.jpg"
     with Image.open(join(source_path, picture)) as pic:
-
+        """
         mask = [3228, 3228 + 256, 1484, 1484 + 256]
-        deblur_module(pic, picture + "-blind-v11-best-2", dest_path, "auto", 33, 15000, 0,
-                      # mask=mask,
+        deblur_module(pic, picture + "-blind-v11-best-2", dest_path, "auto", 3, 5000, 0,
+                      mask=mask,
                       refine=True,
-                      # refine_quality=1,
-                      preview=1,
-                      auto_quality=2,
+                      refine_quality=0.5,
+                      preview=0.25,
+                      auto_quality=0.5,
                       method="best",
                       debug=True)
 
 
-
+        """
 
         pass
+
+    """
+    source_path = "/home/aurelien/Exports/2017-11-19-Shoot Fanny Wong/export"
+    picture = "Shoot Fanny Wong-0146-_DSC0426--PHOTOSHOP.tif"
+    pic = tifffile.imread(join(source_path, picture))
+
+    mask = [1914, 1914 + 722, 718, 1484 + 1012]
+    deblur_module(pic, picture + "-blind-v11-best-3", dest_path, "auto", 11, 30000, 0.5,
+                  mask=mask,
+                  refine=True,
+                  refine_quality=0.5,
+                  preview=0.25,
+                  auto_quality=0.5,
+                  method="best",
+                  bits=16)
+
+    """

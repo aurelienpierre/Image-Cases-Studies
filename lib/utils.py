@@ -15,7 +15,7 @@ import pyfftw
 from os.path import join
 from threading import Thread
 import pyfftw, multiprocessing
-
+from lib import tifffile as tiff
 
 import numpy as np
 import scipy.signal
@@ -304,19 +304,16 @@ def blending(upx, lpx, type):
     return types[type](upx, lpx)
 
 
-def save(pic, name, dest_path, mask=False, icc_profile=None):
-    with Image.fromarray(pic.astype(np.uint8)) as output:
-        if mask:
-            draw = ImageDraw.Draw(output)
-            draw.rectangle([(mask[2], mask[0]), (mask[3], mask[1])], fill=None, outline=128)
+def save(pic, name, dest_path):
+    #tiff = TIFF.open(, mode='w')
 
-        output.save(join(dest_path, name + ".jpg"),
-                    format="jpeg",
-                    optimize=True,
-                    progressive=True,
-                    quality=90,
-                    icc_profile=icc_profile)
+    # For compatibility with PIL, we have to roll the 3rd and first axis.
+    # PIL opens RGB images with RGB channels on the 3rd dimension
+    # libtiff opens RGB images with RGB channels on the first dimension
+    #tiff.write_image(np.rollaxis(pic, 2), compression='lzw', write_rgb=True)
+    #tiff.close()
 
+    tiff.imsave(join(dest_path, name + ".tif"), pic.astype(np.uint16), dtype=np.uint16, photometric='rgb')
 
 """
 Backup old functions
