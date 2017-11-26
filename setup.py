@@ -4,6 +4,7 @@ from distutils.extension import Extension
 
 from Cython.Distutils import build_ext
 
+import numpy
 
 def scandir(dir, files=[]):
     for file in os.listdir(dir):
@@ -30,6 +31,12 @@ def makeExtension(extName):
 extNames = scandir('lib')
 
 extensions = [makeExtension(name) for name in extNames]
+extensions.append(Extension('_tifffile',
+                            [os.path.join("lib", 'tifffile.c')],
+                            include_dirs=['.'],
+                            extra_compile_args=["-O3", "-fopenmp", "-ffast-math"],
+                            extra_link_args=['-fopenmp']
+                            ))
 
 setup(
     name="ICS",
@@ -37,13 +44,5 @@ setup(
     cmdclass={'build_ext': build_ext},
     script_args=['build_ext'],
     options={'build_ext': {'inplace': True, 'force': True}},
-    install_requires=["PIL",
-                      "numpy",
-                      "scipy",
-                      "cython",
-                      "sympy",
-                      "skimage",
-                      "warnings",
-                      "time",
-                      "numba"]
+    include_dirs=[numpy.get_include()]
 )
