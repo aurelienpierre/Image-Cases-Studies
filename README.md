@@ -106,6 +106,11 @@ every pixel not following this law, and attenuate these pixels from the intermed
 the L-1 anisotropic norm of the Total Variation is minimized at every iteration, leading to noise and ringing
 attenuation. In the blind setup, the initial PSF is assumed to be an uniform blur, and then refined at every step along with the image.
 
+The regularization has been modified from the original work to include both a [spatial and spectral term](https://link.springer.com/article/10.1007/s10915-017-0597-2)
+taking into account the 18 neighbouring pixels on the 3 RGB channels. This method ensures a better 
+removal of all kinds of noise by using all the information. Also, the the gradients are computed in 3D using
+[3 separated 1D filters](https://cdn.intechopen.com/pdfs-wm/39346.pdf) ensuring a fast algorithm with a second-order accuracy.
+
 While the theory says that minimizing gradients cannot bring back a sharper image (whose gradients are maximum), the practice shows
 that it actually works. The actual implementation relies on 3 different solvers : the Projected Alternating Minimization,
 the Primal-Dual method (similar to A. Chambolle's TV denoising), and the Majorization-Minimizatiom.
@@ -135,7 +140,7 @@ This takes a fair amount of time but can recover large blurs blurs. It's the imp
 algorithm proposed by Perrone & Favaro in 2014.
 ![alt text](img/richardson-lucy-deconvolution/blured-blind-v8.jpg)
 
-##### After (blind algorithm, MM method - 7 min 45 - 38 iterations of majorization, 190 total iterations - Blind):
+##### After (blind algorithm, MM method - 11 min 30 - 64 iterations of majorization, 320 total iterations - Blind):
 This is the implementation of the Majorization-Minimisation algorithm proposed by [Perrone & Favaro in 2015](http://www.cvg.unibe.ch/dperrone/logtv/index.html).
 The computations are much slower although they can be parallelized but you see less artifacts and a better contrast.
 The additional time comes from the fact that every majorization iteration contains

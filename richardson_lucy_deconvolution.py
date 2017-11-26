@@ -22,6 +22,7 @@ import warnings
 from os.path import join
 
 import numpy as np
+
 import scipy
 from PIL import Image
 from numba import float32, jit, int16, boolean
@@ -45,7 +46,7 @@ from lib import deconvolution as dc
 
 CPU = multiprocessing.cpu_count()
 
-#@jit(cache=True)
+@jit(cache=True)
 def build_pyramid(psf_size, lambd, method):
     """
     To speed-up the deconvolution, the PSF is estimated successively on smaller images of increasing sizes. This function
@@ -79,7 +80,7 @@ def build_pyramid(psf_size, lambd, method):
     print(images, kernels, lambdas)
     return images, kernels, lambdas
 
-#@jit(cache=True)
+@jit(cache=True)
 def process_pyramid(pic, u, psf, lambd, method, epsilon, quality=1):
     """
     To speed-up the deconvolution, the PSF is estimated successively on smaller images of increasing sizes. This function
@@ -140,7 +141,7 @@ def process_pyramid(pic, u, psf, lambd, method, epsilon, quality=1):
 
     return u, psf
 
-#@jit(cache=True)
+@jit(cache=True)
 def make_preview(image, psf, ratio, mask=None):
     """
     Resize the image, the PSF and the mask to preview the settings on a smaller picture to speed-up the tweaking
@@ -252,6 +253,7 @@ def richardson_lucy_PAM(image, u, psf, lambd, iterations, epsilon=1e-3, mask=Non
     MK, NK, CK = psf.shape
     M, N, C = image.shape
 
+
     # Verify the input and scream like a virgin
     assert (CK == C), "Dimensions of the PSF and of the image don't match !"
     assert (MK == NK), "The PSF must be square"
@@ -308,7 +310,7 @@ def richardson_lucy_PAM(image, u, psf, lambd, iterations, epsilon=1e-3, mask=Non
 
 
 @utils.timeit
-#@jit(cache=True)
+@jit(cache=True)
 def deblur_module(pic, filename, dest_path, blur_type, blur_width, noise_reduction_factor, deblur_strength,
                   blur_strength=1,
                   auto_quality=1, ringing_factor=1e-3, refine=False, refine_quality=0, mask=None, debug=False,
@@ -345,6 +347,7 @@ def deblur_module(pic, filename, dest_path, blur_type, blur_width, noise_reducti
     # TODO : refocus http://web.media.mit.edu/~bandy/refocus/PG07refocus.pdf
     # TODO : extract foreground only https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_grabcut/py_grabcut.html#grabcut
 
+    pic = np.asanyarray(pic, dtype=np.float32, order="C")
 
     # Verify the input and scream like a virgin
     assert (blur_width >= 3), "The PSF kernel is too small !"
@@ -457,18 +460,18 @@ if __name__ == '__main__':
 
         # deblur_module(pic, "myope-v4", "kaiser", 10, 0.05, 50, blur_width=11, blur_strength=8, mask=[150, 150 + 256, 600, 600 + 256], refine=True,)
 
-        """
-        deblur_module(pic, picture + "-blind-v14-best", dest_path, "auto", 5, 30000, 1,
+
+        deblur_module(pic, picture + "-blind-v14-best", dest_path, "auto", 5, 12000, 2,
                       mask=[150, 150 + 256, 600, 600 + 256],
                       refine=True,
-                      refine_quality=1,
+                      refine_quality=2,
                       auto_quality=1,
                       ringing_factor=1e-3,
                       method="best",
                       debug=True)
 
 
-        """
+
         """
         deblur_module(pic, picture + "-blind-v10-fast", dest_path, "auto", 5, 0.05, 0,
                       mask=[150, 150 + 512, 600, 600 + 512],
@@ -534,11 +537,13 @@ if __name__ == '__main__':
 
         pass
 
+    # JPEG input example
+
     picture = "153412.jpg"
     with Image.open(join(source_path, picture)) as pic:
 
-        mask = [3228, 3228 + 256, 1484, 1484 + 256]
-        deblur_module(pic, picture + "-blind-v14-best", dest_path, "auto", 9, 15000, 0,
+        mask = [1484, 1484 + 256, 3228, 3228 + 256]
+        deblur_module(pic, picture + "-blind-v14-best", dest_path, "auto", 7, 30000, 0,
                       mask=mask,
                       refine=True,
                       refine_quality=2,
@@ -551,6 +556,8 @@ if __name__ == '__main__':
 
 
         pass
+
+    # TIFF input example
 
     """
     source_path = "/home/aurelien/Exports/2017-11-19-Shoot Fanny Wong/export"

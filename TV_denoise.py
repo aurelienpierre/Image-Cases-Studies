@@ -23,6 +23,8 @@ def auto_denoise(image, k, b):
     Baoxian Wang, Baojun Zhao, Chenwei Deng and Linbo Tang, 2012
     http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=6572468
 
+    https://link.springer.com/article/10.1007/s10915-017-0597-2
+
     :param image:
     :return:
     """

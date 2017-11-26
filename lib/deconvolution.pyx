@@ -188,6 +188,9 @@ cdef class convolve3D:
 cdef float [:, :, :]  conv3(np.ndarray[DTYPE_t, ndim=3] u, int axis_one, int axis_two, int axis_three):
     """
     Convolve a 3D image with a separable kernel representing the 2nd order gradient on the 18 neighbours
+    
+    Reference : https://cdn.intechopen.com/pdfs-wm/39346.pdf and https://link.springer.com/article/10.1007/s10915-017-0597-2
+    
     :param u: 
     :param axis_one: 
     :param axis_two: 
@@ -312,15 +315,17 @@ cpdef unpad_image(image, pad):
     return np.ascontiguousarray(image[pad[0]:-pad[0], pad[1]:-pad[1], ...], np.ndarray)
 
 
-cdef np.ndarray[DTYPE_t, ndim=3] gradTVEM(np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] ut, np.ndarray[DTYPE_t, ndim=3] gradx, np.ndarray[DTYPE_t, ndim=3] grady, float eps, convolve3D FFT_3D):
+cdef np.ndarray[DTYPE_t, ndim=3] gradTVEM(np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] ut, float eps):
+    # https://link.springer.com/article/10.1007/s10915-017-0597-2
     # https://cdn.intechopen.com/pdfs-wm/39346.pdf
     # https://www.intechopen.com/books/matlab-a-fundamental-tool-for-scientific-computing-and-engineering-applications-volume-3/convolution-kernel-for-fast-cpu-gpu-computation-of-2d-3d-isotropic-gradients-on-a-square-cubic-latti
 
-    cdef float [:, :, :] gradTVx, gradTVy
+    cdef float [:, :, :] gradTVx, gradTVy, gradTVz
     cdef np.ndarray[DTYPE_t, ndim=3] out = np.zeros_like(u)
 
     gradTVx = conv3(u, 0, 1, 2)
     gradTVy = conv3(u, 1, 0, 2)
+    gradTVz = conv3(u, 2, 1, 0)
 
     cdef int i, j, k, M, N, C
     M = u.shape[0]
@@ -331,18 +336,19 @@ cdef np.ndarray[DTYPE_t, ndim=3] gradTVEM(np.ndarray[DTYPE_t, ndim=3] u, np.ndar
         for i in prange(M, schedule="guided"):
             for j in range(N):
                 for k in range(C):
-                    out[i, j, k] = (abs(gradTVx[i, j, k]) + abs(gradTVy[i, j, k]) + eps)
+                    out[i, j, k] = (abs(gradTVx[i, j, k]) + abs(gradTVy[i, j, k]) + abs(gradTVz[i, j, k])*3 + eps)
 
 
     gradTVx = conv3(ut, 0, 1, 2)
     gradTVy = conv3(ut, 1, 0, 2)
+    gradTVz = conv3(ut, 2, 1, 0)
 
 
     with nogil, parallel(num_threads=CPU):
         for i in prange(M, schedule="guided"):
             for j in range(N):
                 for k in range(C):
-                    out[i, j, k] /= abs(gradTVx[i, j, k]) + abs(gradTVy[i, j, k]) + eps
+                    out[i, j, k] /= (abs(gradTVx[i, j, k]) + abs(gradTVy[i, j, k]) + abs(gradTVz[i, j, k])*3 + eps)
 
     return out
 
@@ -407,36 +413,12 @@ cdef list _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
 
     cdef int i, j, chan
 
-    # Compute the 3D gradients with an efficient method. From : https://cdn.intechopen.com/pdfs-wm/39346.pdf
-    cdef float w1 = 2/9
-    cdef float w2 = 1/18
-    cdef float w3 = 1/72
-
-    cdef float [:, :] kernel1, kernel2
-
-    kernel1 = np.array([
-        [-w3, 0, w3],
-        [-w2, 0, w2],
-        [-w3, 0, w3]]).astype(DTYPE)
-
-    kernel2 = np.array([
-        [-w2, 0, w2],
-        [-w1, 0, w1],
-        [-w2, 0, w2]]).astype(DTYPE)
-
-    cdef np.ndarray[DTYPE_t, ndim=3] kern = np.dstack((kernel1, kernel2, kernel1))
-    cdef np.ndarray[DTYPE_t, ndim=3] gradx = - np.transpose(kern, axes=(1, 0, 2))
-    cdef np.ndarray[DTYPE_t, ndim=3] grady = np.transpose(gradx, axes=(1, 0, 2))
-    cdef np.ndarray[DTYPE_t, ndim=3] gradz = np.transpose(gradx, axes=(2, 1, 0))
-
-    # [1/9, 0, -1/9], [1/2, 2, 1/2], [1/4, 1, 1/4]
-
     print("System profiling…")
     cdef convolve FFT_valid = convolve(u[..., 0], psf[..., 0], "valid")
     cdef convolve FFT_full = convolve(image[..., 0], psf[..., 0], "full")
     cdef convolve FFT_masked_valid = convolve(u[mask_u[0]:mask_u[1], mask_u[2]:mask_u[3], 0], psf[..., 0], "valid")
     cdef convolve FFT_kern_valid = convolve(u[mask_u[0]:mask_u[1], mask_u[2]:mask_u[3], 0], image[mask_i[0]:mask_i[1], mask_i[2]:mask_i[3], 0], "valid")
-    cdef convolve3D FFT_3D = convolve3D(u, gradx, "same")
+    # cdef convolve3D FFT_3D = convolve3D(u, gradx, "same")
     print("Profiling done !")
 
 
@@ -448,7 +430,7 @@ cdef list _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
         for itt in range(5):
             # Image update
             lambd = min([lambd, 50000])
-            gradV = gradTVEM(u, ut, gradx, grady, eps, FFT_3D)
+            gradV = gradTVEM(u, ut, eps)
 
             for chan in range(3):
                 im_convo[..., chan] = _convolve_image(u[..., chan], image[..., chan], psf[..., chan], FFT_valid, FFT_full)
