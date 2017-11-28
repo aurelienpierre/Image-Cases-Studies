@@ -128,7 +128,7 @@ def process_pyramid(pic, u, psf, lambd, method, epsilon, quality=1):
         u = ndimage.zoom(u, (im.shape[0] / u.shape[0], im.shape[1] / u.shape[1], 1)).astype(np.float32)
 
         # Make a blind Richardson-Lucy deconvolution on the RGB signal
-        u, psf = method(im, u, psf, l, int(iterations/i), epsilon)
+        u, psf = method(im, u, psf, l, iterations, epsilon)
 
         # if the picture has been padded to make it odd, unpad it to get the original size
         if odd_hor:
@@ -461,12 +461,12 @@ if __name__ == '__main__':
         # deblur_module(pic, "myope-v4", "kaiser", 10, 0.05, 50, blur_width=11, blur_strength=8, mask=[150, 150 + 256, 600, 600 + 256], refine=True,)
 
 
-        deblur_module(pic, picture + "-blind-v14-best", dest_path, "auto", 5, 12000, 2,
+        deblur_module(pic, picture + "-blind-v16-best", dest_path, "auto", 5, 8000, 2,
                       mask=[150, 150 + 256, 600, 600 + 256],
                       refine=True,
                       refine_quality=2,
                       auto_quality=1,
-                      ringing_factor=1e-3,
+                      ringing_factor=5e-3,
                       method="best",
                       debug=True)
 
@@ -524,7 +524,7 @@ if __name__ == '__main__':
     with Image.open(join(source_path, picture)) as pic:
         """
         mask = [201, 201+128, 167, 167+128]
-        deblur_module(pic, picture + "test-v7-2-3", dest_path, "auto", 3, 30000, 2,
+        deblur_module(pic, picture + "test-v7-2-3", dest_path, "auto", 3, 12000, 2,
                       denoise=False,
                       mask=mask,
                       refine=True,
@@ -533,15 +533,30 @@ if __name__ == '__main__':
                       preview=1,
                       method="best"
         )
-        """
 
+        """
         pass
 
-    # JPEG input example
+    picture = "P1030302.jpg"
+    with Image.open(join(source_path, picture)) as pic:
+    	"""
+        deblur_module(pic, picture + "-blind-v14-best", dest_path, "auto", 29,8000, 2, mask=[3560, 3560+512, 16, 16+512],
+		
+                      refine=False,
+                      refine_quality=2,
+                      preview=1,
+                      auto_quality=4,
+                      method="best",
+                      debug=True)
 
+        """
+
+
+
+    # JPEG input example
     picture = "153412.jpg"
     with Image.open(join(source_path, picture)) as pic:
-
+        """
         mask = [1484, 1484 + 256, 3228, 3228 + 256]
         deblur_module(pic, picture + "-blind-v14-best", dest_path, "auto", 7, 30000, 0,
                       mask=mask,
@@ -552,13 +567,12 @@ if __name__ == '__main__':
                       method="best",
                       debug=True)
 
-
+        """
 
 
         pass
 
     # TIFF input example
-
     """
     source_path = "/home/aurelien/Exports/2017-11-19-Shoot Fanny Wong/export"
     picture = "Shoot Fanny Wong-0146-_DSC0426--PHOTOSHOP.tif"

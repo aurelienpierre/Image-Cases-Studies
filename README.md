@@ -91,8 +91,6 @@ These algorithms are all auto-adaptative, meaning that all the regularization pa
 estimated by the algorithm based on statistical assumptions. However, as stats don't always represent
 the reality, the user can still force his own parameters.
 
-They have been slightly modified to be able to run parallelized, with RGB each channel on a single process. 
-
 #### Math details
 
 Let the blurry image be the convolution product of a sharp image and a kernel (the PSF) plus a noise matrix.
@@ -106,14 +104,28 @@ every pixel not following this law, and attenuate these pixels from the intermed
 the L-1 anisotropic norm of the Total Variation is minimized at every iteration, leading to noise and ringing
 attenuation. In the blind setup, the initial PSF is assumed to be an uniform blur, and then refined at every step along with the image.
 
-The regularization has been modified from the original work to include both a [spatial and spectral term](https://link.springer.com/article/10.1007/s10915-017-0597-2)
-taking into account the 18 neighbouring pixels on the 3 RGB channels. This method ensures a better 
-removal of all kinds of noise by using all the information. Also, the the gradients are computed in 3D using
-[3 separated 1D filters](https://cdn.intechopen.com/pdfs-wm/39346.pdf) ensuring a fast algorithm with a second-order accuracy.
-
 While the theory says that minimizing gradients cannot bring back a sharper image (whose gradients are maximum), the practice shows
 that it actually works. The actual implementation relies on 3 different solvers : the Projected Alternating Minimization,
 the Primal-Dual method (similar to A. Chambolle's TV denoising), and the Majorization-Minimizatiom.
+
+#### Contributions
+
+This work improves the used references in several ways :
+
+The regularization has been modified from the original work to include both a [spatial and spectral term](https://link.springer.com/article/10.1007/s10915-017-0597-2).
+This method assumes that true sharp edges should have the same
+gradient over the 3 RGB channels, so pixels that differs from this rule are likely to be noise. The 3D spatial/spectral total variation
+acts as handcuffs between channels and helps dramatically in impulse noise removal.
+
+Also, the the gradients are computed in 3D over the 18 neighbouring pixels (over 3 chanels) with a separable filter giving
+ a second-order accurate approximation :
+[3 separated 1D filters](https://cdn.intechopen.com/pdfs-wm/39346.pdf). This is similiar to the Sobel or Prewitt operators.
+
+The gradients are all computed in L-1 norm, favoring edges over smoothness, which gives arguably better results but is with no doubt more 
+computing efficient.
+
+In auto mode, after the initial PSF evaluation along the whole picture, this work allows the user to select a specific zone
+to refine the PSF. This helps in cases where the PSF varies spatially, to constrain the in-focus zone, but also speed-up the computations.
 
 ##### Blurred original :
 ![alt text](img/blured.jpg)
@@ -140,7 +152,7 @@ This takes a fair amount of time but can recover large blurs blurs. It's the imp
 algorithm proposed by Perrone & Favaro in 2014.
 ![alt text](img/richardson-lucy-deconvolution/blured-blind-v8.jpg)
 
-##### After (blind algorithm, MM method - 11 min 30 - 64 iterations of majorization, 320 total iterations - Blind):
+##### After (blind algorithm, MM method - 10 min 15 - 64 iterations of majorization, 320 total iterations - Blind):
 This is the implementation of the Majorization-Minimisation algorithm proposed by [Perrone & Favaro in 2015](http://www.cvg.unibe.ch/dperrone/logtv/index.html).
 The computations are much slower although they can be parallelized but you see less artifacts and a better contrast.
 The additional time comes from the fact that every majorization iteration contains

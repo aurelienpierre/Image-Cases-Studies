@@ -96,11 +96,11 @@ cdef class convolve:
         B = np.pad(B, ((0, M - 1), (0, N - 1)), mode='constant')
 
         self.fft_A_obj = pyfftw.builders.rfft2(A, s=(self.M, self.N), threads=CPU, auto_align_input=True,
-                                               auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
+                                               auto_contiguous=True, planner_effort="FFTW_MEASURE")
         self.fft_B_obj = pyfftw.builders.rfft2(B, s=(self.M, self.N ), threads=CPU,  auto_align_input=True,
-                                               auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
+                                               auto_contiguous=True, planner_effort="FFTW_MEASURE")
         self.ifft_obj = pyfftw.builders.irfft2(self.fft_B_obj.output_array , s=(self.M, self.N), threads=CPU,
-                                               auto_align_input=True, auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
+                                               auto_align_input=True, auto_contiguous=True, planner_effort="FFTW_MEASURE")
 
         self.output_array = self.ifft_obj.output_array
 
@@ -187,9 +187,15 @@ cdef class convolve3D:
 
 cdef float [:, :, :]  conv3(np.ndarray[DTYPE_t, ndim=3] u, int axis_one, int axis_two, int axis_three):
     """
-    Convolve a 3D image with a separable kernel representing the 2nd order gradient on the 18 neighbours
+    Convolve a 3D image with a separable kernel representing the 2nd order gradient on the 18 neighbouring pixels with an 
+    efficient approximation as described by [1]
     
-    Reference : https://cdn.intechopen.com/pdfs-wm/39346.pdf and https://link.springer.com/article/10.1007/s10915-017-0597-2
+    Performs an spatial AND spectral gradient evaluation to remove all finds of noise, as described in [2]
+    
+    Reference
+    --------
+        [1] https://cdn.intechopen.com/pdfs-wm/39346.pdf
+        [2] https://link.springer.com/article/10.1007/s10915-017-0597-2
     
     :param u: 
     :param axis_one: 
@@ -198,65 +204,75 @@ cdef float [:, :, :]  conv3(np.ndarray[DTYPE_t, ndim=3] u, int axis_one, int axi
     :return: 
     """
 
+    # Initialize the filter vectors
+    # The whole 3D kernel can be reconstructed by the outer product in the same order
     cdef float[:] first_dim = np.array([1/9, 0, -1/9], dtype=DTYPE)
     cdef float[:] second_dim = np.array([1/2, 2, 1/2], dtype=DTYPE)
     cdef float [:] third_dim = np.array([1/4, 1, 1/4], dtype=DTYPE)
+
+    # Set-up the default configuration to evaluate the gradient along the X direction
     cdef float [:] vect_one = np.array([1/9, 0, -1/9], dtype=DTYPE)
     cdef float [:] vect_two = np.array([1/2, 2, 1/2], dtype=DTYPE)
     cdef float [:] vect_three = np.array([1/4, 1, 1/4], dtype=DTYPE)
 
 
-    cdef np.ndarray[DTYPE_t, ndim=3] u_pad = pad_image(u, (2, 2), "wrap")
+    cdef np.ndarray[DTYPE_t, ndim=3] u_pad = pad_image(u, (2, 2), "symmetric")
     cdef np.ndarray[DTYPE_t, ndim=3] u_conv = np.dstack((u_pad, u_pad[..., 1], u_pad[..., 0]))
     del u_pad
     cdef float [:, :, :] out = np.zeros_like(u_conv)
 
 
     if axis_one == 1:
+        # gradient along the Y direction
         vect_one = second_dim
     elif axis_one == 2:
+        # gradient along the Z direction
         vect_one = third_dim
 
     if axis_two == 0:
+        # gradient along the Y direction
         vect_two = first_dim
     elif axis_three == 2:
+        # gradient along the Z direction
         vect_two = third_dim
 
     if axis_three == 0:
+        # gradient along the Z direction
         vect_three = first_dim
-    elif axis_three == 1:
-        vect_three = second_dim
-
 
     cdef int M = u.shape[0]
     cdef int N = u.shape[1]
     cdef int C = u.shape[2]
 
-    cdef int i, j, k
+    cdef int i, j, k, nk
+
 
     with nogil, parallel(num_threads=CPU):
         for i in prange(M, schedule="guided"):
             for j in range(N):
                 for k in range(C):
-                    out[i+2, j, k] += vect_one[0] * u_conv[i, j, k]
-                    out[i+2, j, k] += vect_one[1] * u_conv[i+1, j, k]
-                    out[i+2, j, k] += vect_one[2] * u_conv[i+2, j, k]
-                    u_conv[i, j, k] = 0
+                    for nk in range(3):
+                        # http://www.songho.ca/dsp/convolution/convolution.html
+                        u_conv[i+2, j+2, k+2] += vect_one[nk] * out[i + 2, j - nk + 2, k + 2]
+                        # Reset `out` to recycle it in the next step
+                        out[i + 2, j - nk + 2, k + 2] = 0
 
         for i in prange(M, schedule="guided"):
             for j in range(N):
                 for k in range(C):
-                    u_conv[i, j+2, k] += vect_two[0] * out[i, j, k]
-                    u_conv[i, j+2, k] += vect_two[1] * out[i, j+1, k]
-                    u_conv[i, j+2, k] += vect_two[2] * out[i, j+2, k]
-                    out[i, j, k] = 0
+                    for nk in range(3):
+                        # http://www.songho.ca/dsp/convolution/convolution.html
+                        out[i+2, j+2, k+2] += vect_two[nk] * u_conv[i - nk + 2, j + 2, k + 2]
+                        # Reset `u_conv` to recycle it in the next step
+                        u_conv[i - nk + 2, j + 2, k + 2] = 0
 
         for i in prange(M, schedule="guided"):
             for j in range(N):
                 for k in range(C):
-                    out[i, j, k] += vect_three[0] * u_conv[i, j, k]
-                    out[i, j, k] += vect_three[1] * u_conv[i, j, k+1]
-                    out[i, j, k] += vect_three[2] * u_conv[i, j, k+2]
+                    for nk in range(3):
+                    # http://www.songho.ca/dsp/convolution/convolution.html
+                        out[i+2, j+2, k+2] += vect_three[nk] * u_conv[i + 2, j + 2, k + 2 - nk]
+
 
     return out[2:2+M, 2:2+N, 0:3]
 
@@ -336,7 +352,7 @@ cdef np.ndarray[DTYPE_t, ndim=3] gradTVEM(np.ndarray[DTYPE_t, ndim=3] u, np.ndar
         for i in prange(M, schedule="guided"):
             for j in range(N):
                 for k in range(C):
-                    out[i, j, k] = (abs(gradTVx[i, j, k]) + abs(gradTVy[i, j, k]) + abs(gradTVz[i, j, k])*3 + eps)
+                    out[i, j, k] = (abs(gradTVx[i, j, k]) + abs(gradTVy[i, j, k]) + abs(gradTVz[i, j, k])*2 + eps)
 
 
     gradTVx = conv3(ut, 0, 1, 2)
@@ -348,7 +364,7 @@ cdef np.ndarray[DTYPE_t, ndim=3] gradTVEM(np.ndarray[DTYPE_t, ndim=3] u, np.ndar
         for i in prange(M, schedule="guided"):
             for j in range(N):
                 for k in range(C):
-                    out[i, j, k] /= (abs(gradTVx[i, j, k]) + abs(gradTVy[i, j, k]) + abs(gradTVz[i, j, k])*3 + eps)
+                    out[i, j, k] /= (abs(gradTVx[i, j, k]) + abs(gradTVy[i, j, k]) + abs(gradTVz[i, j, k])*2 + eps)
 
     return out
 
@@ -472,6 +488,8 @@ cdef list _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                     psf[..., chan] = _normalize_kernel(psf[..., chan])
 
             lambd *= 1.001
+            k_step *= 1.001
+            u_step *= 1.001
 
         print("%i/%i iterations completed" % ((it+1) * 5, iterations*5))
 
