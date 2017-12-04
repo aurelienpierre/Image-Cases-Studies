@@ -112,7 +112,7 @@ the Primal-Dual method (similar to A. Chambolle's TV denoising), and the Majoriz
 
 This work improves the used references in several ways :
 
-The regularization has been modified from the original work to include both a [spatial and spectral term](https://link.springer.com/article/10.1007/s10915-017-0597-2).
+The regularization has been modified from the original work to include both a [spatial and spectral term](http://ieeexplore.ieee.org/document/8094858/#full-text-section).
 This method assumes that true sharp edges should have the same
 gradient over the 3 RGB channels, so pixels that differs from this rule are likely to be noise. The 3D spatial/spectral total variation
 acts as handcuffs between channels and helps dramatically in impulse noise removal.

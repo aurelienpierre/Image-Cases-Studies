@@ -195,7 +195,7 @@ cdef float [:, :, :]  conv3(np.ndarray[DTYPE_t, ndim=3] u, int axis_one, int axi
     Reference
     --------
         [1] https://cdn.intechopen.com/pdfs-wm/39346.pdf
-        [2] https://link.springer.com/article/10.1007/s10915-017-0597-2
+        [2] http://ieeexplore.ieee.org/document/8094858/#full-text-section
     
     :param u: 
     :param axis_one: 
@@ -332,7 +332,7 @@ cpdef unpad_image(image, pad):
 
 
 cdef np.ndarray[DTYPE_t, ndim=3] gradTVEM(np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] ut, float eps):
-    # https://link.springer.com/article/10.1007/s10915-017-0597-2
+    # http://ieeexplore.ieee.org/document/8094858/#full-text-section
     # https://cdn.intechopen.com/pdfs-wm/39346.pdf
     # https://www.intechopen.com/books/matlab-a-fundamental-tool-for-scientific-computing-and-engineering-applications-volume-3/convolution-kernel-for-fast-cpu-gpu-computation-of-2d-3d-isotropic-gradients-on-a-square-cubic-latti
 

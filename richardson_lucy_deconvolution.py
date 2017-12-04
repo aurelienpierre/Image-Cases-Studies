@@ -428,7 +428,8 @@ def deblur_module(pic, filename, dest_path, blur_type, blur_width, noise_reducti
 
     if deblur_strength > 0:
         print("\n===== REGULAR DECONVOLUTION =====")
-        u, psf = richardson_lucy(pic, u, psf, noise_reduction_factor, int(deblur_strength * 10), ringing_factor,
+        # TODO : http://groups.csail.mit.edu/graphics/CodedAperture/
+        u, psf = richardson_lucy(pic, u, psf, noise_reduction_factor*2, int(deblur_strength * 10), ringing_factor,
                                  blind=False, p=0.8)
 
 
