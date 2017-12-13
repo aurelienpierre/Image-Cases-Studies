@@ -131,10 +131,6 @@ def auto_vibrance(src):
     return src
 
 
-def gaussian(x, sigma):
-    return (1.0 / (2 * np.pi * (sigma ** 2))) * np.exp(- (x ** 2) / (2 * sigma ** 2))
-
-
 def disc_blur(x):
     half = [1 / (np.pi * x ** 2) for x in range(1, int(x / 2) + 1)]
     return half

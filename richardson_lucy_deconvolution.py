@@ -462,12 +462,12 @@ if __name__ == '__main__':
         # deblur_module(pic, "myope-v4", "kaiser", 10, 0.05, 50, blur_width=11, blur_strength=8, mask=[150, 150 + 256, 600, 600 + 256], refine=True,)
 
 
-        deblur_module(pic, picture + "-blind-v16-best", dest_path, "auto", 5, 8000, 2,
+        deblur_module(pic, picture + "-blind-v16-best", dest_path, "gaussian", 5, 8000, 2,
                       mask=[150, 150 + 256, 600, 600 + 256],
+                      blur_strength=1,
                       refine=True,
                       refine_quality=2,
                       auto_quality=1,
-                      ringing_factor=5e-3,
                       method="best",
                       debug=True)
 
