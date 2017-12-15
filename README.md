@@ -130,7 +130,7 @@ to refine the PSF. This helps in cases where the PSF varies spatially, to constr
 ##### Blurred original :
 ![alt text](img/blured.jpg)
 
-The tests have been done on a laptop with an Intel® Core™ i7-2670QM CPU @ 2.20GHz running 3 processes.
+The tests have been done on a laptop with an Intel® Core™ i7-2670QM CPU @ 2.20GHz running 8 processes.
 
 
 ##### After (fast algorithm, PAM method - 35 s - 50 iterations - Non blind):
@@ -144,7 +144,6 @@ This takes as input an user-defined PSF guessed by trial and error but will refi
 (drawn in red here). This is a good compromise as long as the blur is simple (homogenous lens blur).
 ![alt text](img/richardson-lucy-deconvolution/blured-myope-v5.jpg)
 
-
 ##### After (blind algorithm, PAM method - 106 s - 99 iterations - Blind):
 This takes no input and will guess the PSF along from scratch. 
 A balance between the masked zone weight and the whole image weight in the computation can be adjusted.
@@ -152,14 +151,12 @@ This takes a fair amount of time but can recover large blurs blurs. It's the imp
 algorithm proposed by Perrone & Favaro in 2014.
 ![alt text](img/richardson-lucy-deconvolution/blured-blind-v8.jpg)
 
-##### After (blind algorithm, MM method - 10 min 15 - 64 iterations of majorization, 320 total iterations - Blind):
+##### After (blind algorithm, MM method - 2 min 20 - 555 total iterations - Blind):
 This is the implementation of the Majorization-Minimisation algorithm proposed by [Perrone & Favaro in 2015](http://www.cvg.unibe.ch/dperrone/logtv/index.html).
-The computations are much slower although they can be parallelized but you see less artifacts and a better contrast.
-The additional time comes from the fact that every majorization iteration contains
-5 minimization iterations, so it's 5 times the computations needed for the PAM method, but the result is more robust.
+The computations are much slower that's why the PSF is only estimated on a patch of the picture.
 This method has found the sharp picture at a margin of error of 5 % in more than 50 % of the tests. The PAM method never reaches
 the sharp picture, but comes close enough.
-![alt text](img/richardson-lucy-deconvolution/blured-blind-v14-best.jpg)
+![alt text](img/richardson-lucy-deconvolution/blured-blind-v18-best.jpg)
 
 This method deblurs by recovering the sharpness of the edges. However, it does not recover the local contrast. Further
 edition of the above picture with local contrast added through wavelets high-pass filter
