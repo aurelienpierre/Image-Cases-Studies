@@ -147,13 +147,18 @@ def deblur_module(pic, filename, dest_path, blur_width, lambd, tau, step_factor,
 
         u_masked = ndimage.zoom(u_masked, (im.shape[0] / u_masked.shape[0], im.shape[1] / u_masked.shape[1], 1))
 
+        vert_odd = False
+        hor_odd = False
+
         # Pad to ensure oddity
         if pic.shape[0] % 2 == 0:
+            hor_odd = True
             im = dc.pad_image(im, ((1, 0), (0, 0))).astype(np.float32)
             u_masked = dc.pad_image(u_masked, ((1, 0), (0, 0))).astype(np.float32)
             print("Padded vertically")
 
         if pic.shape[1] % 2 == 0:
+            vert_odd = True
             im = dc.pad_image(im, ((0, 0), (1, 0))).astype(np.float32)
             u_masked = dc.pad_image(im, ((0, 0), (1, 0))).astype(np.float32)
             print("Padded horizontally")
@@ -165,6 +170,16 @@ def deblur_module(pic, filename, dest_path, blur_width, lambd, tau, step_factor,
         # Make a blind Richardson-Lucy deconvolution on the RGB signal
         print(im.shape)
         dc.richardson_lucy_MM(im, u_masked, psf, l, tau, step_factor, im.shape[0], im.shape[1], 3, k)
+
+        # Unpad FFT because this image is resized/reused the next step
+        u_masked = u_masked[pad:-pad, pad:-pad, ...]
+
+        # Unpad oddity for same reasons
+        if vert_odd:
+            u_masked = u_masked[1:, :, ...]
+
+        if hor_odd:
+            u_masked = u_masked[:, 1:, ...]
 
         k_prec = k
 
@@ -210,45 +225,39 @@ if __name__ == '__main__':
 
     picture = "blured.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        deblur_module(pic, picture + "-blind-v18", dest_path, 5, 5000, 3.0, 3e-3, mask=[478, 478 + 255, 715, 715 + 255])
-
+        # deblur_module(pic, picture + "-blind-v18", dest_path, 5, 5000, 3.0, 3e-3, mask=[478, 478 + 255, 715, 715 + 255])
         pass
 
     picture = "Shoot-Sienna-Hayes-0042-_DSC0284-sans-PHOTOSHOP-WEB.jpg"
     with Image.open(join(source_path, picture)) as pic:
         # deblur_module(pic, picture + "blind-v18", dest_path, 13, 1000, 3.0, 1e-3, mask=[661, 661 + 255, 532, 532 + 255])
-
         pass
 
     picture = "DSC1168.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        #deblur_module(pic, picture + "blind-v18", dest_path, 9, 5000, 0.01, 3e-3, mask=[631, 631+255, 2826, 2826+255])
-
+        # deblur_module(pic, picture + "blind-v18", dest_path, 9, 5000, 0.01, 3e-3, mask=[631, 631+255, 2826, 2826+255])
         pass
 
     picture = "IMG_9584-900.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        #deblur_module(pic, picture + "test-v18", dest_path, 5, 30000, 1.0, 3e-3, mask=[101, 101+257, 67, 67+257])
+        # deblur_module(pic, picture + "test-v18", dest_path, 5, 30000, 1.0, 3e-3, mask=[101, 101+257, 67, 67+257])
         pass
 
     picture = "P1030302.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        # deblur_module(pic, picture + "-blind-v18-best", dest_path, 29, 8000, 2., 3e-3, mask=[3560, 3560+512, 16, 16+512])
-
+        deblur_module(pic, picture + "-blind-v18-best", dest_path, 11, 12000, 2.0, 2e-3,
+                      mask=[1492, 1492 + 255, 476, 476 + 255])
         pass
 
-    # JPEG input example
     picture = "153412.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1484, 1484 + 255, 3228, 3228 + 255]
-        deblur_module(pic, picture + "-blind-v18-best", dest_path, 7, 30000, 2., 1e-3, mask=mask)
-
+        # deblur_module(pic, picture + "-blind-v18-best", dest_path, 7, 30000, 3., 2e-3, mask=mask)
         pass
 
     # TIFF input example
     source_path = "/home/aurelien/Exports/2017-11-19-Shoot Fanny Wong/export"
     picture = "Shoot Fanny Wong-0146-_DSC0426--PHOTOSHOP.tif"
     pic = tifffile.imread(join(source_path, picture))
-
     mask = [1914, 1914 + 171, 718, 1484 + 171]
     #deblur_module(pic, picture + "-blind-v18", dest_path, 5, 1000, 3.0, 1e-3, mask=mask, bits=16)

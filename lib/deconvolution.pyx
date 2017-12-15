@@ -1,7 +1,7 @@
 # cython: boundscheck=False
 # cython: cdivision=True
 # cython: wraparound=False
-# cython: profile=True
+# cython: profile=False
 import numpy as np
 cimport numpy as np
 cimport cython
@@ -664,7 +664,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
     cdef int iterations[3]
     cdef int main_iter
 
-    iterations[:] = [MK, MK*2, MK*4]
+    iterations[:] = [MK, MK * 2, MK * 2]
     u_step[:] = [step_factor, step_factor/2, step_factor/4]
     k_step[:] = [step_factor, step_factor/2, step_factor/4]
 
@@ -729,8 +729,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
 
             lambd *= 1.001
 
-
-        print("%i/%i iterations completed\n" % ((step+1)*(it+1)*(itt+1), 2*6*5*MK))
+        print("%i total iterations completed\n" % ((step + 1) * (it + 1) * (itt + 1)))
 
 
 
