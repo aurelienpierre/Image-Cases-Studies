@@ -68,10 +68,9 @@ are in `img` subfolders. The built-in generic functions are in the `lib.utils` m
     
 ### Current prototypes
 
-
 #### Richardson-Lucy deconvolution
 
-### Overview
+##### Overview
 
 In theory, blurred and noisy pictures can be perfectly sharpened if we perfectly 
 know the [*Point spread function*](https://en.wikipedia.org/wiki/Point_spread_function) 
@@ -91,7 +90,7 @@ These algorithms are all auto-adaptative, meaning that all the regularization pa
 estimated by the algorithm based on statistical assumptions. However, as stats don't always represent
 the reality, the user can still force his own parameters.
 
-#### Math details
+##### Math details
 
 Let the blurry image be the convolution product of a sharp image and a kernel (the PSF) plus a noise matrix.
 The method used hire aims at finding the sharp image by a gradient descend method, following the Richardson-Lucy algorithm.
@@ -108,7 +107,7 @@ While the theory says that minimizing gradients cannot bring back a sharper imag
 that it actually works. The actual implementation relies on 3 different solvers : the Projected Alternating Minimization,
 the Primal-Dual method (similar to A. Chambolle's TV denoising), and the Majorization-Minimizatiom.
 
-#### Contributions
+##### Contributions
 
 This work improves the used references in several ways :
 
@@ -127,36 +126,50 @@ computing efficient.
 In auto mode, after the initial PSF evaluation along the whole picture, this work allows the user to select a specific zone
 to refine the PSF. This helps in cases where the PSF varies spatially, to constrain the in-focus zone, but also speed-up the computations.
 
-##### Blurred original :
+This implementation has a stopping criterion which stops the gradient descent when convergence is reached or when the gradient
+begins to increase. This criterion is on both the picture deblurring and the PSF estimation and prevents
+the degeneration of the solution as well as useless computations.
+
+The picture deblurring has also an algorithmically-accelerated version which can speed-up the convergence or increase the error, depending the case.
+This method is used only for the non-blind deconvolution, and is optional.
+
+The deconvolution has 2 separate steps : a first one, blind, to determine the PSF, and a second one, non-blind, to deblur the picture.
+This is useful because : 
+
+* the PSF can be computed on a region of the picture only, to ensure fast computations,
+* the PSF can then be saved to be used elsewhere, and checked on a plot before running the full and slow deconvolution,
+* the convergence criterion is always reached sooner on the PSF than the one on the picture. 
+
+##### Results
+###### Blurred original :
 ![alt text](img/blured.jpg)
 
 The tests have been done on a laptop with an Intel® Core™ i7-2670QM CPU @ 2.20GHz running 8 processes.
 
-
-##### After (fast algorithm, PAM method - 35 s - 50 iterations - Non blind):
+###### After (fast algorithm, PAM method - 35 s - 50 iterations - Non blind):
 This takes as input an user-defined PSF guessed by trial and error. While the cost quality/computation is
 interesting, the algorithm can quickely diverge if too many iterations are performed with a 
 poorly defined blur PSF and lead to ringing. It's especially not suitable for motion blur.
 ![alt text](img/richardson-lucy-deconvolution/blured-fast-v3.jpg)
 
-##### After (myopic algorithm, PAM method - 73 s - 50 iterations - Semi-Blind refinement):
+###### After (myopic algorithm, PAM method - 73 s - 50 iterations - Semi-Blind refinement):
 This takes as input an user-defined PSF guessed by trial and error but will refine it every iteration on a 256×256 px sampling patch.
 (drawn in red here). This is a good compromise as long as the blur is simple (homogenous lens blur).
 ![alt text](img/richardson-lucy-deconvolution/blured-myope-v5.jpg)
 
-##### After (blind algorithm, PAM method - 106 s - 99 iterations - Blind):
+###### After (blind algorithm, PAM method - 106 s - 99 iterations - Blind):
 This takes no input and will guess the PSF along from scratch. 
 A balance between the masked zone weight and the whole image weight in the computation can be adjusted.
 This takes a fair amount of time but can recover large blurs blurs. It's the implementation of the Projected Alternating Minimization 
 algorithm proposed by Perrone & Favaro in 2014.
 ![alt text](img/richardson-lucy-deconvolution/blured-blind-v8.jpg)
 
-##### After (blind algorithm, MM method - 2 min 20 - 555 total iterations - Blind):
+###### After (blind algorithm, MM method - 135 s - 130 iterations - Blind.):
 This is the implementation of the Majorization-Minimisation algorithm proposed by [Perrone & Favaro in 2015](http://www.cvg.unibe.ch/dperrone/logtv/index.html).
 The computations are much slower that's why the PSF is only estimated on a patch of the picture.
 This method has found the sharp picture at a margin of error of 5 % in more than 50 % of the tests. The PAM method never reaches
 the sharp picture, but comes close enough.
-![alt text](img/richardson-lucy-deconvolution/blured-blind-v18-best.jpg)
+![alt text](img/richardson-lucy-deconvolution/blured-blind-v19-best.jpg)
 
 This method deblurs by recovering the sharpness of the edges. However, it does not recover the local contrast. Further
 edition of the above picture with local contrast added through wavelets high-pass filter

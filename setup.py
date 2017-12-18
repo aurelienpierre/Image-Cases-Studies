@@ -24,8 +24,8 @@ def makeExtension(extName):
         # your include_dirs must contains the '.' for setup to search all the
         # subfolder of the codeRootFolder
         include_dirs=['.'],
-        extra_compile_args=["-O3", "-fopenmp", "-ffast-math"],
-        extra_link_args=['-fopenmp']
+        extra_compile_args=["-O3", "-fopenmp", "-ffast-math", "-finline-functions"],
+        extra_link_args=['-fopenmp', "-finline-functions"]
     )
 
 extNames = scandir('lib')
@@ -34,8 +34,8 @@ extensions = [makeExtension(name) for name in extNames]
 extensions.append(Extension('_tifffile',
                             [os.path.join("lib", 'tifffile.c')],
                             include_dirs=['.'],
-                            extra_compile_args=["-O3", "-fopenmp", "-ffast-math"],
-                            extra_link_args=['-fopenmp']
+                            extra_compile_args=["-O3", "-fopenmp", "-ffast-math", "-finline-functions"],
+                            extra_link_args=['-fopenmp', "-finline-functions"]
                             ))
 
 setup(
