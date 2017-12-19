@@ -72,7 +72,8 @@ def build_pyramid(psf_size):
     return images, kernels
 
 @utils.timeit
-def deblur_module(pic, filename, dest_path, blur_width, lambd=1, tau=1e-4, step_factor=2e-3, bits=8, quality=1,
+def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-3, coarseness=2e-3, bits=8,
+                  iterations=100, sharpness=0.2,
                   mask=None, accelerate=True, display=True):
     """
     API to call the debluring process
@@ -81,15 +82,15 @@ def deblur_module(pic, filename, dest_path, blur_width, lambd=1, tau=1e-4, step_
     :param filename: string, the name of the file to save
     :param dest_path: string, the path where to save the file
     :param blur_width: integer, the diameter of the blur e.g. the size of the PSF
-    :param lambd: float
-    :param tau: float, the blending parameter between sharp and blurred pictures. Ensure the convergence of the sharp image.
+    :param confidence: float
+    :param bias: float, the blending parameter between sharp and blurred pictures. Ensure the convergence of the sharp image.
     Usually between 0.0001 and 0.1
-    :param step_factor: float, the gradient-descent factor. Normal is 2e-3. Increase it to converge faster, but be careful because
+    :param coarseness: float, the gradient-descent factor. Normal is 2e-3. Increase it to converge faster, but be careful because
     it could diverge more as well.
     :param bits: integer, default is 8 meaning the input image is encoded with 8 bits/channel. Use 16 if you input 16 bits
     tiff files.
-    :param quality: float, default is 1, meaning that the base number of iterations to perform are the width of the blur.
-    While this works in most cases, complicated blurs need extra care. Set it > 1 in conjunction with a smaller step_factor
+    :param iterations: float, default is 1, meaning that the base number of iterations to perform are the width of the blur.
+    While this works in most cases, complicated blurs need extra care. Set it > 1 in conjunction with a smaller coarseness
     when more iterations are needed.
     :param mask: list of 4 integers, the region on which the blur will be estimated to speed-up the process.
     :param accelerate: boolean. Default is True. If True, this trick accelerates the
@@ -134,9 +135,6 @@ def deblur_module(pic, filename, dest_path, blur_width, lambd=1, tau=1e-4, step_
     psf = utils.uniform_kernel(blur_width)
     psf = np.dstack((psf, psf, psf))
 
-    # Compute the parameters
-    iterations = int(quality * blur_width ** 2)
-
     # Get the dimensions once for all
     MK = blur_width
     M = pic.shape[0]
@@ -154,17 +152,17 @@ def deblur_module(pic, filename, dest_path, blur_width, lambd=1, tau=1e-4, step_
 
         u_masked = pic[mask[0]:mask[1], mask[2]:mask[3], ...].copy()
         i_masked = pic[mask[0]:mask[1], mask[2]:mask[3], ...]
-        lambd = (mask[1] - mask[0]) * (mask[3] - mask[2]) * lambd
+        confidence = (mask[1] - mask[0]) * (mask[3] - mask[2]) * confidence
     else:
         u_masked = pic.copy()
         i_masked = pic
-        lambd = M * N * lambd
+        confidence = M * N * confidence
 
     # Build the intermediate sizes and factors
     images, kernels = build_pyramid(MK)
     k_prec = MK
     for i, k in zip(reversed(images), reversed(kernels)):
-        print("== Pyramid step", i, "==")
+        print("======== Pyramid step %1.3f ========" % i)
 
         # Resize blured, deblured images and PSF from previous step
         if i != 1:
@@ -198,9 +196,8 @@ def deblur_module(pic, filename, dest_path, blur_width, lambd=1, tau=1e-4, step_
         u_masked = pad_image(u_masked, (pad, pad))
 
         # Make a blind Richardson-Lucy deconvolution on the RGB signal
-        print(im.shape)
-        dc.richardson_lucy_MM(im, u_masked, psf, tau, im.shape[0], im.shape[1], 3, k, iterations * 2, step_factor / 2,
-                              lambd, accelerate=False, blind=True)
+        dc.richardson_lucy_MM(im, u_masked, psf, bias, im.shape[0], im.shape[1], 3, k, iterations, coarseness,
+                              confidence / i, accelerate=accelerate, blind=True)
 
         # Unpad FFT because this image is resized/reused the next step
         u_masked = u_masked[pad:-pad, pad:-pad, ...]
@@ -220,19 +217,22 @@ def deblur_module(pic, filename, dest_path, blur_width, lambd=1, tau=1e-4, step_
         psf_check = psf_check / np.amax(psf_check)
         plt.imshow(psf_check, interpolation="lanczos", filternorm=1, aspect="equal", vmin=0, vmax=1)
         plt.show()
-        # plt.imshow(u_masked[pad:-pad, pad:-pad, ...], filternorm=1, aspect="equal", vmin=0, vmax=1)
-        # plt.show()
+        plt.imshow(u_masked[pad:-pad, pad:-pad, ...], filternorm=1, aspect="equal", vmin=0, vmax=1)
+        plt.show()
 
     print("\n===== REGULAR DECONVOLUTION =====")
 
     # Pad every edge of the image to avoid boundaries problems during convolution
     pad = np.floor(blur_width / 2).astype(int)
     u = pad_image(pic, (pad, pad))
-    dc.richardson_lucy_MM(pic, u, psf, tau, M, N, C, MK, iterations, step_factor / 2, lambd, accelerate=accelerate,
+    dc.richardson_lucy_MM(pic, u, psf, bias, M, N, C, MK, iterations, coarseness, confidence, accelerate=accelerate,
                           blind=False)
 
     # Remove the FFT padding
     u = u[pad:-pad, pad:-pad, ...]
+
+    # Unsharp mask to boost a bit the sharpness
+    u = (1 + sharpness) * u - sharpness * pic
 
     # if the picture has been padded to make it odd, unpad it to get the original size
     if odd_hor:
@@ -258,38 +258,39 @@ if __name__ == '__main__':
 
     picture = "blured.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        mask = [478, 478 + 455, 715, 715 + 455]
-        deblur_module(pic, picture + "-blind-v19", dest_path, 5, mask=mask, display=False)
-        pass
-
-    picture = "Shoot-Sienna-Hayes-0042-_DSC0284-sans-PHOTOSHOP-WEB.jpg"
-    with Image.open(join(source_path, picture)) as pic:
-        mask = [661, 661 + 255, 532, 532 + 255]
-        deblur_module(pic, picture + "blind-v18", dest_path, 11, mask=mask, display=False)
-        pass
-
-    picture = "DSC1168.jpg"
-    with Image.open(join(source_path, picture)) as pic:
-        mask = [1111, 1111 + 513, 3383, 3383 + 513]
-        deblur_module(pic, picture + "blind-v18", dest_path, 13, mask=mask, display=False)
+        mask = [478, 478 + 255, 715, 715 + 255]
+        deblur_module(pic, picture + "-blind-v19", dest_path, 5, mask=mask, display=True, accelerate=True,
+                      sharpness=0.2, confidence=10)
         pass
 
     picture = "IMG_9584-900.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [101, 101 + 255, 67, 67 + 255]
-        deblur_module(pic, picture + "test-v18-acc", dest_path, 3, mask=mask, display=False)
+        # deblur_module(pic, picture + "test-v18-acc", dest_path, 3, display=True, accelerate=True, mask=mask, sharpness=0.2)
+        pass
+
+    picture = "Shoot-Sienna-Hayes-0042-_DSC0284-sans-PHOTOSHOP-WEB.jpg"
+    with Image.open(join(source_path, picture)) as pic:
+        mask = [314, 314 + 463, 314, 314 + 463]
+        #deblur_module(pic, picture + "blind-v18", dest_path, 5, mask=mask, display=True, confidence=1, accelerate=True)
+        pass
+
+    picture = "DSC1168.jpg"
+    with Image.open(join(source_path, picture)) as pic:
+        mask = [1111, 1111 + 513, 3383, 3383 + 513]
+        deblur_module(pic, picture + "blind-v18", dest_path, 13, mask=mask, display=True, accelerate=True)
         pass
 
     picture = "P1030302.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1492, 1492 + 255, 476, 476 + 255]
-        deblur_module(pic, picture + "-blind-v19-best", dest_path, 21, mask=mask, display=False)
+        #deblur_module(pic, picture + "-blind-v19-best", dest_path, 21, mask=mask, display=True, bias=1e-3)
         pass
 
     picture = "153412.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1484, 1484 + 255, 3228, 3228 + 255]
-        deblur_module(pic, picture + "-blind-v18-best", dest_path, 9, mask=mask, display=False)
+        #deblur_module(pic, picture + "-blind-v18-best", dest_path, 9, mask=mask, display=False)
         pass
 
     # TIFF input example

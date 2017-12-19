@@ -18,6 +18,8 @@ cdef extern from "math.h" nogil:
     float powf(float, float)
     float expf(float)
     int isnan(float)
+    float atan2f(float, float)
+    float cosf(float)
 
 
 DTYPE = np.float32
@@ -87,6 +89,7 @@ cdef inline float norm_L2_3D(float[:, :] dim1, float[:, :]  dim2, int M, int N) 
     return out
 
 
+
 cdef inline float best_param(float[:, :, :] image, float lambd, int M, int N):
     """
     Find the minimum acceptable epsilon to avoid a degenerate constant solution [2]
@@ -129,7 +132,8 @@ cdef inline float best_param(float[:, :, :] image, float lambd, int M, int N):
                 image_average[i, j] -= image_mean
 
     # Compute omega
-    cdef float omega = 2 * lambd * norm_L2_2D(image_average, M, N) / (M*N)
+    cdef int p = 2
+    cdef float omega = 2 * lambd * norm_L2_2D(image_average, M, N) / (p*M*N)
 
     # Compute the gradient
     cdef float [:, :] gradx = cvarray(shape=(M, N), itemsize=sizeof(float), format="f")
@@ -495,71 +499,159 @@ cdef inline void grad3D(float[:, :, :] u, int axis, int M, int N, float[:, :, :]
         if not np.any(out):
             print(M, N)
             raise ValueError("Grad3D is all null")
-        
 
+
+cdef inline void vect_angle(float[:, :, :] gradx_A, float[:, :, :] grady_A, float[:, :, :] gradz_A, int M, int N, float[:, :, :] out) nogil:
+    """
+    Compute the arguments of 3 3D vectors at once
+    """
+
+    cdef float crossx, crossy, crossz, cross, dot
+    cdef size_t i, j, k
+
+    with parallel(num_threads=CPU):
+        for i in prange(M):
+            for j in range(N):
+                for k in range(3):
+                    crossx = grady_A[i, j, k] - gradz_A[i, j, k]
+                    crossy = gradz_A[i, j, k] - gradx_A[i, j, k]
+                    crossz = gradx_A[i, j, k] - grady_A[i, j, k]
+                    cross = powf(powf(crossx, 2) + powf(crossy, 2) + powf(crossz, 2), .5)
+                    dot = gradx_A[i, j, k] + grady_A[i, j, k] + gradz_A[i, j, k]
+                    out[i, j, k] = atan2f(cross, dot)
+
+
+cdef inline void vect_3D_angle(float[:, :, :] gradx_A, float[:, :, :] grady_A, float[:, :, :] gradz_A, float[:, :, :] gradx_B, float[:, :, :] grady_B, float[:, :, :] gradz_B, int M, int N, float[:, :, :] out) nogil:
+    """
+    Compute the angle between 2 vectors of 3 dimensions taken on 3 channels at once
+    
+    http://johnblackburne.blogspot.com/2012/05/angle-between-two-3d-vectors.html
+
+    """
+
+    cdef float crossx, crossy, crossz, cross, dot
+    cdef size_t i, j, k
+
+
+    with parallel(num_threads=CPU):
+        for i in prange(M):
+            for k in range(3):
+                for j in range(N):
+                    crossx = grady_A[i, j, k] * gradz_B[i, j, k] - gradz_A[i, j, k] * grady_B[i, j, k]
+                    crossy = gradz_A[i, j, k] * gradx_B[i, j, k] - gradx_A[i, j, k] * gradz_B[i, j, k]
+                    crossz = gradx_A[i, j, k] * grady_B[i, j, k] - grady_A[i, j, k] * gradx_B[i, j, k]
+                    cross = powf(powf(crossx, 2) + powf(crossy, 2) + powf(crossz, 2), .5)
+                    dot = gradx_A[i, j, k] * gradx_B[i, j, k] + grady_A[i, j, k] * grady_B[i, j, k] + gradz_A[i, j, k] * gradz_B[i, j, k]
+                    out[i, j, k] = fabsf(atan2f(cross, dot))
 
 
 cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, float tau, float[:, :, :] out, int M, int N):
-    # http://ieeexplore.ieee.org/document/8094858/#full-text-section
-    # https://cdn.intechopen.com/pdfs-wm/39346.pdf
-    # https://www.intechopen.com/books/matlab-a-fundamental-tool-for-scientific-computing-and-engineering-applications-volume-3/convolution-kernel-for-fast-cpu-gpu-computation-of-2d-3d-isotropic-gradients-on-a-square-cubic-latti
+    """
+    
+    This is the gradient of the Total variation estimation. It has been adapted from the version Perrone & Favaro (2015).
+    
+    The gradient over the z-axis (RGB channels) has been added and the norm used is L2, allowing to use the argument 
+    of the gradient in polar coordinates. Hence, we minimize not only the gradient norm but the angle between the gradient 
+    vector of the maximized image and of the minimized one. This improves the convergence by avoiding edges to slip in the 
+    wrong direction because we enforce the direction of the gradient.
+    
+    References :
+    --
+    .. [1] http://ieeexplore.ieee.org/document/8094858/#full-text-section
+    .. [2] https://cdn.intechopen.com/pdfs-wm/39346.pdf
+    .. [2] https://www.intechopen.com/books/matlab-a-fundamental-tool-for-scientific-computing-and-engineering-applications-volume-3/convolution-kernel-for-fast-cpu-gpu-computation-of-2d-3d-isotropic-gradients-on-a-square-cubic-latti
+
+    """
 
     cdef int C = 2
 
     cdef size_t i, j, k
-    cdef float[:, :, :] gradx = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
-    cdef float[:, :, :] grady = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
-    cdef float[:, :, :] gradz = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
-    cdef float [:, :, :] temp_buffer = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
-    cdef float max_TV_abs[3]
-    cdef float max_TV[3]
+    #cdef float[:, :, :] gradx = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
+    #cdef float[:, :, :] grady = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
+    #cdef float[:, :, :] gradz = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
+    cdef float [:, :, :] temp_buffer_3D = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
+    cdef float [:, :, :] theta_u = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
+    cdef float [:, :, :] theta_ut = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
+    cdef float [:, :] theta_average = cvarray(shape=(M, N), itemsize=sizeof(float), format="f")
 
 
-    grad3D(u, 1, M, N, gradx, temp_buffer)
-    grad3D(u, 0, M, N, grady, temp_buffer)
+    cdef float[:, :, :] gradx_u = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
+    cdef float[:, :, :] grady_u = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
+    cdef float[:, :, :] gradz_u = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
+    cdef float[:, :, :] gradx_ut = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
+    cdef float[:, :, :] grady_ut = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
+    cdef float[:, :, :] gradz_ut = cvarray(shape=(M, N, 3), itemsize=sizeof(float), format="f")
 
-    with nogil, parallel(num_threads=CPU):
-        for i in prange(M):
-            for k in range(3):
+    grad3D(u, 1, M, N, gradx_u, temp_buffer_3D)
+    grad3D(u, 0, M, N, grady_u, temp_buffer_3D)
+    grad3D(u, 2, M, N, gradz_u, temp_buffer_3D)
+    grad3D(ut, 1, M, N, gradx_ut, temp_buffer_3D)
+    grad3D(ut, 0, M, N, grady_ut, temp_buffer_3D)
+    grad3D(ut, 2, M, N, gradz_ut, temp_buffer_3D)
+
+    with nogil:
+        with parallel(num_threads=CPU):
+            for i in prange(M):
+                for k in range(3):
+                    for j in range(N):
+                        # Compute the norm of the gradient over 3 channels
+                        out[i, j, k] = (powf(powf(gradx_u[i, j, k], 2) + powf(grady_u[i, j, k], 2) + powf(gradz_u[i, j, k], 2), 0.5) + epsilon) / (powf(powf(gradx_ut[i, j, k], 2) + powf(grady_ut[i, j, k], 2) + powf(gradz_ut[i, j, k], 2), 0.5) + epsilon + tau)
+
+        # Compute the difference of the arguments of the gradients and pass them the the 3D buffer
+        vect_3D_angle(gradx_u, grady_u, gradz_u, gradx_ut, grady_ut, gradz_ut, M, N, temp_buffer_3D)
+
+        with parallel(num_threads=CPU):
+            for i in prange(M):
+                for k in range(3):
+                    for j in range(N):
+                        # Multiply the norm by the argument
+                        out[i, j, k] *= fabsf(temp_buffer_3D[i, j, k])
+
+        # Compute the argument of the gradient
+        vect_angle(gradx_u, grady_u, gradz_u, M, N, theta_u)
+        vect_angle(gradx_ut, grady_ut, gradz_ut, M, N, theta_ut)
+
+        with parallel(num_threads=CPU):
+            for i in prange(M):
                 for j in range(N):
-                    out[i, j, k] = fabsf(gradx[i, j, k]) + fabsf(grady[i, j, k]) + epsilon
-
-    if DEBUG:
-        if check_nan_3D(out, M, N, 3) != 0:
-            raise ValueError("TV u contains NaN")
-
-        if not np.any(out):
-            raise ValueError("TV u is all null")
-
-    grad3D(ut, 1, M, N, gradx, temp_buffer)
-    grad3D(ut, 0, M, N, grady, temp_buffer)
-
-    with nogil, parallel(num_threads=CPU):
-        for i in prange(M):
-            for k in range(3):
-                for j in range(N):
-                    out[i, j, k] /= fabsf(gradx[i, j, k]) + fabsf(grady[i, j, k]) + epsilon + tau
+                    # Average theta_ut over the 3 channels and replicate the value
+                    theta_ut[i, j, 0] += (theta_ut[i, j, 0] + theta_ut[i, j, 1] + theta_ut[i, j, 2]) / 3
+                    theta_ut[i, j, 1] = theta_ut[i, j, 0]
+                    theta_ut[i, j, 2] = theta_ut[i, j, 0]
 
 
-    # Compute the z-gradient of the TV over the channels. True details/edges should have a similar gradTV over the 3 channels,
-    # if they don't, we more likely have chroma noise or phase-shift (chromatic aberrations) there so we add an extra
-    # penalty for these (pixels; channels)
-    grad3D(out, 2, M, N, gradz, temp_buffer)
+    # Compute the gradient of the arguments
+    grad3D(theta_u, 1, M, N, gradx_u, temp_buffer_3D)
+    grad3D(theta_u, 0, M, N, grady_u, temp_buffer_3D)
+    grad3D(theta_u, 2, M, N, gradz_u, temp_buffer_3D)
+    grad3D(theta_ut, 1, M, N, gradx_ut, temp_buffer_3D)
+    grad3D(theta_ut, 0, M, N, grady_ut, temp_buffer_3D)
+    grad3D(theta_ut, 2, M, N, gradz_ut, temp_buffer_3D)
 
-    with nogil, parallel(num_threads=CPU):
-        for i in prange(M):
-            for k in range(3):
-                for j in range(N):
-                    out[i, j, k] = out[i, j, k] + fabsf(gradz[i, j, k]) / 3
+    with nogil:
+        with parallel(num_threads=CPU):
+            for i in prange(M):
+                for k in range(3):
+                    for j in range(N):
+                        # Compute the norm of the gradient over 3 channels
+                        out[i, j, k] += (fabsf(gradx_u[i, j, k]) + fabsf(grady_u[i, j, k]) + fabsf(gradz_u[i, j, k]) + epsilon) / (fabsf(gradx_ut[i, j, k]) + fabsf(grady_ut[i, j, k]) + fabsf(gradz_ut[i, j, k]) + epsilon + tau)
+
 
     if DEBUG:
         print("gradTVEM passed")
+        print("out z: Min =  %f - Max = %f - Mean = %f - Median = %f - Std = %f" % (np.amin(out), np.amax(out), np.mean(out), np.median(out), np.std(out)))
 
         if check_nan_3D(out, M, N, 3) != 0:
             raise ValueError("TV ut contains NaN")
 
         if not np.any(out):
             raise ValueError("TV ut is all null")
+
+        if check_nan_3D(out, M, N, 3) != 0:
+            raise ValueError("TV u contains NaN")
+
+        if not np.any(out):
+            raise ValueError("TV u is all null")
 
 
 cdef inline void amax(float[:, :, :] array, int M, int N, float out[3]) nogil:
@@ -633,9 +725,11 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
     cdef np.ndarray[DTYPE_t, ndim=3] gradk = np.empty_like(psf, dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] ut
     cdef np.ndarray[DTYPE_t, ndim=3] gradTV = np.empty_like(u, dtype=DTYPE)
-    cdef np.ndarray[DTYPE_t, ndim=3] gradTVz
+    cdef np.ndarray[DTYPE_t, ndim=3] gradTVz = np.empty_like(u, dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] im_convo = np.empty_like(u, dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] gradu = np.empty_like(u, dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=3] noise_correllation = np.empty_like(psf, dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=3] image_shifted = np.empty_like(u, dtype=DTYPE)
     cdef float dt[3]
     cdef float max_img[3]
     cdef float max_grad_u[3]
@@ -684,17 +778,15 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
     cdef float inner_it = 1
     cdef float outer_it = 1
 
-    print("max %i iterations to perform" % (iterations*5))
-
     it = 0
 
-    while it < iterations and stop < stop_previous and stop_previous_2 > stop_2:
-
+    while it < iterations and (stop > 1e-2 and stop_2 > 1e-2) and stop_previous - stop > -1e-3:
+        # This problem is supposed to be convex so as soon as the error increases, we shut the solver down because we won't to better
         ut = u.copy()
         psf_previous = psf.copy()
         itt = 0
 
-        while itt < 5 and stop_previous > stop and stop_previous_2 > stop_2:
+        while itt < 5 and (stop > 1e-2 and stop_2 > 1e-2) and stop_previous - stop > -1e-3:
 
             # Compute the minimal eps parameter that won't degenerate the sharp solution into a constant one
             eps = best_param(u, lambd, u_M, u_N)
@@ -747,8 +839,6 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                 amax(u_grad_accel, u_M, u_N, max_img)
                 amax_abs(gradu, u_M, u_N, max_grad_u)
 
-                stop = max_grad_u[0] + max_grad_u[1] + max_grad_u[2]
-
                 for k in range(3):
                     dt[k] = step_factor * (max_img[k] + 1/(u_M * u_N)) / (max_grad_u[k] + float(1e-31))
 
@@ -788,8 +878,6 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                 amax(u, u_M, u_N, max_img)
                 amax_abs(gradu, u_M, u_N, max_grad_u)
 
-                stop = max_grad_u[0] + max_grad_u[1] + max_grad_u[2]
-
                 for k in range(3):
                     dt[k] = step_factor * (max_img[k] + 1/(u_M * u_N)) / (max_grad_u[k] + float(1e-31))
 
@@ -818,7 +906,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                 amax(psf, MK, MK, max_img)
                 amax_abs(gradk, MK, MK, max_grad_psf)
 
-                stop_2 = max_grad_psf[0] + max_grad_psf[1] + max_grad_psf[2]
+                stop_2 = np.linalg.norm(gradk)/(MK**2)
 
                 for k in range(3):
                     dt[k] = step_factor * (max_img[k] + 1/(u_M * u_N)) / (max_grad_psf[k] + float(1e-31))
@@ -831,6 +919,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
 
                 _normalize_kernel(psf, MK)
 
+            stop = np.linalg.norm(gradu)/(u_M*u_N)
 
             if DEBUG:
                 if check_nan_3D(u, u_M, u_N, 3) != 0:
@@ -845,20 +934,24 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                 if not np.any(psf):
                     raise ValueError("PSF is all null")
 
-            inner_it +=1
             itt += 1
+            it += 1
 
-        outer_it += 5
-        it += 1
-
-        print("%i iterations completed" % ((it) * (itt)))
+        print("%i iterations completed" % it)
 
     if blind:
-        print("- Diverged at %f (PSF) - %i iterations." %(stop_2, (it) * (itt)))
+        print("Convergence at %.3f (PSF) - %i iterations." %(stop_2, it))
+
+        if stop_2 > 1:
+            print("This blur estimation is likely to be wrong. Increase the confidence, the bias or reduce the blur size.")
     else:
-        print("- Diverged at %f (image) - %i iterations." %(stop, (it) * (itt)))
-    #img = plt.imshow(gradTV[..., 0]/np.amax(gradTV[..., 0]))
-    #plt.show()
+        print("Convergence at %.3f (image) - %i iterations." %(stop, it))
+
+    if it == iterations:
+        print("You did not reach a solution inside the number of iterations you set. Allow more iterations or increase the coarseness.")
+    else:
+        if stop > 1 and blind == False:
+            print("Your solution is likely to be blurred. Increase the bias or the confidence, decrease the bias, or move/increase the mask.")
 
 
 def richardson_lucy_MM(image, u, psf, tau, M, N, C, MK, iterations, step_factor, float lambd, blind=True, accelerate=False):

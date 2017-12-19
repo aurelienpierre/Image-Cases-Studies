@@ -120,15 +120,22 @@ Also, the the gradients are computed in 3D over the 18 neighbouring pixels (over
  a second-order accurate approximation :
 [3 separated 1D filters](https://cdn.intechopen.com/pdfs-wm/39346.pdf). This is similiar to the Sobel or Prewitt operators.
 
-The gradients are all computed in L-1 norm, favoring edges over smoothness, which gives arguably better results but is with no doubt more 
-computing efficient.
+The gradients are all computed in L-2 norm. This allow to set the gradient descent not only on the gradient norm but on
+it's direction, by rewriting the gradient in polar coordinates and using its angle/coordinates. This ensure that edges 
+won't slip away and that the gradients of the deblurred picture have the same direction than the blurry initial one.
+
+A second gradient-descent condition has been added on the argument of the gradients, as a denoising step, to ensure 
+smoothness in the gradients over the channels. As noise is random, it shouldn't affect the 3 channels together.
+On this assumption, we want to remove from the sharp solution pixels having a different gradient in one channel.
+
+This improves greatly the convergence when noise is present and when the PSF guess is oversized. In these cases, 
+the algorithms often never converges and only creates ringging.
 
 In auto mode, after the initial PSF evaluation along the whole picture, this work allows the user to select a specific zone
 to refine the PSF. This helps in cases where the PSF varies spatially, to constrain the in-focus zone, but also speed-up the computations.
 
 This implementation has a stopping criterion which stops the gradient descent when convergence is reached or when the gradient
-begins to increase. This criterion is on both the picture deblurring and the PSF estimation and prevents
-the degeneration of the solution as well as useless computations.
+begins to increase. This criterion prevents the degeneration of the solution as well as useless computations.
 
 The picture deblurring has also an algorithmically-accelerated version which can speed-up the convergence or increase the error, depending the case.
 This method is used only for the non-blind deconvolution, and is optional.
