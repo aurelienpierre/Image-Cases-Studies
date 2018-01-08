@@ -136,28 +136,10 @@ This is useful because :
 * the convergence criterion is always reached sooner on the PSF than the one on the picture. 
 
 ##### Results
-###### Blurred original :
-![alt text](img/blured.jpg)
-
 The tests have been done on a laptop with an Intel® Core™ i7-2670QM CPU @ 2.20GHz running 8 processes.
 
-###### After (fast algorithm, PAM method - 35 s - 50 iterations - Non blind):
-This takes as input an user-defined PSF guessed by trial and error. While the cost quality/computation is
-interesting, the algorithm can quickely diverge if too many iterations are performed with a 
-poorly defined blur PSF and lead to ringing. It's especially not suitable for motion blur.
-![alt text](img/richardson-lucy-deconvolution/blured-fast-v3.jpg)
-
-###### After (myopic algorithm, PAM method - 73 s - 50 iterations - Semi-Blind refinement):
-This takes as input an user-defined PSF guessed by trial and error but will refine it every iteration on a 256×256 px sampling patch.
-(drawn in red here). This is a good compromise as long as the blur is simple (homogenous lens blur).
-![alt text](img/richardson-lucy-deconvolution/blured-myope-v5.jpg)
-
-###### After (blind algorithm, PAM method - 106 s - 99 iterations - Blind):
-This takes no input and will guess the PSF along from scratch. 
-A balance between the masked zone weight and the whole image weight in the computation can be adjusted.
-This takes a fair amount of time but can recover large blurs blurs. It's the implementation of the Projected Alternating Minimization 
-algorithm proposed by Perrone & Favaro in 2014.
-![alt text](img/richardson-lucy-deconvolution/blured-blind-v8.jpg)
+###### Blurred original :
+![alt text](img/blured.jpg)
 
 ###### After (blind algorithm, MM method - 117 s - 264 iterations - Blind.):
 This is the implementation of the Majorization-Minimisation algorithm proposed by [Perrone & Favaro in 2015](http://www.cvg.unibe.ch/dperrone/logtv/index.html).
