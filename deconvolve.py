@@ -75,7 +75,7 @@ def build_pyramid(psf_size):
 from skimage.restoration import denoise_tv_chambolle
 
 @utils.timeit
-def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4, coarseness=1e-3, bits=8,
+def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4, coarseness=5e-4, bits=8,
                   iterations=100, sharpness=0.2, mask=None, display=True, denoise=False):
     """
     API to call the debluring process
@@ -201,9 +201,9 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4,
         u_masked = pad_image(u_masked, (pad, pad))
 
         # Make a blind Richardson-Lucy deconvolution on the RGB signal
-        dc.richardson_lucy_MM(im, u_masked, psf, bias, im.shape[0], im.shape[1], 3, k, iterations * 2, coarseness,
-                              confidence / i, denoise, blind=True)
+        dc.richardson_lucy_MM(im, u_masked, psf, bias, im.shape[0], im.shape[1], 3, k, int(1.0/coarseness), coarseness, confidence / i, denoise, blind=True)
 
+        
         # Unpad FFT because this image is resized/reused the next step
         u_masked = u_masked[pad:-pad, pad:-pad, ...]
 
@@ -231,7 +231,6 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4,
     u = pic.copy()
 
     # Build the intermediate sizes and factors
-    """
     images, kernels = build_pyramid(MK)
     k_prec = MK
     for i, k in zip(reversed(images), reversed(kernels)):
@@ -269,8 +268,7 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4,
         u = pad_image(u, (pad, pad))
 
         # Make a non-blind Richardson-Lucy deconvolution on the RGB signal
-        dc.richardson_lucy_MM(im, u, psf_loc, bias, im.shape[0], im.shape[1], 3, k, iterations, coarseness,
-                              confidence / i, denoise, blind=False)
+        dc.richardson_lucy_MM(im, u, psf_loc, bias, im.shape[0], im.shape[1], 3, k, int(iterations / i), coarseness, confidence / i, denoise, blind=False)
 
         # Unpad FFT because this image is resized/reused the next step
         u = u[pad:-pad, pad:-pad, ...]
@@ -281,10 +279,10 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4,
 
         if hor_odd:
             u = u[:, 1:, ...]
-
-        k_prec = k
         
     """
+    Non pyramidal version
+    
     # Pad every edge of the image to avoid boundaries problems during convolution
     pad = np.floor(blur_width / 2).astype(int)
     u = pad_image(pic, (pad, pad))
@@ -294,6 +292,7 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4,
 
     # Remove the FFT padding
     u = u[pad:-pad, pad:-pad, ...]
+    """
 
     # Unsharp mask to boost a bit the sharpness
     u = (1 + sharpness) * u - sharpness * pic
@@ -323,31 +322,31 @@ if __name__ == '__main__':
     picture = "blured.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [478, 478 + 255, 715, 715 + 255]
-        # deblur_module(pic, picture + "-v20", dest_path, 5, mask=mask, display=False, sharpness=0, confidence=20)
+        #deblur_module(pic, picture + "-v21", dest_path, 5, mask=mask, display=False, sharpness=0, confidence=20, iterations=200)
         pass
 
     picture = "IMG_9584-900.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [101, 101 + 255, 67, 67 + 255]
-        #deblur_module(pic, picture + "-v20", dest_path, 3, display=False, mask=mask, sharpness=0, iterations=200, coarseness=1e-3, denoise=True)
+        #deblur_module(pic, picture + "-v21", dest_path, 3, display=False, mask=mask, sharpness=0, iterations=200, coarseness=1e-3, denoise=True)
         pass
 
     picture = "DSC1168.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1111, 1111 + 513, 3383, 3383 + 513]
-        deblur_module(pic, picture + "-v20", dest_path, 17, mask=mask, display=True, iterations=100, confidence=1,)
+        #deblur_module(pic, picture + "-v21", dest_path, 17, mask=mask, display=True, iterations=100, confidence=1,)
         pass
 
     picture = "P1030302.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1492, 1492 + 555, 476, 476 + 555]
-        deblur_module(pic, picture + "-v20", dest_path, 27, mask=mask, display=True, iterations=100, sharpness=0)
+        deblur_module(pic, picture + "-v21", dest_path, 27, mask=mask, display=False, iterations=100, sharpness=0)
         pass
 
     picture = "153412.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1484, 1484 + 255, 3228, 3228 + 255]
-        #deblur_module(pic, picture + "-v20-denoise", dest_path, 5, mask=mask, display=True, confidence=20)
+        #deblur_module(pic, picture + "-v21-denoise", dest_path, 5, mask=mask, display=True, confidence=20)
         pass
 
     # TIFF input example

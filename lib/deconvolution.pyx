@@ -169,7 +169,7 @@ cdef inline float best_param(float[:, :, :] image, float lambd, int M, int N):
                 image_average[i, j] -= image_mean
 
     # Compute omega
-    cdef int p = 1
+    cdef int p = 2
     cdef float omega = 2 * lambd * norm_L2_2D(image_average, M, N) / (p*M*N)
 
     # Compute the gradient
@@ -755,7 +755,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
         with parallel(num_threads=CPU):
             for i in prange(M):
                 for j in range(N):
-                    out[i, j] = fabsf(max_gradx[i, j]) + fabsf(max_grady[i, j]) + epsilon
+                    out[i, j] = powf(powf(max_gradx[i, j], 2) + powf(max_grady[i, j], 2), 0.5) + epsilon
 
         # Divide by the norm of ut
         grad2D_3(ut, 1, M, N, gradx_u, temp_buffer_3D)
@@ -766,7 +766,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
         with parallel(num_threads=CPU):
             for i in prange(M):
                 for j in range(N):
-                    out[i, j] /= fabsf(max_gradx[i, j]) + fabsf(max_grady[i, j]) + epsilon + tau
+                    out[i, j] /= powf(powf(max_gradx[i, j], 2) + powf(max_grady[i, j], 2), 0.5) + epsilon + tau
 
 
 cdef inline void rotate_180(float[:, :, :] array, int M, int N, float[:, :, :] out) nogil:
@@ -860,45 +860,24 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
     it = 0
 
     # This problem is supposed to be convex so, as soon as the error increases, we shut the solver down because we won't to better
-    while it < iterations and stop_previous - stop > 0:# and stop_previous_2 - stop_2 > 0:
+    while it < iterations and stop_previous - stop > 0 and stop_previous_2 - stop_2 > 0:
         # Prepare the deconvolution
         ut[:] = u.copy()
         itt = 0
 
-        while itt < 5 and stop_previous - stop > 0:# and stop_previous_2 - stop_2 > 0:
+        while itt < 5 and stop_previous - stop > 0 and stop_previous_2 - stop_2 > 0:
 
             # Compute the minimal eps parameter that won't degenerate the sharp solution into a constant one
             eps = best_param(u, lambd, u_M, u_N)
 
             stop_previous = stop
 
-
-            # Accelerated version adapted from [6]
-            iter_weight = (itt - 1) / (itt + 2)
-
-            with nogil, parallel(num_threads=CPU):
-                for i in prange(u_M):
-                    for k in range(3):
-                        for j in range(u_N):
-                            u_grad_accel[i, j, k] = u[i, j, k] - ut[i, j, k]
-
-            amax(u, u_M, u_N, max_img)
-            amax_abs(u_grad_accel, u_M, u_N, max_grad_u)
-
-            with nogil, parallel(num_threads=CPU):
-                for i in prange(u_M):
-                    for k in range(3):
-                        for j in range(u_N):
-                            u_grad_accel[i, j, k] = u[i, j, k] + u_grad_accel[i, j, k] * iter_weight * max_grad_u[k] / (max_img[k] + float(1e-31))
-
-            # BEGIN Peronne's regular code
-
             # Compute the ratio of the norm of Total Variation between the current major and minor deblured images
-            gradTVEM(u_grad_accel, ut, eps, tau, gradTV, u_M, u_N)
+            gradTVEM(u, ut, eps, tau, gradTV, u_M, u_N)
 
             # Compute the new image
             for chan in range(3):
-                error[..., chan] = FFT_valid(u_grad_accel[..., chan], psf[..., chan])
+                error[..., chan] = FFT_valid(u[..., chan], psf[..., chan])
 
             with nogil, parallel(num_threads=CPU):
                 for i in prange(M):
@@ -924,7 +903,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                 for i in prange(u_M):
                     for k in range(3):
                         for j in range(u_N):
-                            u[i, j, k] = u_grad_accel[i, j, k] - dt * gradu[i, j, k]
+                            u[i, j, k] = u[i, j, k] - dt * gradu[i, j, k]
 
             if blind:
                 # PSF update
