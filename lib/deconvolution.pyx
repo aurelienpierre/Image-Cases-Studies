@@ -301,17 +301,75 @@ cdef inline void grad2D(float[:, :] u, int M, int N, float[:, :] out) nogil:
                 out[i, j] = powf(powf(u[i, j] - (u[i-1, j] + u[i+1, j])/ 2., 2) + powf(u[i, j] - (u[i, j-1] + u[i, j-1])/ 2., 2), 0.5)
 
 
-cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, float tau, float[:, :, :] out, int M, int N) nogil:
-    """Compute the L1 norm of the gradient using an average of the forward and backward finite difference"""
+cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, float tau, float[:, :, :] out, int M, int N, int neighbours) nogil:
+    """Compute the L1 norm of the gradient using an average of the forward and backward finite difference over the main axis and the diagonals"""
     
     cdef:
         size_t i, j, k
+        float udx, udy, udxdy, udydx, utdx, utdy, utdxdy, utdydx, uxy, utxy, dxdy
+        
+    epsilon = 2 * epsilon
+    tau = 2 * tau
+        
+        
+    if neighbours == 8:
+        # Evaluate the total variation on 8 neighbours
+        
+        dxdy = 1 / powf(2, 0.5) # Distance over the diagonal
 
-    with parallel(num_threads=CPU):
-        for i in prange(1, M-1):
-            for j in range(1, N-1):
-                for k in range(3):
-                    out[i, j, k] = (fabsf(u[i, j, k] - (u[i-1, j, k] + u[i+1, j, k]) / 2.) + fabsf(u[i, j, k] - (u[i, j-1, k] + u[i, j-1, k]) / 2.) + epsilon) / (fabsf(ut[i, j, k] - (ut[i-1, j, k] + ut[i+1, j, k]) / 2.) + fabsf(ut[i, j, k] - (ut[i, j-1, k] + ut[i, j-1, k]) / 2.) + epsilon + tau)
+        with parallel(num_threads=CPU):
+            for i in prange(1, M-1):
+                for j in range(1, N-1):
+                    for k in range(3):
+                        uxy = u[i, j, k] * 2
+                        udx = uxy - u[i-1, j, k] - u[i+1, j, k] # Warning : this is 2 times the differential
+                        udy = uxy - u[i, j-1, k] - u[i, j-1, k]
+                        
+                        udxdy = (uxy - u[i-1, j-1, k] - u[i+1, j+1, k]) / dxdy
+                        udydx = (uxy - u[i-1, j+1, k] - u[i+1, j-1, k]) / dxdy
+                        
+                        utxy = ut[i, j, k] * 2
+                        utdx = (utxy - ut[i-1, j, k] - ut[i+1, j, k]) / dxdy
+                        utdy = (utxy - ut[i, j-1, k] - ut[i, j-1, k]) / dxdy
+                        
+                        utdxdy = utxy - ut[i-1, j-1, k] - ut[i+1, j+1, k]
+                        utdydx = utxy - ut[i-1, j+1, k] - ut[i+1, j-1, k]
+                                            
+                        out[i, j, k] = (udx + udy + udxdy + udydx) / (fabsf(udx) + fabsf(udy)+ fabsf(udxdy) + fabsf(udydx) + epsilon) / (fabsf(utdx) + fabsf(utdy)+ fabsf(utdxdy) + fabsf(utdydx) + epsilon + tau) / 8
+                        
+    elif neighbours == 4:
+        # Evaluate the total variation on 4 neighbours
+        
+        with parallel(num_threads=CPU):
+            for i in prange(1, M-1):
+                for j in range(1, N-1):
+                    for k in range(3):
+                        uxy = u[i, j, k] * 2
+                        udx = uxy - u[i-1, j, k] - u[i+1, j, k] # Warning : this is 2 times the differential
+                        udy = uxy - u[i, j-1, k] - u[i, j-1, k]
+                        
+                        utxy = ut[i, j, k] * 2
+                        utdx = utxy - ut[i-1, j, k] - ut[i+1, j, k]
+                        utdy = utxy - ut[i, j-1, k] - ut[i, j-1, k]
+    
+                        out[i, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 8
+                        
+    elif neighbours == 2:
+        # Evaluate the total variation on 2 neighbours
+        
+        with parallel(num_threads=CPU):
+            for i in prange(1, M):
+                for j in range(1, N):
+                    for k in range(3):
+                        uxy = u[i, j, k]
+                        udx = uxy - u[i-1, j, k]
+                        udy = uxy - u[i, j-1, k]
+                        
+                        utxy = ut[i, j, k]
+                        utdx = utxy - ut[i-1, j, k]
+                        utdy = utxy - ut[i, j-1, k]
+        
+                        out[i, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 8
     
 
 
@@ -329,7 +387,7 @@ cdef inline void rotate_180(float[:, :, :] array, int M, int N, float[:, :, :] o
 
 
 cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,
-                              float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int denoise, int blind=True):
+                              float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int neighbours, int blind=True):
     """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization by the Minimization-Maximization
     algorithm. This is known to give the sharp image in more than 50 % of the cases.
 
@@ -424,7 +482,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
             gradu = np.zeros((u_M, u_N, 3), dtype=DTYPE)
 
             # Compute the ratio of the norm of Total Variation between the current major and minor deblured images
-            gradTVEM(u, ut, eps, tau, gradu, u_M, u_N)
+            gradTVEM(u, ut, eps, tau, gradu, u_M, u_N, neighbours)
 
             # Compute the new image
             for chan in range(3):
@@ -534,7 +592,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
 
 
 def richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,
-                       float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int denoise, int blind=True):
+                       float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int neighbours, int blind=True):
     # Expose the Cython function to Python
-    _richardson_lucy_MM(image, u, psf, tau, M, N, C, MK, iterations, step_factor, lambd, denoise, blind=blind)
+    _richardson_lucy_MM(image, u, psf, tau, M, N, C, MK, iterations, step_factor, lambd, neighbours, blind=blind)
 
