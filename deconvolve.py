@@ -4,17 +4,7 @@ Created on 30 avr. 2017
 
 @author: aurelien
 
-This script shows an implementation of the Richardson-Lucy deconvolution.
-
-In theory, blurred and noisy pictures can be perfectly sharpened if we perfectly
-know the [*Point spread function*](https://en.wikipedia.org/wiki/Point_spread_function)
-of their maker. In practice, we can only estimate it.
-One of the means to do so is the [Richardson-Lucy deconvolution](https://en.wikipedia.org/wiki/Richardson%E2%80%93Lucy_deconvolution).
-
-The Richardson-Lucy algorithm used here has a damping coefficient wich allows to remove from
-the iterations the pixels which deviate to much (x times the standard deviation of the difference
-source image - deconvoluted image) from the original image. This pixels are considered
-noise and would be amplificated from iteration to iteration otherwise.
+This script shows an implementation of a blind deconvolution
 '''
 
 import warnings
@@ -75,8 +65,8 @@ def build_pyramid(psf_size):
 from skimage.restoration import denoise_tv_chambolle
 
 @utils.timeit
-def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4, coarseness=5e-4, bits=8,
-                  iterations=100, sharpness=0.2, mask=None, display=True, denoise=False):
+def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4, coarseness=1e-3, bits=8,
+                  iterations=200, sharpness=0.2, mask=None, display=True, denoise=False):
     """
     API to call the debluring process
 
@@ -157,11 +147,12 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4,
 
         u_masked = pic[mask[0]:mask[1], mask[2]:mask[3], ...].copy()
         i_masked = pic[mask[0]:mask[1], mask[2]:mask[3], ...]
-        confidence = (mask[1] - mask[0]) * (mask[3] - mask[2]) * confidence
+
     else:
         u_masked = pic.copy()
         i_masked = pic
-        confidence = M * N * confidence
+        
+    confidence = 1000 * confidence
 
     # Build the intermediate sizes and factors
     images, kernels = build_pyramid(MK)
@@ -201,7 +192,7 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4,
         u_masked = pad_image(u_masked, (pad, pad))
 
         # Make a blind Richardson-Lucy deconvolution on the RGB signal
-        dc.richardson_lucy_MM(im, u_masked, psf, bias, im.shape[0], im.shape[1], 3, k, int(1.0/coarseness), coarseness, confidence / i, denoise, blind=True)
+        dc.richardson_lucy_MM(im, u_masked, psf, bias, im.shape[0], im.shape[1], 3, k, int(1.0/coarseness), coarseness, confidence/i, denoise, blind=True)
 
         
         # Unpad FFT because this image is resized/reused the next step
@@ -268,7 +259,7 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4,
         u = pad_image(u, (pad, pad))
 
         # Make a non-blind Richardson-Lucy deconvolution on the RGB signal
-        dc.richardson_lucy_MM(im, u, psf_loc, bias, im.shape[0], im.shape[1], 3, k, int(iterations / i), coarseness, confidence / i, denoise, blind=False)
+        dc.richardson_lucy_MM(im, u, psf_loc, bias, im.shape[0], im.shape[1], 3, k, int(iterations / i), coarseness, confidence/i, denoise, blind=False)
 
         # Unpad FFT because this image is resized/reused the next step
         u = u[pad:-pad, pad:-pad, ...]
@@ -279,20 +270,6 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4,
 
         if hor_odd:
             u = u[:, 1:, ...]
-        
-    """
-    Non pyramidal version
-    
-    # Pad every edge of the image to avoid boundaries problems during convolution
-    pad = np.floor(blur_width / 2).astype(int)
-    u = pad_image(pic, (pad, pad))
-
-    dc.richardson_lucy_MM(pic, u, psf, bias, M, N, C, blur_width, iterations, coarseness * 2,
-                          confidence / i, denoise, blind=False)
-
-    # Remove the FFT padding
-    u = u[pad:-pad, pad:-pad, ...]
-    """
 
     # Unsharp mask to boost a bit the sharpness
     u = (1 + sharpness) * u - sharpness * pic
@@ -322,13 +299,13 @@ if __name__ == '__main__':
     picture = "blured.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [478, 478 + 255, 715, 715 + 255]
-        #deblur_module(pic, picture + "-v21", dest_path, 5, mask=mask, display=False, sharpness=0, confidence=20, iterations=200)
+        #deblur_module(pic, picture + "-v22", dest_path, 5, mask=mask, display=False, sharpness=0.5, confidence=15)
         pass
 
     picture = "IMG_9584-900.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [101, 101 + 255, 67, 67 + 255]
-        #deblur_module(pic, picture + "-v21", dest_path, 3, display=False, mask=mask, sharpness=0, iterations=200, coarseness=1e-3, denoise=True)
+        #deblur_module(pic, picture + "-v22", dest_path, 3, display=False, mask=mask, sharpness=1, confidence=20, bias=1e-3)
         pass
 
     picture = "DSC1168.jpg"
@@ -340,7 +317,7 @@ if __name__ == '__main__':
     picture = "P1030302.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1492, 1492 + 555, 476, 476 + 555]
-        deblur_module(pic, picture + "-v21", dest_path, 27, mask=mask, display=False, iterations=100, sharpness=0)
+        deblur_module(pic, picture + "-v21", dest_path, 39, mask=mask, display=True, iterations=100, sharpness=1, confidence=5)
         pass
 
     picture = "153412.jpg"
@@ -355,3 +332,4 @@ if __name__ == '__main__':
     #pic = tifffile.imread(join(source_path, picture))
     mask = [1914, 1914 + 171, 718, 1484 + 171]
     #deblur_module(pic, picture + "-blind-v18", dest_path, 5, 1000, 3.0, 1e-3, mask=mask, bits=16)
+
