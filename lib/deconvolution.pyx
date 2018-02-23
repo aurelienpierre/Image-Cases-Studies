@@ -29,7 +29,7 @@ ctypedef np.float32_t DTYPE_t
 cdef inline float norm_L2_2D(float[:, :] array, int M, int N) nogil:
     """L2 vector norm of a 2D array. Outputs a scalar."""
 
-    cdef size_t i, j
+    cdef int i, j
     cdef float out = 0
 
     for i in range(M):
@@ -41,19 +41,19 @@ cdef inline float norm_L2_2D(float[:, :] array, int M, int N) nogil:
     return out
 
 
-cdef inline float norm_L2_3D(float [:, :, :] array, int M, int N, float[:, :] temp_buffer_2D) nogil:
+cdef inline float norm_L2_3D(float [:, :, :] array, int M, int N) nogil:
     """L2 vector norm of a 3D array. The L2 norm is computed successively on the 3rd axis, then on the resulting 2D array."""
 
-    cdef size_t i, j, k
+    cdef int i, j, k
     cdef float out = 0
 
     with parallel(num_threads=CPU):
         for i in prange(M):
             for j in range(N):
-                temp_buffer_2D[i, j] = powf((powf(array[i, j, 0], 2) + powf(array[i, j, 1], 2) + powf(array[i, j, 2], 2)), 0.5)
+                for k in range(3):
+                    out += powf(array[i, j, k], 2)
 
-
-    out = norm_L2_2D(temp_buffer_2D, M, N)
+    out = powf(out, 0.5)
 
     return out
 
@@ -61,7 +61,7 @@ cdef inline float norm_L2_3D(float [:, :, :] array, int M, int N, float[:, :] te
 cdef inline void amax(float[:, :, :] array, int M, int N, float out[3]) nogil:
     """Compute the max of every channel and output a 3D vector"""
 
-    cdef size_t i, j, k
+    cdef int i, j, k
     cdef float temp
     out[0] = array[0, 0, 0]
     out[1] = array[0, 0, 1]
@@ -79,7 +79,7 @@ cdef inline void amax(float[:, :, :] array, int M, int N, float out[3]) nogil:
 cdef inline void amax_abs(float[:, :, :] array, int M, int N, float out[3]) nogil:
     """Compute the max of the absolute value of every channel and output a 3D vector"""
 
-    cdef size_t i, j, k
+    cdef int i, j, k
     cdef float temp
     out[0] = fabsf(array[0, 0, 0])
     out[1] = fabsf(array[0, 0, 1])
@@ -97,7 +97,7 @@ cdef inline void amax_abs(float[:, :, :] array, int M, int N, float out[3]) nogi
 cdef inline float amax_abs_2D(float[:, :] array, int M, int N) nogil:
     """Compute the max of the absolute value of every channel and output a float"""
 
-    cdef size_t i, j
+    cdef int i, j
     cdef float temp
     cdef float out = fabsf(array[0, 0])
 
@@ -121,17 +121,7 @@ cdef inline float best_param(float[:, :, :] image, float lambd, int M, int N):
     .. [2] http://www.cvg.unibe.ch/publications/perroneIJCV2015.pdf
     """
 
-    cdef size_t i, j, k
-
-    # Average the channels to compute the parameters just once
-    cdef float[:, :] image_average = np.zeros((M, N), dtype=DTYPE)
-
-    with nogil, parallel(num_threads=CPU):
-        for i in prange(M):
-            for j in range(N):
-                for k in range(3):
-                    image_average[i, j] += image[i, j, k]
-                image_average[i, j] /= 3
+    cdef int i, j, k
 
     # Compute the mean value
     cdef float image_mean = 0
@@ -139,30 +129,32 @@ cdef inline float best_param(float[:, :, :] image, float lambd, int M, int N):
     with nogil:
         for i in range(M):
             for j in range(N):
-                image_mean += image_average[i, j]
+                for k in range(3):
+                    image_mean += image[i, j, k]
 
-        image_mean /= M*N
+        image_mean /= M*N*3
         
         
     # Compute the gradient
-    cdef float [:, :] temp_buffer_2D = np.zeros((M, N), dtype=DTYPE)
-    
-    grad2D(image_average, M, N, temp_buffer_2D)
-    cdef float grad_mean = norm_L2_2D(temp_buffer_2D, M, N) / (M*N)
-    
-    # Compute the difference between the averaged image and the mean
+    cdef float grad_mean = grad2D(image, M, N) / (M*N*3)
+                
+    cdef float norm_diff = 0
+
     with nogil, parallel(num_threads=CPU):
         for i in prange(M):
             for j in range(N):
-                image_average[i, j] -= image_mean
+                for k in range(3):
+                    norm_diff += powf(image[i, j, k] - image_mean, 2)
+
+    norm_diff = powf(norm_diff, 0.5)
 
     # Compute omega
-    cdef float omega = 2 * lambd * norm_L2_2D(image_average, M, N) / (2*M*N)
+    cdef float omega = 2 * lambd * norm_diff / (M*N*3)
     
     # Compute epsilon
     cdef float epsilon = powf((grad_mean) / (expf(omega) - 1), 0.5) * 1.1
     
-    #print("%1.12f, %f" % (epsilon, lambd))
+    print("%1.12f, %f" % (epsilon, lambd))
 
     """
     image_average = np.mean(image, axis=2)
@@ -173,16 +165,18 @@ cdef inline float best_param(float[:, :, :] image, float lambd, int M, int N):
     print("%1.12f, %f" % (epsilon, lambd))
     """
     
-    if epsilon < 1e-9:
-        return 1e-9
-
-    return epsilon
+    if epsilon < 1e-6:
+        return 1e-6
+    elif epsilon > 1e-1:
+        return 1e-1
+    else:
+        return epsilon
 
 
 cdef inline void _normalize_kernel(float[:, :, :] kern, int MK):
     """Normalizes a 3D kernel along its 2 first dimensions"""
 
-    cdef size_t i, j, k
+    cdef int i, j, k
     cdef float check = 0
     cdef float temp[3]
     temp[:] = [0., 0., 0.]
@@ -276,7 +270,7 @@ cdef class convolve:
         cdef float complex [:, :] cfft = self.C
 
         # Multiply
-        cdef size_t i, j
+        cdef int i, j
 
         with nogil, parallel(num_threads=CPU):
             for i in prange(self.Mfft):
@@ -289,27 +283,46 @@ cdef class convolve:
         return out[self.offset_Y:self.offset_Y + self.Y, self.offset_X:self.offset_X + self.X]
 
 
-cdef inline void grad2D(float[:, :] u, int M, int N, float[:, :] out) nogil:
-    """Compute the L2 norm of the gradient using an average of the forward and backward finite difference"""
+cdef inline float grad2D(float[:, :, :] u, int M, int N) nogil:
+    """Compute the L2,2 norm of the gradient using an average of the forward and backward finite difference"""
 
     cdef:
-        size_t i, j, nk
+        int i, j, k
+        float udx, udy, udxdy, udydx, dxdy, uxy, out
+        float temp[3]
+    
+    out = 0
+        
+    dxdy = 1 / powf(2, 0.5) # Distance over the diagonal
 
     with parallel(num_threads=CPU):
         for i in prange(1, M-1):
             for j in range(1, N-1):
-                out[i, j] = powf(powf(u[i, j] - (u[i-1, j] + u[i+1, j])/ 2., 2) + powf(u[i, j] - (u[i, j-1] + u[i, j-1])/ 2., 2), 0.5)
+                for k in range(3):
+                    uxy = u[i, j, k] * 2
+                    udx = uxy - u[i-1, j, k] - u[i+1, j, k] # Warning : this is 2 times the differential
+                    udy = uxy - u[i, j-1, k] - u[i, j-1, k]
+                    
+                    udxdy = (uxy - u[i-1, j-1, k] - u[i+1, j+1, k]) / dxdy
+                    udydx = (uxy - u[i-1, j+1, k] - u[i+1, j-1, k]) / dxdy
+                                        
+                    out += powf(udx, 2) + powf(udy, 2)+ powf(udxdy, 2) + powf(udydx, 2)
+                
+    return powf(out, 0.5)
 
 
-cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, float tau, float[:, :, :] out, int M, int N, int neighbours) nogil:
+cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, float tau, float[:, :, :] im_convo, float lambd, float[:, :, :] out, float[3] max_u, int M, int N, int neighbours) nogil:
     """Compute the L1 norm of the gradient using an average of the forward and backward finite difference over the main axis and the diagonals"""
     
     cdef:
-        size_t i, j, k
-        float udx, udy, udxdy, udydx, utdx, utdy, utdxdy, utdydx, uxy, utxy, dxdy
+        int i, j, k
+        float udx, udy, udxdy, udydx, utdx, utdy, utdxdy, utdydx, uxy, utxy, dxdy, temp
         
     epsilon = 2 * epsilon
     tau = 2 * tau
+    max_u[0] = 0
+    max_u[1] = 0
+    max_u[2] = 0
         
         
     if neighbours == 8:
@@ -335,7 +348,14 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                         utdxdy = utxy - ut[i-1, j-1, k] - ut[i+1, j+1, k]
                         utdydx = utxy - ut[i-1, j+1, k] - ut[i+1, j-1, k]
                                             
-                        out[i, j, k] = (udx + udy + udxdy + udydx) / (fabsf(udx) + fabsf(udy)+ fabsf(udxdy) + fabsf(udydx) + epsilon) / (fabsf(utdx) + fabsf(utdy)+ fabsf(utdxdy) + fabsf(utdydx) + epsilon + tau) / 8
+                        temp  = (udx + udy + udxdy + udydx) / (fabsf(udx) + fabsf(udy)+ fabsf(udxdy) + fabsf(udydx) + epsilon) / (fabsf(utdx) + fabsf(utdy)+ fabsf(utdxdy) + fabsf(utdydx) + epsilon + tau) / 4 + lambd *  im_convo[i, j, k]
+                        
+                        out[i, j, k] = temp
+                        temp = fabsf(temp)
+                        
+                        if temp > max_u[k]:
+                            max_u[k] = temp
+                            
                         
     elif neighbours == 4:
         # Evaluate the total variation on 4 neighbours
@@ -352,7 +372,14 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                         utdx = utxy - ut[i-1, j, k] - ut[i+1, j, k]
                         utdy = utxy - ut[i, j-1, k] - ut[i, j-1, k]
     
-                        out[i, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 8
+                        temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 4 + lambd *  im_convo[i, j, k]
+                        
+                        out[i, j, k] = temp
+                        temp = fabsf(temp)
+                        
+                        if temp > max_u[k]:
+                            max_u[k] = temp
+                        
                         
     elif neighbours == 2:
         # Evaluate the total variation on 2 neighbours
@@ -369,7 +396,53 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                         utdx = utxy - ut[i-1, j, k]
                         utdy = utxy - ut[i, j-1, k]
         
-                        out[i, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 8
+                        temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 4 + lambd *  im_convo[i, j, k]
+                        
+                        out[i, j, k] = temp
+                        temp = fabsf(temp)
+                        
+                        if temp > max_u[k]:
+                            max_u[k] = temp
+                        
+                        
+    # First row
+    with parallel(num_threads=CPU):
+            for j in prange(N):
+                for k in range(3):
+                    udx = u[0, j, k] - u[1, j, k]
+                    utdx = ut[0, j, k] - ut[1, j, k]
+                    
+                    out[0, j, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[0, j, k]
+                    
+    # Last row
+    with parallel(num_threads=CPU):
+            for j in prange(N):
+                for k in range(3):
+                    udx = u[M-1, j, k] - u[M-2, j, k]
+                    utdx = ut[M-1, j, k] - ut[M-2, j, k]
+                    
+                    out[M-1, j, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[M-1, j, k]
+                    
+    # First column
+    with parallel(num_threads=CPU):
+            for i in prange(M):
+                for k in range(3):
+                    udx = u[i, 0, k] - u[i, 1, k]
+                    utdx = ut[i, 0, k] - ut[i, 1, k]
+                    
+                    out[i, 0, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[i, 0, k]
+                    
+                    
+    # Last column
+    with parallel(num_threads=CPU):
+            for i in prange(M):
+                for k in range(3):
+                    udx = u[i, N-1, k] - u[i, N-2, k]
+                    utdx = ut[i, N-1, k] - ut[i, N-2, k]
+                    
+                    out[i, N-1, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[i, N-1, k]
+                    
+                    
     
 
 
@@ -377,14 +450,14 @@ cdef inline void rotate_180(float[:, :, :] array, int M, int N, float[:, :, :] o
     """Rotate an array by 2×90° around its center"""
 
     cdef:
-        size_t i, j, k
+        int i, j, k
 
     with parallel(num_threads=CPU):
         for i in prange(M):
             for k in range(3):
                 for j in range(N):
                     out[i, N-1 -j, k] = array[M - i - 1, j, k]
-
+    
 
 cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,
                               float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int neighbours, int blind=True):
@@ -417,7 +490,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
     """
 
 
-    cdef float eps, iter_weight
+    cdef float epsilon, dtpsf
 
     cdef int u_M = u.shape[0]
     cdef int u_N = u.shape[1]
@@ -428,7 +501,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] im_convo = np.empty_like(u, dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] error = np.empty_like(image, dtype=DTYPE)
 
-    cdef float dt
+    cdef float dt[3]
     cdef float max_img[3]
     cdef float max_grad_u[3]
     cdef float max_grad_psf[3]
@@ -459,9 +532,12 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
     cdef convolve FFT_kern_valid = convolve(u_M, u_N, M, N, "valid")
     print("The profiling is done ! Moving on to the next step…")
 
-    cdef size_t it, itt, i, j, k
+    cdef int it, itt, i, j, k
 
     it = 0
+    
+    # Compute the minimal eps parameter that won't degenerate the sharp solution into a constant one
+    epsilon = best_param(image, lambd, M, N)
 
     # This problem is supposed to be convex so, as soon as the error increases, we shut the solver down because we won't do better
     while it < iterations and not stop_flag:
@@ -469,20 +545,16 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
         ut[:] = u.copy()
         itt = 0
         
-        # Compute the minimal eps parameter that won't degenerate the sharp solution into a constant one
-        eps = best_param(ut, lambd, u_M, u_N)
+        if lambd > 45000:
+            lambd = 45000
+        
+
         stop_previous = stop
         stop_previous_2 = stop_2
-        
-        if lambd > 1e6:
-            lambd = 1e6
 
         while itt < 5:
 
             gradu = np.zeros((u_M, u_N, 3), dtype=DTYPE)
-
-            # Compute the ratio of the norm of Total Variation between the current major and minor deblured images
-            gradTVEM(u, ut, eps, tau, gradu, u_M, u_N, neighbours)
 
             # Compute the new image
             for chan in range(3):
@@ -496,21 +568,18 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
 
             for chan in range(3):
                 im_convo[..., chan] = FFT_full(error[..., chan], psf_rotated[..., chan])
+                            
+            # Compute the ratio of the norm of Total Variation between the current major and minor deblured images
+            gradTVEM(u, ut, epsilon, tau, im_convo, lambd, gradu, max_grad_u, u_M, u_N, neighbours)
+            
+            for k in range(3):
+                dt[k] = step_factor * (np.amax(u[..., k]) + 1/(u_M * u_N)) / (max_grad_u[k] + float(1e-31))
 
             with nogil, parallel(num_threads=CPU):
                 for i in prange(u_M):
                     for k in range(3):
                         for j in range(u_N):
-                            gradu[i, j, k] += lambd *  im_convo[i, j, k]
-
-
-            dt = step_factor * (np.amax(u) + 1/(u_M * u_N)) / (np.amax(np.abs(gradu)) + float(1e-31))
-
-            with nogil, parallel(num_threads=CPU):
-                for i in prange(u_M):
-                    for k in range(3):
-                        for j in range(u_N):
-                            u[i, j, k] = u[i, j, k] - dt * gradu[i, j, k]
+                            u[i, j, k] = u[i, j, k] - dt[k] * gradu[i, j, k]
 
             if blind: 
                 # PSF update
@@ -531,13 +600,13 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                 #amax(psf, MK, MK, max_img)
                 #amax_abs(gradk, MK, MK, max_grad_psf)
 
-                dt = step_factor * (np.amax(psf) + 1/(u_M * u_N)) / (np.amax(np.abs(gradk)) + float(1e-31))
+                dtpsf = step_factor * (np.amax(psf) + 1/(u_M * u_N)) / (np.amax(np.abs(gradk)) + float(1e-31))
 
                 with nogil, parallel(num_threads=CPU):
                     for i in prange(MK):
                         for k in range(3):
                             for j in range(MK):
-                                psf[i, j, k] -= dt * gradk[i, j, k]
+                                psf[i, j, k] -= dtpsf * gradk[i, j, k]
 
                 _normalize_kernel(psf, MK)
 
@@ -551,7 +620,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
             
         # Convergence analysis
         # As images statistics show the cost function decreases only after 100 iterations and converge around 1000, we enforce 20 iterations no matter what 
-        stop = norm_L2_3D(gradu, u_M, u_N, u_temp_buffer_2D)/(u_M*u_N)
+        stop = norm_L2_3D(gradu, u_M, u_N)/(u_M*u_N)
         
         if stop_previous < stop and convergence_flag:
             # Second round where convergence is met : stop the loop after this round
@@ -563,7 +632,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
             
             
         if blind:
-            stop_2 = norm_L2_3D(gradk, MK, MK, psf_temp_buffer_2D)/(MK**2)
+            stop_2 = norm_L2_3D(gradk, MK, MK)/(MK**2)
             
             if stop_previous_2 < stop_2 and convergence_flag:
                 # Second round where convergence is met : stop the loop after this round

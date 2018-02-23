@@ -23,18 +23,20 @@ def makeExtension(extName):
         [extPath],
         # your include_dirs must contains the '.' for setup to search all the
         # subfolder of the codeRootFolder
-        include_dirs=['.'],
-        extra_compile_args=["-O3", "-fopenmp", "-ffast-math", "-finline-functions"],
+        include_dirs=['.', 'numpy.get_include()'],
+        extra_compile_args=["-O3", "-fopenmp", "-ffast-math", "-finline-functions", "-Wno-cpp", "-Wunused-but-set-variable"],
         extra_link_args=['-fopenmp', "-finline-functions"]
     )
+
 
 extNames = scandir('lib')
 
 extensions = [makeExtension(name) for name in extNames]
-extensions.append(Extension('_tifffile',
+
+extensions.append(Extension('lib._tifffile',
                             [os.path.join("lib", 'tifffile.c')],
-                            include_dirs=['.'],
-                            extra_compile_args=["-O3", "-fopenmp", "-ffast-math", "-finline-functions"],
+                            include_dirs=['.', 'numpy.get_include()'],
+                            extra_compile_args=["-O3", "-fopenmp", "-ffast-math", "-finline-functions", "-Wno-cpp", "-Wunused-but-set-variable"],
                             extra_link_args=['-fopenmp', "-finline-functions"]
                             ))
 
