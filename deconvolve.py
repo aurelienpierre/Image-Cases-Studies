@@ -66,8 +66,8 @@ def build_pyramid(psf_size, lambd):
 from skimage.restoration import denoise_tv_chambolle
 
 @utils.timeit
-def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4, step=1e-3, bits=8,
-                  iterations=200, sharpness=0.2, mask=None, display=True, neighbours=4):
+def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4, step=1e-3, bits=8,
+                  iterations=200, sharpness=0, mask=None, display=True, neighbours=8):
     """
     API to call the debluring process
 
@@ -109,6 +109,9 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=1, bias=1e-4,
 
     if blur_width % 2 == 0:
         raise ValueError("The blur width should be odd. You can use %i." % (blur_width + 1))
+        
+    if confidence > 100:
+        raise ValueError("The confidence factor is limited to 100. Try increasing the bias instead")
 
     # Set the bit-depth
     samples = 2**bits - 1
@@ -305,23 +308,23 @@ if __name__ == '__main__':
     picture = "blured.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [478, 478 + 255, 715, 715 + 255]
-        bias_1 = 1e-3
-        #deblur_module(pic, picture + "-v23-2", dest_path, 5, mask=mask, display=True, confidence=80, neighbours=2, bias=bias_1)
-        #deblur_module(pic, picture + "-v23-4", dest_path, 5, mask=mask, display=True, confidence=80, neighbours=4, bias=bias_1)
-        #deblur_module(pic, picture + "-v23-8", dest_path, 5, mask=mask, display=True, confidence=80, neighbours=8, bias=bias_1)
+        bias_1 = 5e-4
+        #deblur_module(pic, picture + "-v24-2", dest_path, 5, mask=mask, display=True, confidence=80, neighbours=2, bias=bias_1)
+        #deblur_module(pic, picture + "-v24-4", dest_path, 5, mask=mask, display=True, confidence=80, neighbours=4, bias=bias_1)
+        #deblur_module(pic, picture + "-v24-8", dest_path, 5, mask=mask, display=True, confidence=100, neighbours=8, bias=bias_1)
         pass
 
     picture = "IMG_9584-900.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [101, 101 + 255, 67, 67 + 255]
-        #deblur_module(pic, picture + "-v23-4", dest_path, 5, display=True, mask=mask, sharpness=0.5, confidence=30, neighbours=8, bias=1e-4)
-        #deblur_module(pic, picture + "-v22-8", dest_path, 3, display=False, mask=mask, sharpness=0.5, confidence=10, neighbours=8, bias=1e-4)
+        #deblur_module(pic, picture + "-v24-4", dest_path, 5, display=True, mask=mask, sharpness=0.5, confidence=10, neighbours=8, bias=5e-4)
+        #deblur_module(pic, picture + "-v24-8", dest_path, 3, display=False, mask=mask, sharpness=0.5, confidence=10, neighbours=8, bias=5e-4)
         pass
 
     picture = "DSC1168.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1111, 1111 + 513, 3383, 3383 + 513]
-        deblur_module(pic, picture + "-v21", dest_path, 33, mask=mask, display=True, iterations=100, confidence=1)
+        #deblur_module(pic, picture + "-v22-2", dest_path, 11, mask=mask, display=True, iterations=100, confidence=10, neighbours=8)
         pass
 
     picture = "P1030302.jpg"
@@ -333,7 +336,7 @@ if __name__ == '__main__':
     picture = "153412.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1484, 1484 + 255, 3228, 3228 + 255]
-        #deblur_module(pic, picture + "-v21-denoise", dest_path, 5, mask=mask, display=True, confidence=20)
+        deblur_module(pic, picture + "-v24", dest_path, 5, mask=mask, display=True, confidence=100, neighbours=8)
         pass
 
     # TIFF input example

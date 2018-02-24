@@ -1076,7 +1076,7 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
 struct __pyx_opt_args_3lib_13deconvolution__richardson_lucy_MM;
 
-/* "lib/deconvolution.pyx":462
+/* "lib/deconvolution.pyx":530
  * 
  * 
  * cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,             # <<<<<<<<<<<<<<
@@ -1088,7 +1088,7 @@ struct __pyx_opt_args_3lib_13deconvolution__richardson_lucy_MM {
   int blind;
 };
 
-/* "lib/deconvolution.pyx":206
+/* "lib/deconvolution.pyx":201
  * 
  * 
  * cdef class convolve:             # <<<<<<<<<<<<<<
@@ -3354,7 +3354,6 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_best_param(__Pyx_memview
   PyObject *__pyx_t_13 = NULL;
   PyObject *__pyx_t_14 = NULL;
   PyObject *__pyx_t_15 = NULL;
-  int __pyx_t_16;
   __Pyx_RefNannySetupContext("best_param", 0);
 
   /* "lib/deconvolution.pyx":127
@@ -3612,14 +3611,14 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_best_param(__Pyx_memview
   /* "lib/deconvolution.pyx":155
  * 
  *     # Compute epsilon
- *     cdef float epsilon = powf((grad_mean) / (expf(omega) - 1), 0.5) * 2.0             # <<<<<<<<<<<<<<
+ *     cdef float epsilon = powf((grad_mean) / (expf(omega) - 1), 0.5)             # <<<<<<<<<<<<<<
  * 
  *     print("%1.12f, %f" % (epsilon, lambd))
  */
-  __pyx_v_epsilon = (powf((__pyx_v_grad_mean / (expf(__pyx_v_omega) - 1.0)), 0.5) * 2.0);
+  __pyx_v_epsilon = powf((__pyx_v_grad_mean / (expf(__pyx_v_omega) - 1.0)), 0.5);
 
   /* "lib/deconvolution.pyx":157
- *     cdef float epsilon = powf((grad_mean) / (expf(omega) - 1), 0.5) * 2.0
+ *     cdef float epsilon = powf((grad_mean) / (expf(omega) - 1), 0.5)
  * 
  *     print("%1.12f, %f" % (epsilon, lambd))             # <<<<<<<<<<<<<<
  * 
@@ -3646,72 +3645,12 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_best_param(__Pyx_memview
   /* "lib/deconvolution.pyx":168
  *     """
  * 
- *     if epsilon < 1e-6:             # <<<<<<<<<<<<<<
- *         return 1e-6
- *     elif epsilon > 1e-1:
- */
-  __pyx_t_16 = ((__pyx_v_epsilon < 1e-6) != 0);
-  if (__pyx_t_16) {
-
-    /* "lib/deconvolution.pyx":169
- * 
- *     if epsilon < 1e-6:
- *         return 1e-6             # <<<<<<<<<<<<<<
- *     elif epsilon > 1e-1:
- *         return 1e-1
- */
-    __pyx_r = 1e-6;
-    goto __pyx_L0;
-
-    /* "lib/deconvolution.pyx":168
- *     """
- * 
- *     if epsilon < 1e-6:             # <<<<<<<<<<<<<<
- *         return 1e-6
- *     elif epsilon > 1e-1:
- */
-  }
-
-  /* "lib/deconvolution.pyx":170
- *     if epsilon < 1e-6:
- *         return 1e-6
- *     elif epsilon > 1e-1:             # <<<<<<<<<<<<<<
- *         return 1e-1
- *     else:
- */
-  __pyx_t_16 = ((__pyx_v_epsilon > 1e-1) != 0);
-  if (__pyx_t_16) {
-
-    /* "lib/deconvolution.pyx":171
- *         return 1e-6
- *     elif epsilon > 1e-1:
- *         return 1e-1             # <<<<<<<<<<<<<<
- *     else:
- *         return epsilon
- */
-    __pyx_r = 1e-1;
-    goto __pyx_L0;
-
-    /* "lib/deconvolution.pyx":170
- *     if epsilon < 1e-6:
- *         return 1e-6
- *     elif epsilon > 1e-1:             # <<<<<<<<<<<<<<
- *         return 1e-1
- *     else:
- */
-  }
-
-  /* "lib/deconvolution.pyx":173
- *         return 1e-1
- *     else:
- *         return epsilon             # <<<<<<<<<<<<<<
+ *     return epsilon             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  /*else*/ {
-    __pyx_r = __pyx_v_epsilon;
-    goto __pyx_L0;
-  }
+  __pyx_r = __pyx_v_epsilon;
+  goto __pyx_L0;
 
   /* "lib/deconvolution.pyx":114
  * 
@@ -3733,7 +3672,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_best_param(__Pyx_memview
   return __pyx_r;
 }
 
-/* "lib/deconvolution.pyx":176
+/* "lib/deconvolution.pyx":171
  * 
  * 
  * cdef inline void _normalize_kernel(float[:, :, :] kern, int MK):             # <<<<<<<<<<<<<<
@@ -3773,7 +3712,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
   Py_ssize_t __pyx_t_23;
   __Pyx_RefNannySetupContext("_normalize_kernel", 0);
 
-  /* "lib/deconvolution.pyx":180
+  /* "lib/deconvolution.pyx":175
  * 
  *     cdef int i, j, k
  *     cdef float check = 0             # <<<<<<<<<<<<<<
@@ -3782,7 +3721,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
  */
   __pyx_v_check = 0.0;
 
-  /* "lib/deconvolution.pyx":182
+  /* "lib/deconvolution.pyx":177
  *     cdef float check = 0
  *     cdef float temp[3]
  *     temp[:] = [0., 0., 0.]             # <<<<<<<<<<<<<<
@@ -3794,7 +3733,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
   __pyx_t_1[2] = 0.;
   memcpy(&(__pyx_v_temp[0]), __pyx_t_1, sizeof(__pyx_v_temp[0]) * (3));
 
-  /* "lib/deconvolution.pyx":184
+  /* "lib/deconvolution.pyx":179
  *     temp[:] = [0., 0., 0.]
  * 
  *     with nogil:             # <<<<<<<<<<<<<<
@@ -3809,7 +3748,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
       #endif
       /*try:*/ {
 
-        /* "lib/deconvolution.pyx":186
+        /* "lib/deconvolution.pyx":181
  *     with nogil:
  *         # Make negative values == 0
  *         for k in range(3):             # <<<<<<<<<<<<<<
@@ -3819,7 +3758,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
         for (__pyx_t_2 = 0; __pyx_t_2 < 3; __pyx_t_2+=1) {
           __pyx_v_k = __pyx_t_2;
 
-          /* "lib/deconvolution.pyx":187
+          /* "lib/deconvolution.pyx":182
  *         # Make negative values == 0
  *         for k in range(3):
  *             for i in range(MK):             # <<<<<<<<<<<<<<
@@ -3830,7 +3769,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
           for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
             __pyx_v_i = __pyx_t_4;
 
-            /* "lib/deconvolution.pyx":188
+            /* "lib/deconvolution.pyx":183
  *         for k in range(3):
  *             for i in range(MK):
  *                 for j in range(MK):             # <<<<<<<<<<<<<<
@@ -3841,7 +3780,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
             for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
               __pyx_v_j = __pyx_t_6;
 
-              /* "lib/deconvolution.pyx":189
+              /* "lib/deconvolution.pyx":184
  *             for i in range(MK):
  *                 for j in range(MK):
  *                     if (kern[i, j, k] < 0):             # <<<<<<<<<<<<<<
@@ -3854,7 +3793,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
               __pyx_t_10 = (((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_kern.data + __pyx_t_7 * __pyx_v_kern.strides[0]) ) + __pyx_t_8 * __pyx_v_kern.strides[1]) ) + __pyx_t_9 * __pyx_v_kern.strides[2]) ))) < 0.0) != 0);
               if (__pyx_t_10) {
 
-                /* "lib/deconvolution.pyx":190
+                /* "lib/deconvolution.pyx":185
  *                 for j in range(MK):
  *                     if (kern[i, j, k] < 0):
  *                         kern[i, j, k] = - kern[i, j, k]             # <<<<<<<<<<<<<<
@@ -3869,7 +3808,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
                 __pyx_t_16 = __pyx_v_k;
                 *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_kern.data + __pyx_t_14 * __pyx_v_kern.strides[0]) ) + __pyx_t_15 * __pyx_v_kern.strides[1]) ) + __pyx_t_16 * __pyx_v_kern.strides[2]) )) = (-(*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_kern.data + __pyx_t_11 * __pyx_v_kern.strides[0]) ) + __pyx_t_12 * __pyx_v_kern.strides[1]) ) + __pyx_t_13 * __pyx_v_kern.strides[2]) ))));
 
-                /* "lib/deconvolution.pyx":189
+                /* "lib/deconvolution.pyx":184
  *             for i in range(MK):
  *                 for j in range(MK):
  *                     if (kern[i, j, k] < 0):             # <<<<<<<<<<<<<<
@@ -3878,7 +3817,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
  */
               }
 
-              /* "lib/deconvolution.pyx":192
+              /* "lib/deconvolution.pyx":187
  *                         kern[i, j, k] = - kern[i, j, k]
  * 
  *                     temp[k] += kern[i, j, k]             # <<<<<<<<<<<<<<
@@ -3894,7 +3833,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
           }
         }
 
-        /* "lib/deconvolution.pyx":195
+        /* "lib/deconvolution.pyx":190
  * 
  *         # Make the sum of elements along the 2 first dimensions == 1
  *         for k in range(3):             # <<<<<<<<<<<<<<
@@ -3904,7 +3843,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
         for (__pyx_t_2 = 0; __pyx_t_2 < 3; __pyx_t_2+=1) {
           __pyx_v_k = __pyx_t_2;
 
-          /* "lib/deconvolution.pyx":196
+          /* "lib/deconvolution.pyx":191
  *         # Make the sum of elements along the 2 first dimensions == 1
  *         for k in range(3):
  *             for i in range(MK):             # <<<<<<<<<<<<<<
@@ -3915,7 +3854,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
           for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
             __pyx_v_i = __pyx_t_4;
 
-            /* "lib/deconvolution.pyx":197
+            /* "lib/deconvolution.pyx":192
  *         for k in range(3):
  *             for i in range(MK):
  *                 for j in range(MK):             # <<<<<<<<<<<<<<
@@ -3926,7 +3865,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
             for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
               __pyx_v_j = __pyx_t_6;
 
-              /* "lib/deconvolution.pyx":198
+              /* "lib/deconvolution.pyx":193
  *             for i in range(MK):
  *                 for j in range(MK):
  *                     kern[i, j, k] /= temp[k]             # <<<<<<<<<<<<<<
@@ -3942,7 +3881,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
         }
       }
 
-      /* "lib/deconvolution.pyx":184
+      /* "lib/deconvolution.pyx":179
  *     temp[:] = [0., 0., 0.]
  * 
  *     with nogil:             # <<<<<<<<<<<<<<
@@ -3961,7 +3900,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
       }
   }
 
-  /* "lib/deconvolution.pyx":176
+  /* "lib/deconvolution.pyx":171
  * 
  * 
  * cdef inline void _normalize_kernel(float[:, :, :] kern, int MK):             # <<<<<<<<<<<<<<
@@ -3973,7 +3912,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution__normalize_kernel(__Pyx_m
   __Pyx_RefNannyFinishContext();
 }
 
-/* "lib/deconvolution.pyx":201
+/* "lib/deconvolution.pyx":196
  * 
  * 
  * cpdef void normalize_kernel(np.ndarray[DTYPE_t, ndim=3] kern, int MK):             # <<<<<<<<<<<<<<
@@ -3994,11 +3933,11 @@ static void __pyx_f_3lib_13deconvolution_normalize_kernel(PyArrayObject *__pyx_v
   __pyx_pybuffernd_kern.rcbuffer = &__pyx_pybuffer_kern;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_kern.rcbuffer->pybuffer, (PyObject*)__pyx_v_kern, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 201, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_kern.rcbuffer->pybuffer, (PyObject*)__pyx_v_kern, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 196, __pyx_L1_error)
   }
   __pyx_pybuffernd_kern.diminfo[0].strides = __pyx_pybuffernd_kern.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_kern.diminfo[0].shape = __pyx_pybuffernd_kern.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_kern.diminfo[1].strides = __pyx_pybuffernd_kern.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_kern.diminfo[1].shape = __pyx_pybuffernd_kern.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_kern.diminfo[2].strides = __pyx_pybuffernd_kern.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_kern.diminfo[2].shape = __pyx_pybuffernd_kern.rcbuffer->pybuffer.shape[2];
 
-  /* "lib/deconvolution.pyx":203
+  /* "lib/deconvolution.pyx":198
  * cpdef void normalize_kernel(np.ndarray[DTYPE_t, ndim=3] kern, int MK):
  *     # Expose the Cython function to Python
  *     _normalize_kernel(kern, MK)             # <<<<<<<<<<<<<<
@@ -4006,13 +3945,13 @@ static void __pyx_f_3lib_13deconvolution_normalize_kernel(PyArrayObject *__pyx_v
  * 
  */
   __pyx_t_1 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_kern));
-  if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 203, __pyx_L1_error)
+  if (unlikely(!__pyx_t_1.memview)) __PYX_ERR(0, 198, __pyx_L1_error)
   __pyx_f_3lib_13deconvolution__normalize_kernel(__pyx_t_1, __pyx_v_MK);
   __PYX_XDEC_MEMVIEW(&__pyx_t_1, 1);
   __pyx_t_1.memview = NULL;
   __pyx_t_1.data = NULL;
 
-  /* "lib/deconvolution.pyx":201
+  /* "lib/deconvolution.pyx":196
  * 
  * 
  * cpdef void normalize_kernel(np.ndarray[DTYPE_t, ndim=3] kern, int MK):             # <<<<<<<<<<<<<<
@@ -4069,11 +4008,11 @@ static PyObject *__pyx_pw_3lib_13deconvolution_1normalize_kernel(PyObject *__pyx
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_MK)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("normalize_kernel", 1, 2, 2, 1); __PYX_ERR(0, 201, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("normalize_kernel", 1, 2, 2, 1); __PYX_ERR(0, 196, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "normalize_kernel") < 0)) __PYX_ERR(0, 201, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "normalize_kernel") < 0)) __PYX_ERR(0, 196, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -4082,17 +4021,17 @@ static PyObject *__pyx_pw_3lib_13deconvolution_1normalize_kernel(PyObject *__pyx
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
     }
     __pyx_v_kern = ((PyArrayObject *)values[0]);
-    __pyx_v_MK = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_MK == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 201, __pyx_L3_error)
+    __pyx_v_MK = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_MK == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 196, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("normalize_kernel", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 201, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("normalize_kernel", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 196, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("lib.deconvolution.normalize_kernel", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_kern), __pyx_ptype_5numpy_ndarray, 1, "kern", 0))) __PYX_ERR(0, 201, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_kern), __pyx_ptype_5numpy_ndarray, 1, "kern", 0))) __PYX_ERR(0, 196, __pyx_L1_error)
   __pyx_r = __pyx_pf_3lib_13deconvolution_normalize_kernel(__pyx_self, __pyx_v_kern, __pyx_v_MK);
 
   /* function exit code */
@@ -4117,11 +4056,11 @@ static PyObject *__pyx_pf_3lib_13deconvolution_normalize_kernel(CYTHON_UNUSED Py
   __pyx_pybuffernd_kern.rcbuffer = &__pyx_pybuffer_kern;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_kern.rcbuffer->pybuffer, (PyObject*)__pyx_v_kern, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 201, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_kern.rcbuffer->pybuffer, (PyObject*)__pyx_v_kern, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 196, __pyx_L1_error)
   }
   __pyx_pybuffernd_kern.diminfo[0].strides = __pyx_pybuffernd_kern.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_kern.diminfo[0].shape = __pyx_pybuffernd_kern.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_kern.diminfo[1].strides = __pyx_pybuffernd_kern.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_kern.diminfo[1].shape = __pyx_pybuffernd_kern.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_kern.diminfo[2].strides = __pyx_pybuffernd_kern.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_kern.diminfo[2].shape = __pyx_pybuffernd_kern.rcbuffer->pybuffer.shape[2];
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_void_to_None(__pyx_f_3lib_13deconvolution_normalize_kernel(__pyx_v_kern, __pyx_v_MK, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 201, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_void_to_None(__pyx_f_3lib_13deconvolution_normalize_kernel(__pyx_v_kern, __pyx_v_MK, 0)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 196, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -4147,7 +4086,7 @@ static PyObject *__pyx_pf_3lib_13deconvolution_normalize_kernel(CYTHON_UNUSED Py
   return __pyx_r;
 }
 
-/* "lib/deconvolution.pyx":210
+/* "lib/deconvolution.pyx":205
  *     cdef int X, Y, M, N, offset_X, offset_Y, M_input, N_input, MK_input, NK_input, Mfft, Nfft
  * 
  *     def __cinit__(self, int M, int N, int MK, int NK, str domain):             # <<<<<<<<<<<<<<
@@ -4195,29 +4134,29 @@ static int __pyx_pw_3lib_13deconvolution_8convolve_1__cinit__(PyObject *__pyx_v_
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_N)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 1); __PYX_ERR(0, 210, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 1); __PYX_ERR(0, 205, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_MK)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 2); __PYX_ERR(0, 210, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 2); __PYX_ERR(0, 205, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_NK)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 3); __PYX_ERR(0, 210, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 3); __PYX_ERR(0, 205, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_domain)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 4); __PYX_ERR(0, 210, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, 4); __PYX_ERR(0, 205, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 210, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__cinit__") < 0)) __PYX_ERR(0, 205, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 5) {
       goto __pyx_L5_argtuple_error;
@@ -4228,21 +4167,21 @@ static int __pyx_pw_3lib_13deconvolution_8convolve_1__cinit__(PyObject *__pyx_v_
       values[3] = PyTuple_GET_ITEM(__pyx_args, 3);
       values[4] = PyTuple_GET_ITEM(__pyx_args, 4);
     }
-    __pyx_v_M = __Pyx_PyInt_As_int(values[0]); if (unlikely((__pyx_v_M == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 210, __pyx_L3_error)
-    __pyx_v_N = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_N == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 210, __pyx_L3_error)
-    __pyx_v_MK = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_MK == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 210, __pyx_L3_error)
-    __pyx_v_NK = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_NK == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 210, __pyx_L3_error)
+    __pyx_v_M = __Pyx_PyInt_As_int(values[0]); if (unlikely((__pyx_v_M == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 205, __pyx_L3_error)
+    __pyx_v_N = __Pyx_PyInt_As_int(values[1]); if (unlikely((__pyx_v_N == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 205, __pyx_L3_error)
+    __pyx_v_MK = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_MK == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 205, __pyx_L3_error)
+    __pyx_v_NK = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_NK == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 205, __pyx_L3_error)
     __pyx_v_domain = ((PyObject*)values[4]);
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 210, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__cinit__", 1, 5, 5, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 205, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("lib.deconvolution.convolve.__cinit__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_domain), (&PyString_Type), 1, "domain", 1))) __PYX_ERR(0, 210, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_domain), (&PyString_Type), 1, "domain", 1))) __PYX_ERR(0, 205, __pyx_L1_error)
   __pyx_r = __pyx_pf_3lib_13deconvolution_8convolve___cinit__(((struct __pyx_obj_3lib_13deconvolution_convolve *)__pyx_v_self), __pyx_v_M, __pyx_v_N, __pyx_v_MK, __pyx_v_NK, __pyx_v_domain);
 
   /* function exit code */
@@ -4268,7 +4207,7 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
   PyObject *__pyx_t_9 = NULL;
   __Pyx_RefNannySetupContext("__cinit__", 0);
 
-  /* "lib/deconvolution.pyx":223
+  /* "lib/deconvolution.pyx":218
  * 
  *         # Takes an MN image and an MKMK kernel or second image
  *         self.M_input = M             # <<<<<<<<<<<<<<
@@ -4277,7 +4216,7 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
  */
   __pyx_v_self->M_input = __pyx_v_M;
 
-  /* "lib/deconvolution.pyx":224
+  /* "lib/deconvolution.pyx":219
  *         # Takes an MN image and an MKMK kernel or second image
  *         self.M_input = M
  *         self.N_input = N             # <<<<<<<<<<<<<<
@@ -4286,7 +4225,7 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
  */
   __pyx_v_self->N_input = __pyx_v_N;
 
-  /* "lib/deconvolution.pyx":225
+  /* "lib/deconvolution.pyx":220
  *         self.M_input = M
  *         self.N_input = N
  *         self.MK_input = MK             # <<<<<<<<<<<<<<
@@ -4295,7 +4234,7 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
  */
   __pyx_v_self->MK_input = __pyx_v_MK;
 
-  /* "lib/deconvolution.pyx":226
+  /* "lib/deconvolution.pyx":221
  *         self.N_input = N
  *         self.MK_input = MK
  *         self.NK_input = NK             # <<<<<<<<<<<<<<
@@ -4304,18 +4243,18 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
  */
   __pyx_v_self->NK_input = __pyx_v_NK;
 
-  /* "lib/deconvolution.pyx":229
+  /* "lib/deconvolution.pyx":224
  * 
  *         # Compute the finals dimensions of the output
  *         if domain == "valid":             # <<<<<<<<<<<<<<
  *             self.Y = self.M_input - self.MK_input + 1
  *             self.X = self.N_input - self.NK_input + 1
  */
-  __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_v_domain, __pyx_n_s_valid, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 229, __pyx_L1_error)
+  __pyx_t_1 = (__Pyx_PyString_Equals(__pyx_v_domain, __pyx_n_s_valid, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 224, __pyx_L1_error)
   __pyx_t_2 = (__pyx_t_1 != 0);
   if (__pyx_t_2) {
 
-    /* "lib/deconvolution.pyx":230
+    /* "lib/deconvolution.pyx":225
  *         # Compute the finals dimensions of the output
  *         if domain == "valid":
  *             self.Y = self.M_input - self.MK_input + 1             # <<<<<<<<<<<<<<
@@ -4324,7 +4263,7 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
  */
     __pyx_v_self->Y = ((__pyx_v_self->M_input - __pyx_v_self->MK_input) + 1);
 
-    /* "lib/deconvolution.pyx":231
+    /* "lib/deconvolution.pyx":226
  *         if domain == "valid":
  *             self.Y = self.M_input - self.MK_input + 1
  *             self.X = self.N_input - self.NK_input + 1             # <<<<<<<<<<<<<<
@@ -4333,7 +4272,7 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
  */
     __pyx_v_self->X = ((__pyx_v_self->N_input - __pyx_v_self->NK_input) + 1);
 
-    /* "lib/deconvolution.pyx":229
+    /* "lib/deconvolution.pyx":224
  * 
  *         # Compute the finals dimensions of the output
  *         if domain == "valid":             # <<<<<<<<<<<<<<
@@ -4343,18 +4282,18 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
     goto __pyx_L3;
   }
 
-  /* "lib/deconvolution.pyx":232
+  /* "lib/deconvolution.pyx":227
  *             self.Y = self.M_input - self.MK_input + 1
  *             self.X = self.N_input - self.NK_input + 1
  *         elif domain == "full":             # <<<<<<<<<<<<<<
  *             self.Y = self.M_input + self.MK_input - 1
  *             self.X = self.N_input + self.NK_input - 1
  */
-  __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_domain, __pyx_n_s_full, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 232, __pyx_L1_error)
+  __pyx_t_2 = (__Pyx_PyString_Equals(__pyx_v_domain, __pyx_n_s_full, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 227, __pyx_L1_error)
   __pyx_t_1 = (__pyx_t_2 != 0);
   if (__pyx_t_1) {
 
-    /* "lib/deconvolution.pyx":233
+    /* "lib/deconvolution.pyx":228
  *             self.X = self.N_input - self.NK_input + 1
  *         elif domain == "full":
  *             self.Y = self.M_input + self.MK_input - 1             # <<<<<<<<<<<<<<
@@ -4363,7 +4302,7 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
  */
     __pyx_v_self->Y = ((__pyx_v_self->M_input + __pyx_v_self->MK_input) - 1);
 
-    /* "lib/deconvolution.pyx":234
+    /* "lib/deconvolution.pyx":229
  *         elif domain == "full":
  *             self.Y = self.M_input + self.MK_input - 1
  *             self.X = self.N_input + self.NK_input - 1             # <<<<<<<<<<<<<<
@@ -4372,7 +4311,7 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
  */
     __pyx_v_self->X = ((__pyx_v_self->N_input + __pyx_v_self->NK_input) - 1);
 
-    /* "lib/deconvolution.pyx":232
+    /* "lib/deconvolution.pyx":227
  *             self.Y = self.M_input - self.MK_input + 1
  *             self.X = self.N_input - self.NK_input + 1
  *         elif domain == "full":             # <<<<<<<<<<<<<<
@@ -4382,7 +4321,7 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
   }
   __pyx_L3:;
 
-  /* "lib/deconvolution.pyx":237
+  /* "lib/deconvolution.pyx":232
  * 
  *         # Compute the dimensions of the FFT
  *         self.M = self.M_input + self.MK_input -1             # <<<<<<<<<<<<<<
@@ -4391,7 +4330,7 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
  */
   __pyx_v_self->M = ((__pyx_v_self->M_input + __pyx_v_self->MK_input) - 1);
 
-  /* "lib/deconvolution.pyx":238
+  /* "lib/deconvolution.pyx":233
  *         # Compute the dimensions of the FFT
  *         self.M = self.M_input + self.MK_input -1
  *         self.N = self.N_input + self.NK_input -1             # <<<<<<<<<<<<<<
@@ -4400,19 +4339,19 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
  */
   __pyx_v_self->N = ((__pyx_v_self->N_input + __pyx_v_self->NK_input) - 1);
 
-  /* "lib/deconvolution.pyx":240
+  /* "lib/deconvolution.pyx":235
  *         self.N = self.N_input + self.NK_input -1
  * 
  *         self.offset_Y = int(np.floor((self.M - self.Y)/2))             # <<<<<<<<<<<<<<
  *         self.offset_X = int(np.floor((self.N - self.X)/2))
  * 
  */
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 240, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 235, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_floor); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 240, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_floor); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 235, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyInt_From_long(((__pyx_v_self->M - __pyx_v_self->Y) / 2)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 240, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_long(((__pyx_v_self->M - __pyx_v_self->Y) / 2)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 235, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __pyx_t_6 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_5))) {
@@ -4425,14 +4364,14 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
     }
   }
   if (!__pyx_t_6) {
-    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 240, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_t_4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 235, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_3);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_5)) {
       PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_t_4};
-      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 240, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 235, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -4441,45 +4380,45 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
       PyObject *__pyx_temp[2] = {__pyx_t_6, __pyx_t_4};
-      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 240, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 235, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     } else
     #endif
     {
-      __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 240, __pyx_L1_error)
+      __pyx_t_7 = PyTuple_New(1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 235, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_6); __pyx_t_6 = NULL;
       __Pyx_GIVEREF(__pyx_t_4);
       PyTuple_SET_ITEM(__pyx_t_7, 0+1, __pyx_t_4);
       __pyx_t_4 = 0;
-      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_7, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 240, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_7, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 235, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = __Pyx_PyNumber_Int(__pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 240, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyNumber_Int(__pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 235, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_8 = __Pyx_PyInt_As_int(__pyx_t_5); if (unlikely((__pyx_t_8 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 240, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyInt_As_int(__pyx_t_5); if (unlikely((__pyx_t_8 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 235, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __pyx_v_self->offset_Y = __pyx_t_8;
 
-  /* "lib/deconvolution.pyx":241
+  /* "lib/deconvolution.pyx":236
  * 
  *         self.offset_Y = int(np.floor((self.M - self.Y)/2))
  *         self.offset_X = int(np.floor((self.N - self.X)/2))             # <<<<<<<<<<<<<<
  * 
  *         # Initialize the FFTW containers
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 241, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 236, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_floor); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 241, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_floor); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 236, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_From_long(((__pyx_v_self->N - __pyx_v_self->X) / 2)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 241, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_long(((__pyx_v_self->N - __pyx_v_self->X) / 2)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 236, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_7))) {
@@ -4492,14 +4431,14 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
     }
   }
   if (!__pyx_t_4) {
-    __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 241, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_3); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 236, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __Pyx_GOTREF(__pyx_t_5);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_7)) {
       PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_3};
-      __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 241, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 236, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -4508,49 +4447,49 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_7)) {
       PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_3};
-      __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 241, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 236, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     } else
     #endif
     {
-      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 241, __pyx_L1_error)
+      __pyx_t_6 = PyTuple_New(1+1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 236, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_6);
       __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_4); __pyx_t_4 = NULL;
       __Pyx_GIVEREF(__pyx_t_3);
       PyTuple_SET_ITEM(__pyx_t_6, 0+1, __pyx_t_3);
       __pyx_t_3 = 0;
-      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_6, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 241, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_6, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 236, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = __Pyx_PyNumber_Int(__pyx_t_5); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 241, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyNumber_Int(__pyx_t_5); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 236, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_8 = __Pyx_PyInt_As_int(__pyx_t_7); if (unlikely((__pyx_t_8 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 241, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyInt_As_int(__pyx_t_7); if (unlikely((__pyx_t_8 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 236, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __pyx_v_self->offset_X = __pyx_t_8;
 
-  /* "lib/deconvolution.pyx":244
+  /* "lib/deconvolution.pyx":239
  * 
  *         # Initialize the FFTW containers
  *         self.A = pyfftw.zeros_aligned((self.M, self.N), dtype=DTYPE, n=pyfftw.simd_alignment)             # <<<<<<<<<<<<<<
  *         self.B = pyfftw.zeros_aligned((self.M, self.N), dtype=DTYPE, n=pyfftw.simd_alignment)
  * 
  */
-  __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 239, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_zeros_aligned); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_zeros_aligned); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = __Pyx_PyInt_From_int(__pyx_v_self->M); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyInt_From_int(__pyx_v_self->M); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 239, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_6 = __Pyx_PyInt_From_int(__pyx_v_self->N); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyInt_From_int(__pyx_v_self->N); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 239, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_7);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_7);
@@ -4558,25 +4497,25 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
   PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_6);
   __pyx_t_7 = 0;
   __pyx_t_6 = 0;
-  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 239, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 239, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 239, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_7) < 0) __PYX_ERR(0, 244, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_7) < 0) __PYX_ERR(0, 239, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 239, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_simd_alignment); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_simd_alignment); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 239, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_n, __pyx_t_4) < 0) __PYX_ERR(0, 244, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_n, __pyx_t_4) < 0) __PYX_ERR(0, 239, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 239, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -4587,23 +4526,23 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
   __pyx_v_self->A = __pyx_t_4;
   __pyx_t_4 = 0;
 
-  /* "lib/deconvolution.pyx":245
+  /* "lib/deconvolution.pyx":240
  *         # Initialize the FFTW containers
  *         self.A = pyfftw.zeros_aligned((self.M, self.N), dtype=DTYPE, n=pyfftw.simd_alignment)
  *         self.B = pyfftw.zeros_aligned((self.M, self.N), dtype=DTYPE, n=pyfftw.simd_alignment)             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 245, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 240, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros_aligned); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 245, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_zeros_aligned); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 240, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->M); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 245, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->M); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 240, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_6 = __Pyx_PyInt_From_int(__pyx_v_self->N); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 245, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyInt_From_int(__pyx_v_self->N); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 240, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 245, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_New(2); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 240, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_GIVEREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4);
@@ -4611,25 +4550,25 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
   PyTuple_SET_ITEM(__pyx_t_5, 1, __pyx_t_6);
   __pyx_t_4 = 0;
   __pyx_t_6 = 0;
-  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 245, __pyx_L1_error)
+  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 240, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_GIVEREF(__pyx_t_5);
   PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_5);
   __pyx_t_5 = 0;
-  __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 245, __pyx_L1_error)
+  __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 240, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 245, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 240, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 245, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 240, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 245, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 240, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_simd_alignment); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 245, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_simd_alignment); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 240, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_n, __pyx_t_7) < 0) __PYX_ERR(0, 245, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_n, __pyx_t_7) < 0) __PYX_ERR(0, 240, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 245, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 240, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -4640,33 +4579,33 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
   __pyx_v_self->B = __pyx_t_7;
   __pyx_t_7 = 0;
 
-  /* "lib/deconvolution.pyx":248
+  /* "lib/deconvolution.pyx":243
  * 
  * 
  *         self.fft_A_obj = pyfftw.builders.rfft2(self.A, s=(self.M, self.N), threads=CPU, auto_align_input=True,             # <<<<<<<<<<<<<<
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
  *         self.fft_B_obj = pyfftw.builders.rfft2(self.B, s=(self.M, self.N ), threads=CPU,  auto_align_input=True,
  */
-  __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 248, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 243, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_builders); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 248, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_builders); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 243, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_rfft2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 248, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_5, __pyx_n_s_rfft2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 243, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-  __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 248, __pyx_L1_error)
+  __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 243, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_INCREF(__pyx_v_self->A);
   __Pyx_GIVEREF(__pyx_v_self->A);
   PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_v_self->A);
-  __pyx_t_6 = PyDict_New(); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 248, __pyx_L1_error)
+  __pyx_t_6 = PyDict_New(); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 243, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
-  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_self->M); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 248, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_self->M); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 243, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->N); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 248, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->N); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 243, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_9 = PyTuple_New(2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 248, __pyx_L1_error)
+  __pyx_t_9 = PyTuple_New(2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 243, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_3);
@@ -4674,32 +4613,32 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
   PyTuple_SET_ITEM(__pyx_t_9, 1, __pyx_t_4);
   __pyx_t_3 = 0;
   __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_s, __pyx_t_9) < 0) __PYX_ERR(0, 248, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_s, __pyx_t_9) < 0) __PYX_ERR(0, 243, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-  __pyx_t_9 = __Pyx_PyInt_From_int(__pyx_v_3lib_13deconvolution_CPU); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 248, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyInt_From_int(__pyx_v_3lib_13deconvolution_CPU); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 243, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_threads, __pyx_t_9) < 0) __PYX_ERR(0, 248, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_threads, __pyx_t_9) < 0) __PYX_ERR(0, 243, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_auto_align_input, Py_True) < 0) __PYX_ERR(0, 248, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_auto_align_input, Py_True) < 0) __PYX_ERR(0, 243, __pyx_L1_error)
 
-  /* "lib/deconvolution.pyx":249
+  /* "lib/deconvolution.pyx":244
  * 
  *         self.fft_A_obj = pyfftw.builders.rfft2(self.A, s=(self.M, self.N), threads=CPU, auto_align_input=True,
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")             # <<<<<<<<<<<<<<
  *         self.fft_B_obj = pyfftw.builders.rfft2(self.B, s=(self.M, self.N ), threads=CPU,  auto_align_input=True,
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
  */
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_auto_contiguous, Py_True) < 0) __PYX_ERR(0, 248, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_planner_effort, __pyx_n_s_FFTW_ESTIMATE) < 0) __PYX_ERR(0, 248, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_auto_contiguous, Py_True) < 0) __PYX_ERR(0, 243, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_6, __pyx_n_s_planner_effort, __pyx_n_s_FFTW_ESTIMATE) < 0) __PYX_ERR(0, 243, __pyx_L1_error)
 
-  /* "lib/deconvolution.pyx":248
+  /* "lib/deconvolution.pyx":243
  * 
  * 
  *         self.fft_A_obj = pyfftw.builders.rfft2(self.A, s=(self.M, self.N), threads=CPU, auto_align_input=True,             # <<<<<<<<<<<<<<
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
  *         self.fft_B_obj = pyfftw.builders.rfft2(self.B, s=(self.M, self.N ), threads=CPU,  auto_align_input=True,
  */
-  __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_5, __pyx_t_6); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 248, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_5, __pyx_t_6); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 243, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -4710,33 +4649,33 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
   __pyx_v_self->fft_A_obj = __pyx_t_9;
   __pyx_t_9 = 0;
 
-  /* "lib/deconvolution.pyx":250
+  /* "lib/deconvolution.pyx":245
  *         self.fft_A_obj = pyfftw.builders.rfft2(self.A, s=(self.M, self.N), threads=CPU, auto_align_input=True,
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
  *         self.fft_B_obj = pyfftw.builders.rfft2(self.B, s=(self.M, self.N ), threads=CPU,  auto_align_input=True,             # <<<<<<<<<<<<<<
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
  * 
  */
-  __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 250, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
-  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_builders); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 250, __pyx_L1_error)
+  __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_builders); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_rfft2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 250, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_6, __pyx_n_s_rfft2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
-  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 250, __pyx_L1_error)
+  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_INCREF(__pyx_v_self->B);
   __Pyx_GIVEREF(__pyx_v_self->B);
   PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_v_self->B);
-  __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 250, __pyx_L1_error)
+  __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_7 = __Pyx_PyInt_From_int(__pyx_v_self->M); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 250, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyInt_From_int(__pyx_v_self->M); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->N); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 250, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->N); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 250, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_7);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_7);
@@ -4744,32 +4683,32 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
   PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_4);
   __pyx_t_7 = 0;
   __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_s, __pyx_t_3) < 0) __PYX_ERR(0, 250, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_s, __pyx_t_3) < 0) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_3lib_13deconvolution_CPU); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 250, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_3lib_13deconvolution_CPU); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_threads, __pyx_t_3) < 0) __PYX_ERR(0, 250, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_threads, __pyx_t_3) < 0) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_auto_align_input, Py_True) < 0) __PYX_ERR(0, 250, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_auto_align_input, Py_True) < 0) __PYX_ERR(0, 245, __pyx_L1_error)
 
-  /* "lib/deconvolution.pyx":251
+  /* "lib/deconvolution.pyx":246
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
  *         self.fft_B_obj = pyfftw.builders.rfft2(self.B, s=(self.M, self.N ), threads=CPU,  auto_align_input=True,
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")             # <<<<<<<<<<<<<<
  * 
  *         self.C = pyfftw.zeros_aligned(self.fft_A_obj.output_shape, dtype=np.complex64, n=pyfftw.simd_alignment)
  */
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_auto_contiguous, Py_True) < 0) __PYX_ERR(0, 250, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_planner_effort, __pyx_n_s_FFTW_ESTIMATE) < 0) __PYX_ERR(0, 250, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_auto_contiguous, Py_True) < 0) __PYX_ERR(0, 245, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_planner_effort, __pyx_n_s_FFTW_ESTIMATE) < 0) __PYX_ERR(0, 245, __pyx_L1_error)
 
-  /* "lib/deconvolution.pyx":250
+  /* "lib/deconvolution.pyx":245
  *         self.fft_A_obj = pyfftw.builders.rfft2(self.A, s=(self.M, self.N), threads=CPU, auto_align_input=True,
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
  *         self.fft_B_obj = pyfftw.builders.rfft2(self.B, s=(self.M, self.N ), threads=CPU,  auto_align_input=True,             # <<<<<<<<<<<<<<
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
  * 
  */
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 250, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_t_6, __pyx_t_5); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 245, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -4780,42 +4719,42 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
   __pyx_v_self->fft_B_obj = __pyx_t_3;
   __pyx_t_3 = 0;
 
-  /* "lib/deconvolution.pyx":253
+  /* "lib/deconvolution.pyx":248
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
  * 
  *         self.C = pyfftw.zeros_aligned(self.fft_A_obj.output_shape, dtype=np.complex64, n=pyfftw.simd_alignment)             # <<<<<<<<<<<<<<
  *         self.ifft_obj = pyfftw.builders.irfft2(self.fft_A_obj.output_array, s=(self.M, self.N), threads=CPU, auto_align_input=True,
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
  */
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 248, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros_aligned); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_zeros_aligned); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 248, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->fft_A_obj, __pyx_n_s_output_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->fft_A_obj, __pyx_n_s_output_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 248, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 248, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 248, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 248, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_complex64); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_complex64); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 248, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 253, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 248, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 248, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_simd_alignment); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_simd_alignment); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 248, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_n, __pyx_t_9) < 0) __PYX_ERR(0, 253, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_n, __pyx_t_9) < 0) __PYX_ERR(0, 248, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-  __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 253, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 248, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -4826,35 +4765,35 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
   __pyx_v_self->C = __pyx_t_9;
   __pyx_t_9 = 0;
 
-  /* "lib/deconvolution.pyx":254
+  /* "lib/deconvolution.pyx":249
  * 
  *         self.C = pyfftw.zeros_aligned(self.fft_A_obj.output_shape, dtype=np.complex64, n=pyfftw.simd_alignment)
  *         self.ifft_obj = pyfftw.builders.irfft2(self.fft_A_obj.output_array, s=(self.M, self.N), threads=CPU, auto_align_input=True,             # <<<<<<<<<<<<<<
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
  * 
  */
-  __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 254, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_GetModuleGlobalName(__pyx_n_s_pyfftw); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 249, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_builders); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 254, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_9, __pyx_n_s_builders); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 249, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_irfft2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 254, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_irfft2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 249, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->fft_A_obj, __pyx_n_s_output_array); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 254, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->fft_A_obj, __pyx_n_s_output_array); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 249, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 254, __pyx_L1_error)
+  __pyx_t_6 = PyTuple_New(1); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 249, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_6);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_6, 0, __pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 254, __pyx_L1_error)
+  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 249, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_self->M); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 254, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyInt_From_int(__pyx_v_self->M); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 249, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->N); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 254, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_self->N); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 249, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 254, __pyx_L1_error)
+  __pyx_t_7 = PyTuple_New(2); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 249, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_GIVEREF(__pyx_t_5);
   PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_5);
@@ -4862,32 +4801,32 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
   PyTuple_SET_ITEM(__pyx_t_7, 1, __pyx_t_4);
   __pyx_t_5 = 0;
   __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_s, __pyx_t_7) < 0) __PYX_ERR(0, 254, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_s, __pyx_t_7) < 0) __PYX_ERR(0, 249, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_7 = __Pyx_PyInt_From_int(__pyx_v_3lib_13deconvolution_CPU); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 254, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyInt_From_int(__pyx_v_3lib_13deconvolution_CPU); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 249, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_threads, __pyx_t_7) < 0) __PYX_ERR(0, 254, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_threads, __pyx_t_7) < 0) __PYX_ERR(0, 249, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_auto_align_input, Py_True) < 0) __PYX_ERR(0, 254, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_auto_align_input, Py_True) < 0) __PYX_ERR(0, 249, __pyx_L1_error)
 
-  /* "lib/deconvolution.pyx":255
+  /* "lib/deconvolution.pyx":250
  *         self.C = pyfftw.zeros_aligned(self.fft_A_obj.output_shape, dtype=np.complex64, n=pyfftw.simd_alignment)
  *         self.ifft_obj = pyfftw.builders.irfft2(self.fft_A_obj.output_array, s=(self.M, self.N), threads=CPU, auto_align_input=True,
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")             # <<<<<<<<<<<<<<
  * 
  *         self.Mfft = self.fft_A_obj.output_shape[0]
  */
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_auto_contiguous, Py_True) < 0) __PYX_ERR(0, 254, __pyx_L1_error)
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_planner_effort, __pyx_n_s_FFTW_ESTIMATE) < 0) __PYX_ERR(0, 254, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_auto_contiguous, Py_True) < 0) __PYX_ERR(0, 249, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_planner_effort, __pyx_n_s_FFTW_ESTIMATE) < 0) __PYX_ERR(0, 249, __pyx_L1_error)
 
-  /* "lib/deconvolution.pyx":254
+  /* "lib/deconvolution.pyx":249
  * 
  *         self.C = pyfftw.zeros_aligned(self.fft_A_obj.output_shape, dtype=np.complex64, n=pyfftw.simd_alignment)
  *         self.ifft_obj = pyfftw.builders.irfft2(self.fft_A_obj.output_array, s=(self.M, self.N), threads=CPU, auto_align_input=True,             # <<<<<<<<<<<<<<
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
  * 
  */
-  __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 254, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_t_6, __pyx_t_3); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 249, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
   __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
@@ -4898,39 +4837,39 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
   __pyx_v_self->ifft_obj = __pyx_t_7;
   __pyx_t_7 = 0;
 
-  /* "lib/deconvolution.pyx":257
+  /* "lib/deconvolution.pyx":252
  *                                                auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
  * 
  *         self.Mfft = self.fft_A_obj.output_shape[0]             # <<<<<<<<<<<<<<
  *         self.Nfft = self.fft_A_obj.output_shape[1]
  * 
  */
-  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->fft_A_obj, __pyx_n_s_output_shape); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 257, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->fft_A_obj, __pyx_n_s_output_shape); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 252, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
-  __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_7, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 257, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetItemInt(__pyx_t_7, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 252, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-  __pyx_t_8 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_8 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 257, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_8 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 252, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_v_self->Mfft = __pyx_t_8;
 
-  /* "lib/deconvolution.pyx":258
+  /* "lib/deconvolution.pyx":253
  * 
  *         self.Mfft = self.fft_A_obj.output_shape[0]
  *         self.Nfft = self.fft_A_obj.output_shape[1]             # <<<<<<<<<<<<<<
  * 
  * 
  */
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->fft_A_obj, __pyx_n_s_output_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 258, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->fft_A_obj, __pyx_n_s_output_shape); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 253, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_3, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 258, __pyx_L1_error)
+  __pyx_t_7 = __Pyx_GetItemInt(__pyx_t_3, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 0); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 253, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_7);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_8 = __Pyx_PyInt_As_int(__pyx_t_7); if (unlikely((__pyx_t_8 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 258, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyInt_As_int(__pyx_t_7); if (unlikely((__pyx_t_8 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 253, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
   __pyx_v_self->Nfft = __pyx_t_8;
 
-  /* "lib/deconvolution.pyx":210
+  /* "lib/deconvolution.pyx":205
  *     cdef int X, Y, M, N, offset_X, offset_Y, M_input, N_input, MK_input, NK_input, Mfft, Nfft
  * 
  *     def __cinit__(self, int M, int N, int MK, int NK, str domain):             # <<<<<<<<<<<<<<
@@ -4955,7 +4894,7 @@ static int __pyx_pf_3lib_13deconvolution_8convolve___cinit__(struct __pyx_obj_3l
   return __pyx_r;
 }
 
-/* "lib/deconvolution.pyx":261
+/* "lib/deconvolution.pyx":256
  * 
  * 
  *     def __call__(self, float[:, :] A, float[:, :] B):             # <<<<<<<<<<<<<<
@@ -4994,11 +4933,11 @@ static PyObject *__pyx_pw_3lib_13deconvolution_8convolve_3__call__(PyObject *__p
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_B)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("__call__", 1, 2, 2, 1); __PYX_ERR(0, 261, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("__call__", 1, 2, 2, 1); __PYX_ERR(0, 256, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__call__") < 0)) __PYX_ERR(0, 261, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "__call__") < 0)) __PYX_ERR(0, 256, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -5006,12 +4945,12 @@ static PyObject *__pyx_pw_3lib_13deconvolution_8convolve_3__call__(PyObject *__p
       values[0] = PyTuple_GET_ITEM(__pyx_args, 0);
       values[1] = PyTuple_GET_ITEM(__pyx_args, 1);
     }
-    __pyx_v_A = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(values[0]); if (unlikely(!__pyx_v_A.memview)) __PYX_ERR(0, 261, __pyx_L3_error)
-    __pyx_v_B = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(values[1]); if (unlikely(!__pyx_v_B.memview)) __PYX_ERR(0, 261, __pyx_L3_error)
+    __pyx_v_A = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(values[0]); if (unlikely(!__pyx_v_A.memview)) __PYX_ERR(0, 256, __pyx_L3_error)
+    __pyx_v_B = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(values[1]); if (unlikely(!__pyx_v_B.memview)) __PYX_ERR(0, 256, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("__call__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 261, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("__call__", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 256, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("lib.deconvolution.convolve.__call__", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -5058,26 +4997,26 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
   __pyx_pybuffernd_out.data = NULL;
   __pyx_pybuffernd_out.rcbuffer = &__pyx_pybuffer_out;
 
-  /* "lib/deconvolution.pyx":264
+  /* "lib/deconvolution.pyx":259
  * 
  *         # Fill the containers with input
  *         self.A[0:self.M_input, 0:self.N_input] = A             # <<<<<<<<<<<<<<
  *         self.B[0:self.MK_input, 0:self.NK_input] = B
  * 
  */
-  __pyx_t_1 = __pyx_memoryview_fromslice(__pyx_v_A, 2, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 264, __pyx_L1_error)
+  __pyx_t_1 = __pyx_memoryview_fromslice(__pyx_v_A, 2, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 259, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_self->M_input); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 264, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_self->M_input); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 259, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PySlice_New(__pyx_int_0, __pyx_t_2, Py_None); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 264, __pyx_L1_error)
+  __pyx_t_3 = PySlice_New(__pyx_int_0, __pyx_t_2, Py_None); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 259, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_self->N_input); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 264, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_self->N_input); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 259, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = PySlice_New(__pyx_int_0, __pyx_t_2, Py_None); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 264, __pyx_L1_error)
+  __pyx_t_4 = PySlice_New(__pyx_int_0, __pyx_t_2, Py_None); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 259, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 264, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 259, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3);
@@ -5085,30 +5024,30 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
   PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_4);
   __pyx_t_3 = 0;
   __pyx_t_4 = 0;
-  if (unlikely(PyObject_SetItem(__pyx_v_self->A, __pyx_t_2, __pyx_t_1) < 0)) __PYX_ERR(0, 264, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_v_self->A, __pyx_t_2, __pyx_t_1) < 0)) __PYX_ERR(0, 259, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "lib/deconvolution.pyx":265
+  /* "lib/deconvolution.pyx":260
  *         # Fill the containers with input
  *         self.A[0:self.M_input, 0:self.N_input] = A
  *         self.B[0:self.MK_input, 0:self.NK_input] = B             # <<<<<<<<<<<<<<
  * 
  *         # Run the FFTs
  */
-  __pyx_t_1 = __pyx_memoryview_fromslice(__pyx_v_B, 2, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 265, __pyx_L1_error)
+  __pyx_t_1 = __pyx_memoryview_fromslice(__pyx_v_B, 2, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 260, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_self->MK_input); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 265, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_self->MK_input); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 260, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = PySlice_New(__pyx_int_0, __pyx_t_2, Py_None); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 265, __pyx_L1_error)
+  __pyx_t_4 = PySlice_New(__pyx_int_0, __pyx_t_2, Py_None); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 260, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_self->NK_input); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 265, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_self->NK_input); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 260, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = PySlice_New(__pyx_int_0, __pyx_t_2, Py_None); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 265, __pyx_L1_error)
+  __pyx_t_3 = PySlice_New(__pyx_int_0, __pyx_t_2, Py_None); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 260, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 265, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 260, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_4);
@@ -5116,11 +5055,11 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
   PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_3);
   __pyx_t_4 = 0;
   __pyx_t_3 = 0;
-  if (unlikely(PyObject_SetItem(__pyx_v_self->B, __pyx_t_2, __pyx_t_1) < 0)) __PYX_ERR(0, 265, __pyx_L1_error)
+  if (unlikely(PyObject_SetItem(__pyx_v_self->B, __pyx_t_2, __pyx_t_1) < 0)) __PYX_ERR(0, 260, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "lib/deconvolution.pyx":268
+  /* "lib/deconvolution.pyx":263
  * 
  *         # Run the FFTs
  *         cdef float complex [:, :] Afft = self.fft_A_obj(self.A)             # <<<<<<<<<<<<<<
@@ -5139,13 +5078,13 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_self->A); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 268, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_self->A); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 263, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_self->A};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 268, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 263, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
@@ -5153,32 +5092,32 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_self->A};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 268, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 263, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
     #endif
     {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 268, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 263, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
       __Pyx_INCREF(__pyx_v_self->A);
       __Pyx_GIVEREF(__pyx_v_self->A);
       PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_self->A);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 268, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 263, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_dsds___pyx_t_float_complex(__pyx_t_1);
-  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 268, __pyx_L1_error)
+  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 263, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_Afft = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "lib/deconvolution.pyx":269
+  /* "lib/deconvolution.pyx":264
  *         # Run the FFTs
  *         cdef float complex [:, :] Afft = self.fft_A_obj(self.A)
  *         cdef float complex [:, :] Bfft = self.fft_B_obj(self.B)             # <<<<<<<<<<<<<<
@@ -5197,13 +5136,13 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
     }
   }
   if (!__pyx_t_4) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_self->B); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 269, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_self->B); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 264, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_self->B};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 269, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 264, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
@@ -5211,32 +5150,32 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_v_self->B};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 269, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 264, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
     #endif
     {
-      __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 269, __pyx_L1_error)
+      __pyx_t_3 = PyTuple_New(1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 264, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4); __pyx_t_4 = NULL;
       __Pyx_INCREF(__pyx_v_self->B);
       __Pyx_GIVEREF(__pyx_v_self->B);
       PyTuple_SET_ITEM(__pyx_t_3, 0+1, __pyx_v_self->B);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 269, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_3, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 264, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_dsds___pyx_t_float_complex(__pyx_t_1);
-  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 269, __pyx_L1_error)
+  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 264, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_v_Bfft = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "lib/deconvolution.pyx":270
+  /* "lib/deconvolution.pyx":265
  *         cdef float complex [:, :] Afft = self.fft_A_obj(self.A)
  *         cdef float complex [:, :] Bfft = self.fft_B_obj(self.B)
  *         cdef float complex [:, :] cfft = self.C             # <<<<<<<<<<<<<<
@@ -5244,12 +5183,12 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
  *         # Multiply
  */
   __pyx_t_5 = __Pyx_PyObject_to_MemoryviewSlice_dsds___pyx_t_float_complex(__pyx_v_self->C);
-  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 270, __pyx_L1_error)
+  if (unlikely(!__pyx_t_5.memview)) __PYX_ERR(0, 265, __pyx_L1_error)
   __pyx_v_cfft = __pyx_t_5;
   __pyx_t_5.memview = NULL;
   __pyx_t_5.data = NULL;
 
-  /* "lib/deconvolution.pyx":275
+  /* "lib/deconvolution.pyx":270
  *         cdef int i, j
  * 
  *         with nogil, parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
@@ -5275,7 +5214,7 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
             #endif /* _OPENMP */
             {
 
-                /* "lib/deconvolution.pyx":276
+                /* "lib/deconvolution.pyx":271
  * 
  *         with nogil, parallel(num_threads=CPU):
  *             for i in prange(self.Mfft):             # <<<<<<<<<<<<<<
@@ -5297,7 +5236,7 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
                                 /* Initialize private variables to invalid values */
                                 __pyx_v_j = ((int)0xbad0bad0);
 
-                                /* "lib/deconvolution.pyx":277
+                                /* "lib/deconvolution.pyx":272
  *         with nogil, parallel(num_threads=CPU):
  *             for i in prange(self.Mfft):
  *                 for j in range(self.Nfft):             # <<<<<<<<<<<<<<
@@ -5308,7 +5247,7 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
                                 for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
                                   __pyx_v_j = __pyx_t_10;
 
-                                  /* "lib/deconvolution.pyx":278
+                                  /* "lib/deconvolution.pyx":273
  *             for i in prange(self.Mfft):
  *                 for j in range(self.Nfft):
  *                     cfft[i, j] = Afft[i, j] * Bfft[i, j]             # <<<<<<<<<<<<<<
@@ -5337,7 +5276,7 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
         #endif
       }
 
-      /* "lib/deconvolution.pyx":275
+      /* "lib/deconvolution.pyx":270
  *         cdef int i, j
  * 
  *         with nogil, parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
@@ -5356,7 +5295,7 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
       }
   }
 
-  /* "lib/deconvolution.pyx":281
+  /* "lib/deconvolution.pyx":276
  * 
  *         # Run the iFFT, slice and exit
  *         cdef np.ndarray[DTYPE_t, ndim=2] out = self.ifft_obj(self.C)             # <<<<<<<<<<<<<<
@@ -5375,13 +5314,13 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_self->C); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 281, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_v_self->C); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 276, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_self->C};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 281, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 276, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
@@ -5389,31 +5328,31 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_self->C};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 281, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 276, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_1);
     } else
     #endif
     {
-      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 281, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 276, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3); __pyx_t_3 = NULL;
       __Pyx_INCREF(__pyx_v_self->C);
       __Pyx_GIVEREF(__pyx_v_self->C);
       PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_v_self->C);
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 281, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 276, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     }
   }
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 281, __pyx_L1_error)
+  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 276, __pyx_L1_error)
   __pyx_t_17 = ((PyArrayObject *)__pyx_t_1);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_out.rcbuffer->pybuffer, (PyObject*)__pyx_t_17, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) {
       __pyx_v_out = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_out.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 281, __pyx_L1_error)
+      __PYX_ERR(0, 276, __pyx_L1_error)
     } else {__pyx_pybuffernd_out.diminfo[0].strides = __pyx_pybuffernd_out.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_out.diminfo[0].shape = __pyx_pybuffernd_out.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_out.diminfo[1].strides = __pyx_pybuffernd_out.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_out.diminfo[1].shape = __pyx_pybuffernd_out.rcbuffer->pybuffer.shape[1];
     }
   }
@@ -5421,7 +5360,7 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
   __pyx_v_out = ((PyArrayObject *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "lib/deconvolution.pyx":283
+  /* "lib/deconvolution.pyx":278
  *         cdef np.ndarray[DTYPE_t, ndim=2] out = self.ifft_obj(self.C)
  * 
  *         return out[self.offset_Y:self.offset_Y + self.Y, self.offset_X:self.offset_X + self.X]             # <<<<<<<<<<<<<<
@@ -5429,23 +5368,23 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
  * 
  */
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->offset_Y); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 283, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_self->offset_Y); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyInt_From_int((__pyx_v_self->offset_Y + __pyx_v_self->Y)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 283, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int((__pyx_v_self->offset_Y + __pyx_v_self->Y)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = PySlice_New(__pyx_t_1, __pyx_t_2, Py_None); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 283, __pyx_L1_error)
+  __pyx_t_4 = PySlice_New(__pyx_t_1, __pyx_t_2, Py_None); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_self->offset_X); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 283, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_self->offset_X); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyInt_From_int((__pyx_v_self->offset_X + __pyx_v_self->X)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 283, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int((__pyx_v_self->offset_X + __pyx_v_self->X)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PySlice_New(__pyx_t_2, __pyx_t_1, Py_None); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 283, __pyx_L1_error)
+  __pyx_t_3 = PySlice_New(__pyx_t_2, __pyx_t_1, Py_None); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 283, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_4);
@@ -5453,14 +5392,14 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_2__call__(struct __pyx_
   PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_t_3);
   __pyx_t_4 = 0;
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyObject_GetItem(((PyObject *)__pyx_v_out), __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 283, __pyx_L1_error)
+  __pyx_t_3 = PyObject_GetItem(((PyObject *)__pyx_v_out), __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 278, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_r = __pyx_t_3;
   __pyx_t_3 = 0;
   goto __pyx_L0;
 
-  /* "lib/deconvolution.pyx":261
+  /* "lib/deconvolution.pyx":256
  * 
  * 
  *     def __call__(self, float[:, :] A, float[:, :] B):             # <<<<<<<<<<<<<<
@@ -5605,7 +5544,7 @@ static PyObject *__pyx_pf_3lib_13deconvolution_8convolve_6__setstate_cython__(CY
   return __pyx_r;
 }
 
-/* "lib/deconvolution.pyx":286
+/* "lib/deconvolution.pyx":281
  * 
  * 
  * cdef inline float grad2D(float[:, :, :] u, int M, int N) nogil:             # <<<<<<<<<<<<<<
@@ -5659,7 +5598,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
   Py_ssize_t __pyx_t_32;
   Py_ssize_t __pyx_t_33;
 
-  /* "lib/deconvolution.pyx":294
+  /* "lib/deconvolution.pyx":289
  *         float temp[3]
  * 
  *     out = 0             # <<<<<<<<<<<<<<
@@ -5668,7 +5607,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
  */
   __pyx_v_out = 0.0;
 
-  /* "lib/deconvolution.pyx":296
+  /* "lib/deconvolution.pyx":291
  *     out = 0
  * 
  *     dxdy = 1 / powf(2, 0.5) # Distance over the diagonal             # <<<<<<<<<<<<<<
@@ -5677,7 +5616,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
  */
   __pyx_v_dxdy = (1.0 / powf(2.0, 0.5));
 
-  /* "lib/deconvolution.pyx":298
+  /* "lib/deconvolution.pyx":293
  *     dxdy = 1 / powf(2, 0.5) # Distance over the diagonal
  * 
  *     with parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
@@ -5696,7 +5635,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
       #endif /* _OPENMP */
       {
 
-          /* "lib/deconvolution.pyx":299
+          /* "lib/deconvolution.pyx":294
  * 
  *     with parallel(num_threads=CPU):
  *         for i in prange(1, M-1):             # <<<<<<<<<<<<<<
@@ -5724,7 +5663,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
                           __pyx_v_udydx = ((float)__PYX_NAN());
                           __pyx_v_uxy = ((float)__PYX_NAN());
 
-                          /* "lib/deconvolution.pyx":300
+                          /* "lib/deconvolution.pyx":295
  *     with parallel(num_threads=CPU):
  *         for i in prange(1, M-1):
  *             for j in range(1, N-1):             # <<<<<<<<<<<<<<
@@ -5735,7 +5674,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
                           for (__pyx_t_5 = 1; __pyx_t_5 < __pyx_t_4; __pyx_t_5+=1) {
                             __pyx_v_j = __pyx_t_5;
 
-                            /* "lib/deconvolution.pyx":301
+                            /* "lib/deconvolution.pyx":296
  *         for i in prange(1, M-1):
  *             for j in range(1, N-1):
  *                 for k in range(3):             # <<<<<<<<<<<<<<
@@ -5745,7 +5684,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
                             for (__pyx_t_6 = 0; __pyx_t_6 < 3; __pyx_t_6+=1) {
                               __pyx_v_k = __pyx_t_6;
 
-                              /* "lib/deconvolution.pyx":302
+                              /* "lib/deconvolution.pyx":297
  *             for j in range(1, N-1):
  *                 for k in range(3):
  *                     uxy = u[i, j, k] * 2             # <<<<<<<<<<<<<<
@@ -5757,7 +5696,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
                               __pyx_t_9 = __pyx_v_k;
                               __pyx_v_uxy = ((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_7 * __pyx_v_u.strides[0]) ) + __pyx_t_8 * __pyx_v_u.strides[1]) ) + __pyx_t_9 * __pyx_v_u.strides[2]) ))) * 2.0);
 
-                              /* "lib/deconvolution.pyx":303
+                              /* "lib/deconvolution.pyx":298
  *                 for k in range(3):
  *                     uxy = u[i, j, k] * 2
  *                     udx = uxy - u[i-1, j, k] - u[i+1, j, k] # Warning : this is 2 times the differential             # <<<<<<<<<<<<<<
@@ -5772,7 +5711,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
                               __pyx_t_15 = __pyx_v_k;
                               __pyx_v_udx = ((__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_10 * __pyx_v_u.strides[0]) ) + __pyx_t_11 * __pyx_v_u.strides[1]) ) + __pyx_t_12 * __pyx_v_u.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_13 * __pyx_v_u.strides[0]) ) + __pyx_t_14 * __pyx_v_u.strides[1]) ) + __pyx_t_15 * __pyx_v_u.strides[2]) ))));
 
-                              /* "lib/deconvolution.pyx":304
+                              /* "lib/deconvolution.pyx":299
  *                     uxy = u[i, j, k] * 2
  *                     udx = uxy - u[i-1, j, k] - u[i+1, j, k] # Warning : this is 2 times the differential
  *                     udy = uxy - u[i, j-1, k] - u[i, j-1, k]             # <<<<<<<<<<<<<<
@@ -5787,7 +5726,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
                               __pyx_t_21 = __pyx_v_k;
                               __pyx_v_udy = ((__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_16 * __pyx_v_u.strides[0]) ) + __pyx_t_17 * __pyx_v_u.strides[1]) ) + __pyx_t_18 * __pyx_v_u.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_19 * __pyx_v_u.strides[0]) ) + __pyx_t_20 * __pyx_v_u.strides[1]) ) + __pyx_t_21 * __pyx_v_u.strides[2]) ))));
 
-                              /* "lib/deconvolution.pyx":306
+                              /* "lib/deconvolution.pyx":301
  *                     udy = uxy - u[i, j-1, k] - u[i, j-1, k]
  * 
  *                     udxdy = (uxy - u[i-1, j-1, k] - u[i+1, j+1, k]) / dxdy             # <<<<<<<<<<<<<<
@@ -5802,7 +5741,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
                               __pyx_t_27 = __pyx_v_k;
                               __pyx_v_udxdy = (((__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_22 * __pyx_v_u.strides[0]) ) + __pyx_t_23 * __pyx_v_u.strides[1]) ) + __pyx_t_24 * __pyx_v_u.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_25 * __pyx_v_u.strides[0]) ) + __pyx_t_26 * __pyx_v_u.strides[1]) ) + __pyx_t_27 * __pyx_v_u.strides[2]) )))) / __pyx_v_dxdy);
 
-                              /* "lib/deconvolution.pyx":307
+                              /* "lib/deconvolution.pyx":302
  * 
  *                     udxdy = (uxy - u[i-1, j-1, k] - u[i+1, j+1, k]) / dxdy
  *                     udydx = (uxy - u[i-1, j+1, k] - u[i+1, j-1, k]) / dxdy             # <<<<<<<<<<<<<<
@@ -5817,7 +5756,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
                               __pyx_t_33 = __pyx_v_k;
                               __pyx_v_udydx = (((__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_28 * __pyx_v_u.strides[0]) ) + __pyx_t_29 * __pyx_v_u.strides[1]) ) + __pyx_t_30 * __pyx_v_u.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_31 * __pyx_v_u.strides[0]) ) + __pyx_t_32 * __pyx_v_u.strides[1]) ) + __pyx_t_33 * __pyx_v_u.strides[2]) )))) / __pyx_v_dxdy);
 
-                              /* "lib/deconvolution.pyx":309
+                              /* "lib/deconvolution.pyx":304
  *                     udydx = (uxy - u[i-1, j+1, k] - u[i+1, j-1, k]) / dxdy
  * 
  *                     out += powf(udx, 2) + powf(udy, 2)+ powf(udxdy, 2) + powf(udydx, 2)             # <<<<<<<<<<<<<<
@@ -5840,7 +5779,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
       #define unlikely(x) __builtin_expect(!!(x), 0)
   #endif
 
-  /* "lib/deconvolution.pyx":311
+  /* "lib/deconvolution.pyx":306
  *                     out += powf(udx, 2) + powf(udy, 2)+ powf(udxdy, 2) + powf(udydx, 2)
  * 
  *     return powf(out, 0.5)             # <<<<<<<<<<<<<<
@@ -5850,7 +5789,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
   __pyx_r = powf(__pyx_v_out, 0.5);
   goto __pyx_L0;
 
-  /* "lib/deconvolution.pyx":286
+  /* "lib/deconvolution.pyx":281
  * 
  * 
  * cdef inline float grad2D(float[:, :, :] u, int M, int N) nogil:             # <<<<<<<<<<<<<<
@@ -5863,7 +5802,7 @@ static CYTHON_INLINE float __pyx_f_3lib_13deconvolution_grad2D(__Pyx_memviewslic
   return __pyx_r;
 }
 
-/* "lib/deconvolution.pyx":314
+/* "lib/deconvolution.pyx":309
  * 
  * 
  * cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, float tau, float[:, :, :] im_convo, float lambd, float[:, :, :] out, float[3] max_u, int M, int N, int neighbours) nogil:             # <<<<<<<<<<<<<<
@@ -6088,8 +6027,152 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
   Py_ssize_t __pyx_t_199;
   Py_ssize_t __pyx_t_200;
   Py_ssize_t __pyx_t_201;
+  Py_ssize_t __pyx_t_202;
+  Py_ssize_t __pyx_t_203;
+  Py_ssize_t __pyx_t_204;
+  Py_ssize_t __pyx_t_205;
+  Py_ssize_t __pyx_t_206;
+  Py_ssize_t __pyx_t_207;
+  Py_ssize_t __pyx_t_208;
+  Py_ssize_t __pyx_t_209;
+  Py_ssize_t __pyx_t_210;
+  Py_ssize_t __pyx_t_211;
+  Py_ssize_t __pyx_t_212;
+  Py_ssize_t __pyx_t_213;
+  Py_ssize_t __pyx_t_214;
+  Py_ssize_t __pyx_t_215;
+  Py_ssize_t __pyx_t_216;
+  Py_ssize_t __pyx_t_217;
+  Py_ssize_t __pyx_t_218;
+  Py_ssize_t __pyx_t_219;
+  Py_ssize_t __pyx_t_220;
+  Py_ssize_t __pyx_t_221;
+  Py_ssize_t __pyx_t_222;
+  Py_ssize_t __pyx_t_223;
+  Py_ssize_t __pyx_t_224;
+  Py_ssize_t __pyx_t_225;
+  Py_ssize_t __pyx_t_226;
+  Py_ssize_t __pyx_t_227;
+  Py_ssize_t __pyx_t_228;
+  Py_ssize_t __pyx_t_229;
+  Py_ssize_t __pyx_t_230;
+  Py_ssize_t __pyx_t_231;
+  Py_ssize_t __pyx_t_232;
+  Py_ssize_t __pyx_t_233;
+  Py_ssize_t __pyx_t_234;
+  Py_ssize_t __pyx_t_235;
+  Py_ssize_t __pyx_t_236;
+  Py_ssize_t __pyx_t_237;
+  Py_ssize_t __pyx_t_238;
+  Py_ssize_t __pyx_t_239;
+  Py_ssize_t __pyx_t_240;
+  Py_ssize_t __pyx_t_241;
+  Py_ssize_t __pyx_t_242;
+  Py_ssize_t __pyx_t_243;
+  Py_ssize_t __pyx_t_244;
+  Py_ssize_t __pyx_t_245;
+  Py_ssize_t __pyx_t_246;
+  Py_ssize_t __pyx_t_247;
+  Py_ssize_t __pyx_t_248;
+  Py_ssize_t __pyx_t_249;
+  Py_ssize_t __pyx_t_250;
+  Py_ssize_t __pyx_t_251;
+  Py_ssize_t __pyx_t_252;
+  Py_ssize_t __pyx_t_253;
+  Py_ssize_t __pyx_t_254;
+  Py_ssize_t __pyx_t_255;
+  Py_ssize_t __pyx_t_256;
+  Py_ssize_t __pyx_t_257;
+  Py_ssize_t __pyx_t_258;
+  Py_ssize_t __pyx_t_259;
+  Py_ssize_t __pyx_t_260;
+  Py_ssize_t __pyx_t_261;
+  Py_ssize_t __pyx_t_262;
+  Py_ssize_t __pyx_t_263;
+  Py_ssize_t __pyx_t_264;
+  Py_ssize_t __pyx_t_265;
+  Py_ssize_t __pyx_t_266;
+  Py_ssize_t __pyx_t_267;
+  Py_ssize_t __pyx_t_268;
+  Py_ssize_t __pyx_t_269;
+  Py_ssize_t __pyx_t_270;
+  Py_ssize_t __pyx_t_271;
+  Py_ssize_t __pyx_t_272;
+  Py_ssize_t __pyx_t_273;
+  Py_ssize_t __pyx_t_274;
+  Py_ssize_t __pyx_t_275;
+  Py_ssize_t __pyx_t_276;
+  Py_ssize_t __pyx_t_277;
+  Py_ssize_t __pyx_t_278;
+  Py_ssize_t __pyx_t_279;
+  Py_ssize_t __pyx_t_280;
+  Py_ssize_t __pyx_t_281;
+  Py_ssize_t __pyx_t_282;
+  Py_ssize_t __pyx_t_283;
+  Py_ssize_t __pyx_t_284;
+  Py_ssize_t __pyx_t_285;
+  Py_ssize_t __pyx_t_286;
+  Py_ssize_t __pyx_t_287;
+  Py_ssize_t __pyx_t_288;
+  Py_ssize_t __pyx_t_289;
+  Py_ssize_t __pyx_t_290;
+  Py_ssize_t __pyx_t_291;
+  Py_ssize_t __pyx_t_292;
+  Py_ssize_t __pyx_t_293;
+  Py_ssize_t __pyx_t_294;
+  Py_ssize_t __pyx_t_295;
+  Py_ssize_t __pyx_t_296;
+  Py_ssize_t __pyx_t_297;
+  Py_ssize_t __pyx_t_298;
+  Py_ssize_t __pyx_t_299;
+  Py_ssize_t __pyx_t_300;
+  Py_ssize_t __pyx_t_301;
+  Py_ssize_t __pyx_t_302;
+  Py_ssize_t __pyx_t_303;
+  Py_ssize_t __pyx_t_304;
+  Py_ssize_t __pyx_t_305;
+  Py_ssize_t __pyx_t_306;
+  Py_ssize_t __pyx_t_307;
+  Py_ssize_t __pyx_t_308;
+  Py_ssize_t __pyx_t_309;
+  Py_ssize_t __pyx_t_310;
+  Py_ssize_t __pyx_t_311;
+  Py_ssize_t __pyx_t_312;
+  Py_ssize_t __pyx_t_313;
+  Py_ssize_t __pyx_t_314;
+  Py_ssize_t __pyx_t_315;
+  Py_ssize_t __pyx_t_316;
+  Py_ssize_t __pyx_t_317;
+  Py_ssize_t __pyx_t_318;
+  Py_ssize_t __pyx_t_319;
+  Py_ssize_t __pyx_t_320;
+  Py_ssize_t __pyx_t_321;
+  Py_ssize_t __pyx_t_322;
+  Py_ssize_t __pyx_t_323;
+  Py_ssize_t __pyx_t_324;
+  Py_ssize_t __pyx_t_325;
+  Py_ssize_t __pyx_t_326;
+  Py_ssize_t __pyx_t_327;
+  Py_ssize_t __pyx_t_328;
+  Py_ssize_t __pyx_t_329;
+  Py_ssize_t __pyx_t_330;
+  Py_ssize_t __pyx_t_331;
+  Py_ssize_t __pyx_t_332;
+  Py_ssize_t __pyx_t_333;
+  Py_ssize_t __pyx_t_334;
+  Py_ssize_t __pyx_t_335;
+  Py_ssize_t __pyx_t_336;
+  Py_ssize_t __pyx_t_337;
+  Py_ssize_t __pyx_t_338;
+  Py_ssize_t __pyx_t_339;
+  Py_ssize_t __pyx_t_340;
+  Py_ssize_t __pyx_t_341;
+  Py_ssize_t __pyx_t_342;
+  Py_ssize_t __pyx_t_343;
+  Py_ssize_t __pyx_t_344;
+  Py_ssize_t __pyx_t_345;
 
-  /* "lib/deconvolution.pyx":321
+  /* "lib/deconvolution.pyx":316
  *         float udx, udy, udxdy, udydx, utdx, utdy, utdxdy, utdydx, uxy, utxy, dxdy, temp
  * 
  *     epsilon = 2 * epsilon             # <<<<<<<<<<<<<<
@@ -6098,7 +6181,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
  */
   __pyx_v_epsilon = (2.0 * __pyx_v_epsilon);
 
-  /* "lib/deconvolution.pyx":322
+  /* "lib/deconvolution.pyx":317
  * 
  *     epsilon = 2 * epsilon
  *     tau = 2 * tau             # <<<<<<<<<<<<<<
@@ -6107,7 +6190,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
  */
   __pyx_v_tau = (2.0 * __pyx_v_tau);
 
-  /* "lib/deconvolution.pyx":323
+  /* "lib/deconvolution.pyx":318
  *     epsilon = 2 * epsilon
  *     tau = 2 * tau
  *     max_u[0] = 0             # <<<<<<<<<<<<<<
@@ -6116,7 +6199,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
  */
   (__pyx_v_max_u[0]) = 0.0;
 
-  /* "lib/deconvolution.pyx":324
+  /* "lib/deconvolution.pyx":319
  *     tau = 2 * tau
  *     max_u[0] = 0
  *     max_u[1] = 0             # <<<<<<<<<<<<<<
@@ -6125,7 +6208,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
  */
   (__pyx_v_max_u[1]) = 0.0;
 
-  /* "lib/deconvolution.pyx":325
+  /* "lib/deconvolution.pyx":320
  *     max_u[0] = 0
  *     max_u[1] = 0
  *     max_u[2] = 0             # <<<<<<<<<<<<<<
@@ -6134,18 +6217,18 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
  */
   (__pyx_v_max_u[2]) = 0.0;
 
-  /* "lib/deconvolution.pyx":328
+  /* "lib/deconvolution.pyx":326
  * 
  * 
  *     if neighbours == 8:             # <<<<<<<<<<<<<<
- *         # Evaluate the total variation on 8 neighbours
+ *         # Evaluate the total variation on 8 neighbours : direct directions and diagonals, with a bilateral approximation
  * 
  */
   switch (__pyx_v_neighbours) {
     case 8:
 
-    /* "lib/deconvolution.pyx":331
- *         # Evaluate the total variation on 8 neighbours
+    /* "lib/deconvolution.pyx":329
+ *         # Evaluate the total variation on 8 neighbours : direct directions and diagonals, with a bilateral approximation
  * 
  *         dxdy = 1 / powf(2, 0.5) # Distance over the diagonal             # <<<<<<<<<<<<<<
  * 
@@ -6153,7 +6236,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
  */
     __pyx_v_dxdy = (1.0 / powf(2.0, 0.5));
 
-    /* "lib/deconvolution.pyx":333
+    /* "lib/deconvolution.pyx":331
  *         dxdy = 1 / powf(2, 0.5) # Distance over the diagonal
  * 
  *         with parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
@@ -6172,7 +6255,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
         #endif /* _OPENMP */
         {
 
-            /* "lib/deconvolution.pyx":334
+            /* "lib/deconvolution.pyx":332
  * 
  *         with parallel(num_threads=CPU):
  *             for i in prange(1, M-1):             # <<<<<<<<<<<<<<
@@ -6206,7 +6289,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                             __pyx_v_utxy = ((float)__PYX_NAN());
                             __pyx_v_uxy = ((float)__PYX_NAN());
 
-                            /* "lib/deconvolution.pyx":335
+                            /* "lib/deconvolution.pyx":333
  *         with parallel(num_threads=CPU):
  *             for i in prange(1, M-1):
  *                 for j in range(1, N-1):             # <<<<<<<<<<<<<<
@@ -6217,7 +6300,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                             for (__pyx_t_5 = 1; __pyx_t_5 < __pyx_t_4; __pyx_t_5+=1) {
                               __pyx_v_j = __pyx_t_5;
 
-                              /* "lib/deconvolution.pyx":336
+                              /* "lib/deconvolution.pyx":334
  *             for i in prange(1, M-1):
  *                 for j in range(1, N-1):
  *                     for k in range(3):             # <<<<<<<<<<<<<<
@@ -6227,7 +6310,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                               for (__pyx_t_6 = 0; __pyx_t_6 < 3; __pyx_t_6+=1) {
                                 __pyx_v_k = __pyx_t_6;
 
-                                /* "lib/deconvolution.pyx":337
+                                /* "lib/deconvolution.pyx":335
  *                 for j in range(1, N-1):
  *                     for k in range(3):
  *                         uxy = u[i, j, k] * 2             # <<<<<<<<<<<<<<
@@ -6239,7 +6322,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_9 = __pyx_v_k;
                                 __pyx_v_uxy = ((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_7 * __pyx_v_u.strides[0]) ) + __pyx_t_8 * __pyx_v_u.strides[1]) ) + __pyx_t_9 * __pyx_v_u.strides[2]) ))) * 2.0);
 
-                                /* "lib/deconvolution.pyx":338
+                                /* "lib/deconvolution.pyx":336
  *                     for k in range(3):
  *                         uxy = u[i, j, k] * 2
  *                         udx = uxy - u[i-1, j, k] - u[i+1, j, k] # Warning : this is 2 times the differential             # <<<<<<<<<<<<<<
@@ -6254,7 +6337,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_15 = __pyx_v_k;
                                 __pyx_v_udx = ((__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_10 * __pyx_v_u.strides[0]) ) + __pyx_t_11 * __pyx_v_u.strides[1]) ) + __pyx_t_12 * __pyx_v_u.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_13 * __pyx_v_u.strides[0]) ) + __pyx_t_14 * __pyx_v_u.strides[1]) ) + __pyx_t_15 * __pyx_v_u.strides[2]) ))));
 
-                                /* "lib/deconvolution.pyx":339
+                                /* "lib/deconvolution.pyx":337
  *                         uxy = u[i, j, k] * 2
  *                         udx = uxy - u[i-1, j, k] - u[i+1, j, k] # Warning : this is 2 times the differential
  *                         udy = uxy - u[i, j-1, k] - u[i, j-1, k]             # <<<<<<<<<<<<<<
@@ -6269,7 +6352,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_21 = __pyx_v_k;
                                 __pyx_v_udy = ((__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_16 * __pyx_v_u.strides[0]) ) + __pyx_t_17 * __pyx_v_u.strides[1]) ) + __pyx_t_18 * __pyx_v_u.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_19 * __pyx_v_u.strides[0]) ) + __pyx_t_20 * __pyx_v_u.strides[1]) ) + __pyx_t_21 * __pyx_v_u.strides[2]) ))));
 
-                                /* "lib/deconvolution.pyx":341
+                                /* "lib/deconvolution.pyx":339
  *                         udy = uxy - u[i, j-1, k] - u[i, j-1, k]
  * 
  *                         udxdy = (uxy - u[i-1, j-1, k] - u[i+1, j+1, k]) / dxdy             # <<<<<<<<<<<<<<
@@ -6284,7 +6367,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_27 = __pyx_v_k;
                                 __pyx_v_udxdy = (((__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_22 * __pyx_v_u.strides[0]) ) + __pyx_t_23 * __pyx_v_u.strides[1]) ) + __pyx_t_24 * __pyx_v_u.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_25 * __pyx_v_u.strides[0]) ) + __pyx_t_26 * __pyx_v_u.strides[1]) ) + __pyx_t_27 * __pyx_v_u.strides[2]) )))) / __pyx_v_dxdy);
 
-                                /* "lib/deconvolution.pyx":342
+                                /* "lib/deconvolution.pyx":340
  * 
  *                         udxdy = (uxy - u[i-1, j-1, k] - u[i+1, j+1, k]) / dxdy
  *                         udydx = (uxy - u[i-1, j+1, k] - u[i+1, j-1, k]) / dxdy             # <<<<<<<<<<<<<<
@@ -6299,7 +6382,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_33 = __pyx_v_k;
                                 __pyx_v_udydx = (((__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_28 * __pyx_v_u.strides[0]) ) + __pyx_t_29 * __pyx_v_u.strides[1]) ) + __pyx_t_30 * __pyx_v_u.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_31 * __pyx_v_u.strides[0]) ) + __pyx_t_32 * __pyx_v_u.strides[1]) ) + __pyx_t_33 * __pyx_v_u.strides[2]) )))) / __pyx_v_dxdy);
 
-                                /* "lib/deconvolution.pyx":344
+                                /* "lib/deconvolution.pyx":342
  *                         udydx = (uxy - u[i-1, j+1, k] - u[i+1, j-1, k]) / dxdy
  * 
  *                         utxy = ut[i, j, k] * 2             # <<<<<<<<<<<<<<
@@ -6311,7 +6394,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_36 = __pyx_v_k;
                                 __pyx_v_utxy = ((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_34 * __pyx_v_ut.strides[0]) ) + __pyx_t_35 * __pyx_v_ut.strides[1]) ) + __pyx_t_36 * __pyx_v_ut.strides[2]) ))) * 2.0);
 
-                                /* "lib/deconvolution.pyx":345
+                                /* "lib/deconvolution.pyx":343
  * 
  *                         utxy = ut[i, j, k] * 2
  *                         utdx = (utxy - ut[i-1, j, k] - ut[i+1, j, k]) / dxdy             # <<<<<<<<<<<<<<
@@ -6326,7 +6409,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_42 = __pyx_v_k;
                                 __pyx_v_utdx = (((__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_37 * __pyx_v_ut.strides[0]) ) + __pyx_t_38 * __pyx_v_ut.strides[1]) ) + __pyx_t_39 * __pyx_v_ut.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_40 * __pyx_v_ut.strides[0]) ) + __pyx_t_41 * __pyx_v_ut.strides[1]) ) + __pyx_t_42 * __pyx_v_ut.strides[2]) )))) / __pyx_v_dxdy);
 
-                                /* "lib/deconvolution.pyx":346
+                                /* "lib/deconvolution.pyx":344
  *                         utxy = ut[i, j, k] * 2
  *                         utdx = (utxy - ut[i-1, j, k] - ut[i+1, j, k]) / dxdy
  *                         utdy = (utxy - ut[i, j-1, k] - ut[i, j-1, k]) / dxdy             # <<<<<<<<<<<<<<
@@ -6341,7 +6424,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_48 = __pyx_v_k;
                                 __pyx_v_utdy = (((__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_43 * __pyx_v_ut.strides[0]) ) + __pyx_t_44 * __pyx_v_ut.strides[1]) ) + __pyx_t_45 * __pyx_v_ut.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_46 * __pyx_v_ut.strides[0]) ) + __pyx_t_47 * __pyx_v_ut.strides[1]) ) + __pyx_t_48 * __pyx_v_ut.strides[2]) )))) / __pyx_v_dxdy);
 
-                                /* "lib/deconvolution.pyx":348
+                                /* "lib/deconvolution.pyx":346
  *                         utdy = (utxy - ut[i, j-1, k] - ut[i, j-1, k]) / dxdy
  * 
  *                         utdxdy = utxy - ut[i-1, j-1, k] - ut[i+1, j+1, k]             # <<<<<<<<<<<<<<
@@ -6356,7 +6439,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_54 = __pyx_v_k;
                                 __pyx_v_utdxdy = ((__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_49 * __pyx_v_ut.strides[0]) ) + __pyx_t_50 * __pyx_v_ut.strides[1]) ) + __pyx_t_51 * __pyx_v_ut.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_52 * __pyx_v_ut.strides[0]) ) + __pyx_t_53 * __pyx_v_ut.strides[1]) ) + __pyx_t_54 * __pyx_v_ut.strides[2]) ))));
 
-                                /* "lib/deconvolution.pyx":349
+                                /* "lib/deconvolution.pyx":347
  * 
  *                         utdxdy = utxy - ut[i-1, j-1, k] - ut[i+1, j+1, k]
  *                         utdydx = utxy - ut[i-1, j+1, k] - ut[i+1, j-1, k]             # <<<<<<<<<<<<<<
@@ -6371,7 +6454,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_60 = __pyx_v_k;
                                 __pyx_v_utdydx = ((__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_55 * __pyx_v_ut.strides[0]) ) + __pyx_t_56 * __pyx_v_ut.strides[1]) ) + __pyx_t_57 * __pyx_v_ut.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_58 * __pyx_v_ut.strides[0]) ) + __pyx_t_59 * __pyx_v_ut.strides[1]) ) + __pyx_t_60 * __pyx_v_ut.strides[2]) ))));
 
-                                /* "lib/deconvolution.pyx":351
+                                /* "lib/deconvolution.pyx":349
  *                         utdydx = utxy - ut[i-1, j+1, k] - ut[i+1, j-1, k]
  * 
  *                         temp  = (udx + udy + udxdy + udydx) / (fabsf(udx) + fabsf(udy)+ fabsf(udxdy) + fabsf(udydx) + epsilon) / (fabsf(utdx) + fabsf(utdy)+ fabsf(utdxdy) + fabsf(utdydx) + epsilon + tau) / 4 + lambd *  im_convo[i, j, k]             # <<<<<<<<<<<<<<
@@ -6383,7 +6466,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_63 = __pyx_v_k;
                                 __pyx_v_temp = (((((((__pyx_v_udx + __pyx_v_udy) + __pyx_v_udxdy) + __pyx_v_udydx) / ((((fabsf(__pyx_v_udx) + fabsf(__pyx_v_udy)) + fabsf(__pyx_v_udxdy)) + fabsf(__pyx_v_udydx)) + __pyx_v_epsilon)) / (((((fabsf(__pyx_v_utdx) + fabsf(__pyx_v_utdy)) + fabsf(__pyx_v_utdxdy)) + fabsf(__pyx_v_utdydx)) + __pyx_v_epsilon) + __pyx_v_tau)) / 4.0) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_61 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_62 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_63 * __pyx_v_im_convo.strides[2]) )))));
 
-                                /* "lib/deconvolution.pyx":353
+                                /* "lib/deconvolution.pyx":351
  *                         temp  = (udx + udy + udxdy + udydx) / (fabsf(udx) + fabsf(udy)+ fabsf(udxdy) + fabsf(udydx) + epsilon) / (fabsf(utdx) + fabsf(utdy)+ fabsf(utdxdy) + fabsf(utdydx) + epsilon + tau) / 4 + lambd *  im_convo[i, j, k]
  * 
  *                         out[i, j, k] = temp             # <<<<<<<<<<<<<<
@@ -6395,7 +6478,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_66 = __pyx_v_k;
                                 *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_64 * __pyx_v_out.strides[0]) ) + __pyx_t_65 * __pyx_v_out.strides[1]) ) + __pyx_t_66 * __pyx_v_out.strides[2]) )) = __pyx_v_temp;
 
-                                /* "lib/deconvolution.pyx":354
+                                /* "lib/deconvolution.pyx":352
  * 
  *                         out[i, j, k] = temp
  *                         temp = fabsf(temp)             # <<<<<<<<<<<<<<
@@ -6404,7 +6487,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
  */
                                 __pyx_v_temp = fabsf(__pyx_v_temp);
 
-                                /* "lib/deconvolution.pyx":356
+                                /* "lib/deconvolution.pyx":354
  *                         temp = fabsf(temp)
  * 
  *                         if temp > max_u[k]:             # <<<<<<<<<<<<<<
@@ -6414,7 +6497,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_67 = ((__pyx_v_temp > (__pyx_v_max_u[__pyx_v_k])) != 0);
                                 if (__pyx_t_67) {
 
-                                  /* "lib/deconvolution.pyx":357
+                                  /* "lib/deconvolution.pyx":355
  * 
  *                         if temp > max_u[k]:
  *                             max_u[k] = temp             # <<<<<<<<<<<<<<
@@ -6423,7 +6506,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
  */
                                   (__pyx_v_max_u[__pyx_v_k]) = __pyx_v_temp;
 
-                                  /* "lib/deconvolution.pyx":356
+                                  /* "lib/deconvolution.pyx":354
  *                         temp = fabsf(temp)
  * 
  *                         if temp > max_u[k]:             # <<<<<<<<<<<<<<
@@ -6446,26 +6529,26 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
         #define unlikely(x) __builtin_expect(!!(x), 0)
     #endif
 
-    /* "lib/deconvolution.pyx":328
+    /* "lib/deconvolution.pyx":326
  * 
  * 
  *     if neighbours == 8:             # <<<<<<<<<<<<<<
- *         # Evaluate the total variation on 8 neighbours
+ *         # Evaluate the total variation on 8 neighbours : direct directions and diagonals, with a bilateral approximation
  * 
  */
     break;
 
-    /* "lib/deconvolution.pyx":360
+    /* "lib/deconvolution.pyx":358
  * 
  * 
  *     elif neighbours == 4:             # <<<<<<<<<<<<<<
- *         # Evaluate the total variation on 4 neighbours
+ *         # Evaluate the total variation on 4 neighbours : direct directions, with a bilateral approximation
  * 
  */
     case 4:
 
-    /* "lib/deconvolution.pyx":363
- *         # Evaluate the total variation on 4 neighbours
+    /* "lib/deconvolution.pyx":361
+ *         # Evaluate the total variation on 4 neighbours : direct directions, with a bilateral approximation
  * 
  *         with parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
  *             for i in prange(1, M-1):
@@ -6483,7 +6566,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
         #endif /* _OPENMP */
         {
 
-            /* "lib/deconvolution.pyx":364
+            /* "lib/deconvolution.pyx":362
  * 
  *         with parallel(num_threads=CPU):
  *             for i in prange(1, M-1):             # <<<<<<<<<<<<<<
@@ -6513,7 +6596,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                             __pyx_v_utxy = ((float)__PYX_NAN());
                             __pyx_v_uxy = ((float)__PYX_NAN());
 
-                            /* "lib/deconvolution.pyx":365
+                            /* "lib/deconvolution.pyx":363
  *         with parallel(num_threads=CPU):
  *             for i in prange(1, M-1):
  *                 for j in range(1, N-1):             # <<<<<<<<<<<<<<
@@ -6524,7 +6607,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                             for (__pyx_t_5 = 1; __pyx_t_5 < __pyx_t_4; __pyx_t_5+=1) {
                               __pyx_v_j = __pyx_t_5;
 
-                              /* "lib/deconvolution.pyx":366
+                              /* "lib/deconvolution.pyx":364
  *             for i in prange(1, M-1):
  *                 for j in range(1, N-1):
  *                     for k in range(3):             # <<<<<<<<<<<<<<
@@ -6534,7 +6617,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                               for (__pyx_t_6 = 0; __pyx_t_6 < 3; __pyx_t_6+=1) {
                                 __pyx_v_k = __pyx_t_6;
 
-                                /* "lib/deconvolution.pyx":367
+                                /* "lib/deconvolution.pyx":365
  *                 for j in range(1, N-1):
  *                     for k in range(3):
  *                         uxy = u[i, j, k] * 2             # <<<<<<<<<<<<<<
@@ -6546,7 +6629,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_70 = __pyx_v_k;
                                 __pyx_v_uxy = ((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_68 * __pyx_v_u.strides[0]) ) + __pyx_t_69 * __pyx_v_u.strides[1]) ) + __pyx_t_70 * __pyx_v_u.strides[2]) ))) * 2.0);
 
-                                /* "lib/deconvolution.pyx":368
+                                /* "lib/deconvolution.pyx":366
  *                     for k in range(3):
  *                         uxy = u[i, j, k] * 2
  *                         udx = uxy - u[i-1, j, k] - u[i+1, j, k] # Warning : this is 2 times the differential             # <<<<<<<<<<<<<<
@@ -6561,7 +6644,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_76 = __pyx_v_k;
                                 __pyx_v_udx = ((__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_71 * __pyx_v_u.strides[0]) ) + __pyx_t_72 * __pyx_v_u.strides[1]) ) + __pyx_t_73 * __pyx_v_u.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_74 * __pyx_v_u.strides[0]) ) + __pyx_t_75 * __pyx_v_u.strides[1]) ) + __pyx_t_76 * __pyx_v_u.strides[2]) ))));
 
-                                /* "lib/deconvolution.pyx":369
+                                /* "lib/deconvolution.pyx":367
  *                         uxy = u[i, j, k] * 2
  *                         udx = uxy - u[i-1, j, k] - u[i+1, j, k] # Warning : this is 2 times the differential
  *                         udy = uxy - u[i, j-1, k] - u[i, j-1, k]             # <<<<<<<<<<<<<<
@@ -6576,7 +6659,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_82 = __pyx_v_k;
                                 __pyx_v_udy = ((__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_77 * __pyx_v_u.strides[0]) ) + __pyx_t_78 * __pyx_v_u.strides[1]) ) + __pyx_t_79 * __pyx_v_u.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_80 * __pyx_v_u.strides[0]) ) + __pyx_t_81 * __pyx_v_u.strides[1]) ) + __pyx_t_82 * __pyx_v_u.strides[2]) ))));
 
-                                /* "lib/deconvolution.pyx":371
+                                /* "lib/deconvolution.pyx":369
  *                         udy = uxy - u[i, j-1, k] - u[i, j-1, k]
  * 
  *                         utxy = ut[i, j, k] * 2             # <<<<<<<<<<<<<<
@@ -6588,7 +6671,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_85 = __pyx_v_k;
                                 __pyx_v_utxy = ((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_83 * __pyx_v_ut.strides[0]) ) + __pyx_t_84 * __pyx_v_ut.strides[1]) ) + __pyx_t_85 * __pyx_v_ut.strides[2]) ))) * 2.0);
 
-                                /* "lib/deconvolution.pyx":372
+                                /* "lib/deconvolution.pyx":370
  * 
  *                         utxy = ut[i, j, k] * 2
  *                         utdx = utxy - ut[i-1, j, k] - ut[i+1, j, k]             # <<<<<<<<<<<<<<
@@ -6603,7 +6686,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_91 = __pyx_v_k;
                                 __pyx_v_utdx = ((__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_86 * __pyx_v_ut.strides[0]) ) + __pyx_t_87 * __pyx_v_ut.strides[1]) ) + __pyx_t_88 * __pyx_v_ut.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_89 * __pyx_v_ut.strides[0]) ) + __pyx_t_90 * __pyx_v_ut.strides[1]) ) + __pyx_t_91 * __pyx_v_ut.strides[2]) ))));
 
-                                /* "lib/deconvolution.pyx":373
+                                /* "lib/deconvolution.pyx":371
  *                         utxy = ut[i, j, k] * 2
  *                         utdx = utxy - ut[i-1, j, k] - ut[i+1, j, k]
  *                         utdy = utxy - ut[i, j-1, k] - ut[i, j-1, k]             # <<<<<<<<<<<<<<
@@ -6618,7 +6701,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_97 = __pyx_v_k;
                                 __pyx_v_utdy = ((__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_92 * __pyx_v_ut.strides[0]) ) + __pyx_t_93 * __pyx_v_ut.strides[1]) ) + __pyx_t_94 * __pyx_v_ut.strides[2]) )))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_95 * __pyx_v_ut.strides[0]) ) + __pyx_t_96 * __pyx_v_ut.strides[1]) ) + __pyx_t_97 * __pyx_v_ut.strides[2]) ))));
 
-                                /* "lib/deconvolution.pyx":375
+                                /* "lib/deconvolution.pyx":373
  *                         utdy = utxy - ut[i, j-1, k] - ut[i, j-1, k]
  * 
  *                         temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 4 + lambd *  im_convo[i, j, k]             # <<<<<<<<<<<<<<
@@ -6630,7 +6713,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_100 = __pyx_v_k;
                                 __pyx_v_temp = (((((__pyx_v_udx + __pyx_v_udy) / ((fabsf(__pyx_v_udx) + fabsf(__pyx_v_udy)) + __pyx_v_epsilon)) / (((fabsf(__pyx_v_utdx) + fabsf(__pyx_v_utdy)) + __pyx_v_epsilon) + __pyx_v_tau)) / 4.0) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_98 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_99 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_100 * __pyx_v_im_convo.strides[2]) )))));
 
-                                /* "lib/deconvolution.pyx":377
+                                /* "lib/deconvolution.pyx":375
  *                         temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 4 + lambd *  im_convo[i, j, k]
  * 
  *                         out[i, j, k] = temp             # <<<<<<<<<<<<<<
@@ -6642,7 +6725,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_103 = __pyx_v_k;
                                 *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_101 * __pyx_v_out.strides[0]) ) + __pyx_t_102 * __pyx_v_out.strides[1]) ) + __pyx_t_103 * __pyx_v_out.strides[2]) )) = __pyx_v_temp;
 
-                                /* "lib/deconvolution.pyx":378
+                                /* "lib/deconvolution.pyx":376
  * 
  *                         out[i, j, k] = temp
  *                         temp = fabsf(temp)             # <<<<<<<<<<<<<<
@@ -6651,7 +6734,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
  */
                                 __pyx_v_temp = fabsf(__pyx_v_temp);
 
-                                /* "lib/deconvolution.pyx":380
+                                /* "lib/deconvolution.pyx":378
  *                         temp = fabsf(temp)
  * 
  *                         if temp > max_u[k]:             # <<<<<<<<<<<<<<
@@ -6661,7 +6744,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_67 = ((__pyx_v_temp > (__pyx_v_max_u[__pyx_v_k])) != 0);
                                 if (__pyx_t_67) {
 
-                                  /* "lib/deconvolution.pyx":381
+                                  /* "lib/deconvolution.pyx":379
  * 
  *                         if temp > max_u[k]:
  *                             max_u[k] = temp             # <<<<<<<<<<<<<<
@@ -6670,7 +6753,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
  */
                                   (__pyx_v_max_u[__pyx_v_k]) = __pyx_v_temp;
 
-                                  /* "lib/deconvolution.pyx":380
+                                  /* "lib/deconvolution.pyx":378
  *                         temp = fabsf(temp)
  * 
  *                         if temp > max_u[k]:             # <<<<<<<<<<<<<<
@@ -6693,26 +6776,26 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
         #define unlikely(x) __builtin_expect(!!(x), 0)
     #endif
 
-    /* "lib/deconvolution.pyx":360
+    /* "lib/deconvolution.pyx":358
  * 
  * 
  *     elif neighbours == 4:             # <<<<<<<<<<<<<<
- *         # Evaluate the total variation on 4 neighbours
+ *         # Evaluate the total variation on 4 neighbours : direct directions, with a bilateral approximation
  * 
  */
     break;
 
-    /* "lib/deconvolution.pyx":384
+    /* "lib/deconvolution.pyx":382
  * 
  * 
  *     elif neighbours == 2:             # <<<<<<<<<<<<<<
- *         # Evaluate the total variation on 2 neighbours
+ *         # Evaluate the total variation on 2 neighbours : simple backward difference
  * 
  */
     case 2:
 
-    /* "lib/deconvolution.pyx":387
- *         # Evaluate the total variation on 2 neighbours
+    /* "lib/deconvolution.pyx":385
+ *         # Evaluate the total variation on 2 neighbours : simple backward difference
  * 
  *         with parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
  *             for i in prange(1, M):
@@ -6730,7 +6813,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
         #endif /* _OPENMP */
         {
 
-            /* "lib/deconvolution.pyx":388
+            /* "lib/deconvolution.pyx":386
  * 
  *         with parallel(num_threads=CPU):
  *             for i in prange(1, M):             # <<<<<<<<<<<<<<
@@ -6760,7 +6843,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                             __pyx_v_utxy = ((float)__PYX_NAN());
                             __pyx_v_uxy = ((float)__PYX_NAN());
 
-                            /* "lib/deconvolution.pyx":389
+                            /* "lib/deconvolution.pyx":387
  *         with parallel(num_threads=CPU):
  *             for i in prange(1, M):
  *                 for j in range(1, N):             # <<<<<<<<<<<<<<
@@ -6771,7 +6854,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                             for (__pyx_t_104 = 1; __pyx_t_104 < __pyx_t_6; __pyx_t_104+=1) {
                               __pyx_v_j = __pyx_t_104;
 
-                              /* "lib/deconvolution.pyx":390
+                              /* "lib/deconvolution.pyx":388
  *             for i in prange(1, M):
  *                 for j in range(1, N):
  *                     for k in range(3):             # <<<<<<<<<<<<<<
@@ -6781,7 +6864,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                               for (__pyx_t_105 = 0; __pyx_t_105 < 3; __pyx_t_105+=1) {
                                 __pyx_v_k = __pyx_t_105;
 
-                                /* "lib/deconvolution.pyx":391
+                                /* "lib/deconvolution.pyx":389
  *                 for j in range(1, N):
  *                     for k in range(3):
  *                         uxy = u[i, j, k]             # <<<<<<<<<<<<<<
@@ -6793,7 +6876,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_108 = __pyx_v_k;
                                 __pyx_v_uxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_106 * __pyx_v_u.strides[0]) ) + __pyx_t_107 * __pyx_v_u.strides[1]) ) + __pyx_t_108 * __pyx_v_u.strides[2]) )));
 
-                                /* "lib/deconvolution.pyx":392
+                                /* "lib/deconvolution.pyx":390
  *                     for k in range(3):
  *                         uxy = u[i, j, k]
  *                         udx = uxy - u[i-1, j, k]             # <<<<<<<<<<<<<<
@@ -6805,7 +6888,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_111 = __pyx_v_k;
                                 __pyx_v_udx = (__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_109 * __pyx_v_u.strides[0]) ) + __pyx_t_110 * __pyx_v_u.strides[1]) ) + __pyx_t_111 * __pyx_v_u.strides[2]) ))));
 
-                                /* "lib/deconvolution.pyx":393
+                                /* "lib/deconvolution.pyx":391
  *                         uxy = u[i, j, k]
  *                         udx = uxy - u[i-1, j, k]
  *                         udy = uxy - u[i, j-1, k]             # <<<<<<<<<<<<<<
@@ -6817,7 +6900,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_114 = __pyx_v_k;
                                 __pyx_v_udy = (__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_112 * __pyx_v_u.strides[0]) ) + __pyx_t_113 * __pyx_v_u.strides[1]) ) + __pyx_t_114 * __pyx_v_u.strides[2]) ))));
 
-                                /* "lib/deconvolution.pyx":395
+                                /* "lib/deconvolution.pyx":393
  *                         udy = uxy - u[i, j-1, k]
  * 
  *                         utxy = ut[i, j, k]             # <<<<<<<<<<<<<<
@@ -6829,7 +6912,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_117 = __pyx_v_k;
                                 __pyx_v_utxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_115 * __pyx_v_ut.strides[0]) ) + __pyx_t_116 * __pyx_v_ut.strides[1]) ) + __pyx_t_117 * __pyx_v_ut.strides[2]) )));
 
-                                /* "lib/deconvolution.pyx":396
+                                /* "lib/deconvolution.pyx":394
  * 
  *                         utxy = ut[i, j, k]
  *                         utdx = utxy - ut[i-1, j, k]             # <<<<<<<<<<<<<<
@@ -6841,32 +6924,32 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_120 = __pyx_v_k;
                                 __pyx_v_utdx = (__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_118 * __pyx_v_ut.strides[0]) ) + __pyx_t_119 * __pyx_v_ut.strides[1]) ) + __pyx_t_120 * __pyx_v_ut.strides[2]) ))));
 
-                                /* "lib/deconvolution.pyx":397
+                                /* "lib/deconvolution.pyx":395
  *                         utxy = ut[i, j, k]
  *                         utdx = utxy - ut[i-1, j, k]
  *                         utdy = utxy - ut[i, j-1, k]             # <<<<<<<<<<<<<<
  * 
- *                         temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 4 + lambd *  im_convo[i, j, k]
+ *                         temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[i, j, k]
  */
                                 __pyx_t_121 = __pyx_v_i;
                                 __pyx_t_122 = (__pyx_v_j - 1);
                                 __pyx_t_123 = __pyx_v_k;
                                 __pyx_v_utdy = (__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_121 * __pyx_v_ut.strides[0]) ) + __pyx_t_122 * __pyx_v_ut.strides[1]) ) + __pyx_t_123 * __pyx_v_ut.strides[2]) ))));
 
-                                /* "lib/deconvolution.pyx":399
+                                /* "lib/deconvolution.pyx":397
  *                         utdy = utxy - ut[i, j-1, k]
  * 
- *                         temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 4 + lambd *  im_convo[i, j, k]             # <<<<<<<<<<<<<<
+ *                         temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[i, j, k]             # <<<<<<<<<<<<<<
  * 
  *                         out[i, j, k] = temp
  */
                                 __pyx_t_124 = __pyx_v_i;
                                 __pyx_t_125 = __pyx_v_j;
                                 __pyx_t_126 = __pyx_v_k;
-                                __pyx_v_temp = (((((__pyx_v_udx + __pyx_v_udy) / ((fabsf(__pyx_v_udx) + fabsf(__pyx_v_udy)) + __pyx_v_epsilon)) / (((fabsf(__pyx_v_utdx) + fabsf(__pyx_v_utdy)) + __pyx_v_epsilon) + __pyx_v_tau)) / 4.0) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_124 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_125 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_126 * __pyx_v_im_convo.strides[2]) )))));
+                                __pyx_v_temp = (((((__pyx_v_udx + __pyx_v_udy) / ((fabsf(__pyx_v_udx) + fabsf(__pyx_v_udy)) + __pyx_v_epsilon)) / (((fabsf(__pyx_v_utdx) + fabsf(__pyx_v_utdy)) + __pyx_v_epsilon) + __pyx_v_tau)) / 2.0) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_124 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_125 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_126 * __pyx_v_im_convo.strides[2]) )))));
 
-                                /* "lib/deconvolution.pyx":401
- *                         temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 4 + lambd *  im_convo[i, j, k]
+                                /* "lib/deconvolution.pyx":399
+ *                         temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[i, j, k]
  * 
  *                         out[i, j, k] = temp             # <<<<<<<<<<<<<<
  *                         temp = fabsf(temp)
@@ -6877,7 +6960,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_129 = __pyx_v_k;
                                 *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_127 * __pyx_v_out.strides[0]) ) + __pyx_t_128 * __pyx_v_out.strides[1]) ) + __pyx_t_129 * __pyx_v_out.strides[2]) )) = __pyx_v_temp;
 
-                                /* "lib/deconvolution.pyx":402
+                                /* "lib/deconvolution.pyx":400
  * 
  *                         out[i, j, k] = temp
  *                         temp = fabsf(temp)             # <<<<<<<<<<<<<<
@@ -6886,7 +6969,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
  */
                                 __pyx_v_temp = fabsf(__pyx_v_temp);
 
-                                /* "lib/deconvolution.pyx":404
+                                /* "lib/deconvolution.pyx":402
  *                         temp = fabsf(temp)
  * 
  *                         if temp > max_u[k]:             # <<<<<<<<<<<<<<
@@ -6896,7 +6979,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
                                 __pyx_t_67 = ((__pyx_v_temp > (__pyx_v_max_u[__pyx_v_k])) != 0);
                                 if (__pyx_t_67) {
 
-                                  /* "lib/deconvolution.pyx":405
+                                  /* "lib/deconvolution.pyx":403
  * 
  *                         if temp > max_u[k]:
  *                             max_u[k] = temp             # <<<<<<<<<<<<<<
@@ -6905,7 +6988,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
  */
                                   (__pyx_v_max_u[__pyx_v_k]) = __pyx_v_temp;
 
-                                  /* "lib/deconvolution.pyx":404
+                                  /* "lib/deconvolution.pyx":402
  *                         temp = fabsf(temp)
  * 
  *                         if temp > max_u[k]:             # <<<<<<<<<<<<<<
@@ -6928,11 +7011,11 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
         #define unlikely(x) __builtin_expect(!!(x), 0)
     #endif
 
-    /* "lib/deconvolution.pyx":384
+    /* "lib/deconvolution.pyx":382
  * 
  * 
  *     elif neighbours == 2:             # <<<<<<<<<<<<<<
- *         # Evaluate the total variation on 2 neighbours
+ *         # Evaluate the total variation on 2 neighbours : simple backward difference
  * 
  */
     break;
@@ -6943,7 +7026,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
  * 
  *     # First row
  *     with parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
- *             for j in prange(N):
+ *             for j in prange(1, N-1):
  *                 for k in range(3):
  */
   {
@@ -6954,88 +7037,140 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
           #define unlikely(x) (x)
       #endif
       #ifdef _OPENMP
-      #pragma omp parallel  private(__pyx_t_104, __pyx_t_105, __pyx_t_130, __pyx_t_131, __pyx_t_132, __pyx_t_133, __pyx_t_134, __pyx_t_135, __pyx_t_136, __pyx_t_137, __pyx_t_138, __pyx_t_139, __pyx_t_140, __pyx_t_141, __pyx_t_142, __pyx_t_143, __pyx_t_144, __pyx_t_145, __pyx_t_146, __pyx_t_147, __pyx_t_5, __pyx_t_6) num_threads(__pyx_v_3lib_13deconvolution_CPU)
+      #pragma omp parallel  private(__pyx_t_1, __pyx_t_130, __pyx_t_131, __pyx_t_132, __pyx_t_133, __pyx_t_134, __pyx_t_135, __pyx_t_136, __pyx_t_137, __pyx_t_138, __pyx_t_139, __pyx_t_140, __pyx_t_141, __pyx_t_142, __pyx_t_143, __pyx_t_144, __pyx_t_145, __pyx_t_146, __pyx_t_147, __pyx_t_148, __pyx_t_149, __pyx_t_150, __pyx_t_151, __pyx_t_152, __pyx_t_153, __pyx_t_154, __pyx_t_155, __pyx_t_156, __pyx_t_157, __pyx_t_158, __pyx_t_159, __pyx_t_2, __pyx_t_3, __pyx_t_5) num_threads(__pyx_v_3lib_13deconvolution_CPU)
       #endif /* _OPENMP */
       {
 
           /* "lib/deconvolution.pyx":410
  *     # First row
  *     with parallel(num_threads=CPU):
- *             for j in prange(N):             # <<<<<<<<<<<<<<
+ *             for j in prange(1, N-1):             # <<<<<<<<<<<<<<
  *                 for k in range(3):
- *                     udx = u[0, j, k] - u[1, j, k]
+ *                     uxy = u[0, j, k]
  */
-          __pyx_t_5 = __pyx_v_N;
+          __pyx_t_2 = (__pyx_v_N - 1);
           if (1 == 0) abort();
           {
-              __pyx_t_104 = (__pyx_t_5 - 0 + 1 - 1/abs(1)) / 1;
-              if (__pyx_t_104 > 0)
+              __pyx_t_3 = (__pyx_t_2 - 1 + 1 - 1/abs(1)) / 1;
+              if (__pyx_t_3 > 0)
               {
                   #ifdef _OPENMP
-                  #pragma omp for firstprivate(__pyx_v_j) lastprivate(__pyx_v_j) lastprivate(__pyx_v_k) lastprivate(__pyx_v_udx) lastprivate(__pyx_v_utdx)
+                  #pragma omp for firstprivate(__pyx_v_j) lastprivate(__pyx_v_j) lastprivate(__pyx_v_k) lastprivate(__pyx_v_udx) lastprivate(__pyx_v_udy) lastprivate(__pyx_v_utdx) lastprivate(__pyx_v_utdy) lastprivate(__pyx_v_utxy) lastprivate(__pyx_v_uxy)
                   #endif /* _OPENMP */
-                  for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_104; __pyx_t_6++){
+                  for (__pyx_t_1 = 0; __pyx_t_1 < __pyx_t_3; __pyx_t_1++){
                       {
-                          __pyx_v_j = (int)(0 + 1 * __pyx_t_6);
+                          __pyx_v_j = (int)(1 + 1 * __pyx_t_1);
                           /* Initialize private variables to invalid values */
                           __pyx_v_k = ((int)0xbad0bad0);
                           __pyx_v_udx = ((float)__PYX_NAN());
+                          __pyx_v_udy = ((float)__PYX_NAN());
                           __pyx_v_utdx = ((float)__PYX_NAN());
+                          __pyx_v_utdy = ((float)__PYX_NAN());
+                          __pyx_v_utxy = ((float)__PYX_NAN());
+                          __pyx_v_uxy = ((float)__PYX_NAN());
 
                           /* "lib/deconvolution.pyx":411
  *     with parallel(num_threads=CPU):
- *             for j in prange(N):
+ *             for j in prange(1, N-1):
  *                 for k in range(3):             # <<<<<<<<<<<<<<
- *                     udx = u[0, j, k] - u[1, j, k]
- *                     utdx = ut[0, j, k] - ut[1, j, k]
+ *                     uxy = u[0, j, k]
+ *                     udx = uxy - u[1, j, k]
  */
-                          for (__pyx_t_105 = 0; __pyx_t_105 < 3; __pyx_t_105+=1) {
-                            __pyx_v_k = __pyx_t_105;
+                          for (__pyx_t_5 = 0; __pyx_t_5 < 3; __pyx_t_5+=1) {
+                            __pyx_v_k = __pyx_t_5;
 
                             /* "lib/deconvolution.pyx":412
- *             for j in prange(N):
+ *             for j in prange(1, N-1):
  *                 for k in range(3):
- *                     udx = u[0, j, k] - u[1, j, k]             # <<<<<<<<<<<<<<
- *                     utdx = ut[0, j, k] - ut[1, j, k]
- * 
+ *                     uxy = u[0, j, k]             # <<<<<<<<<<<<<<
+ *                     udx = uxy - u[1, j, k]
+ *                     udy = uxy - (u[0, j-1, k] + u[0, j+1, k])/2
  */
                             __pyx_t_130 = 0;
                             __pyx_t_131 = __pyx_v_j;
                             __pyx_t_132 = __pyx_v_k;
-                            __pyx_t_133 = 1;
-                            __pyx_t_134 = __pyx_v_j;
-                            __pyx_t_135 = __pyx_v_k;
-                            __pyx_v_udx = ((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_130 * __pyx_v_u.strides[0]) ) + __pyx_t_131 * __pyx_v_u.strides[1]) ) + __pyx_t_132 * __pyx_v_u.strides[2]) ))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_133 * __pyx_v_u.strides[0]) ) + __pyx_t_134 * __pyx_v_u.strides[1]) ) + __pyx_t_135 * __pyx_v_u.strides[2]) ))));
+                            __pyx_v_uxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_130 * __pyx_v_u.strides[0]) ) + __pyx_t_131 * __pyx_v_u.strides[1]) ) + __pyx_t_132 * __pyx_v_u.strides[2]) )));
 
                             /* "lib/deconvolution.pyx":413
  *                 for k in range(3):
- *                     udx = u[0, j, k] - u[1, j, k]
- *                     utdx = ut[0, j, k] - ut[1, j, k]             # <<<<<<<<<<<<<<
+ *                     uxy = u[0, j, k]
+ *                     udx = uxy - u[1, j, k]             # <<<<<<<<<<<<<<
+ *                     udy = uxy - (u[0, j-1, k] + u[0, j+1, k])/2
  * 
- *                     out[0, j, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[0, j, k]
+ */
+                            __pyx_t_133 = 1;
+                            __pyx_t_134 = __pyx_v_j;
+                            __pyx_t_135 = __pyx_v_k;
+                            __pyx_v_udx = (__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_133 * __pyx_v_u.strides[0]) ) + __pyx_t_134 * __pyx_v_u.strides[1]) ) + __pyx_t_135 * __pyx_v_u.strides[2]) ))));
+
+                            /* "lib/deconvolution.pyx":414
+ *                     uxy = u[0, j, k]
+ *                     udx = uxy - u[1, j, k]
+ *                     udy = uxy - (u[0, j-1, k] + u[0, j+1, k])/2             # <<<<<<<<<<<<<<
+ * 
+ *                     utxy = ut[0, j, k]
  */
                             __pyx_t_136 = 0;
-                            __pyx_t_137 = __pyx_v_j;
+                            __pyx_t_137 = (__pyx_v_j - 1);
                             __pyx_t_138 = __pyx_v_k;
-                            __pyx_t_139 = 1;
-                            __pyx_t_140 = __pyx_v_j;
+                            __pyx_t_139 = 0;
+                            __pyx_t_140 = (__pyx_v_j + 1);
                             __pyx_t_141 = __pyx_v_k;
-                            __pyx_v_utdx = ((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_136 * __pyx_v_ut.strides[0]) ) + __pyx_t_137 * __pyx_v_ut.strides[1]) ) + __pyx_t_138 * __pyx_v_ut.strides[2]) ))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_139 * __pyx_v_ut.strides[0]) ) + __pyx_t_140 * __pyx_v_ut.strides[1]) ) + __pyx_t_141 * __pyx_v_ut.strides[2]) ))));
+                            __pyx_v_udy = (__pyx_v_uxy - (((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_136 * __pyx_v_u.strides[0]) ) + __pyx_t_137 * __pyx_v_u.strides[1]) ) + __pyx_t_138 * __pyx_v_u.strides[2]) ))) + (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_139 * __pyx_v_u.strides[0]) ) + __pyx_t_140 * __pyx_v_u.strides[1]) ) + __pyx_t_141 * __pyx_v_u.strides[2]) )))) / 2.0));
 
-                            /* "lib/deconvolution.pyx":415
- *                     utdx = ut[0, j, k] - ut[1, j, k]
+                            /* "lib/deconvolution.pyx":416
+ *                     udy = uxy - (u[0, j-1, k] + u[0, j+1, k])/2
  * 
- *                     out[0, j, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[0, j, k]             # <<<<<<<<<<<<<<
- * 
- *     # Last row
+ *                     utxy = ut[0, j, k]             # <<<<<<<<<<<<<<
+ *                     utdx = utxy - ut[1, j, k]
+ *                     utdy = utxy - (ut[0, j-1, k] + ut[0, j+1, k])/2
  */
                             __pyx_t_142 = 0;
                             __pyx_t_143 = __pyx_v_j;
                             __pyx_t_144 = __pyx_v_k;
-                            __pyx_t_145 = 0;
+                            __pyx_v_utxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_142 * __pyx_v_ut.strides[0]) ) + __pyx_t_143 * __pyx_v_ut.strides[1]) ) + __pyx_t_144 * __pyx_v_ut.strides[2]) )));
+
+                            /* "lib/deconvolution.pyx":417
+ * 
+ *                     utxy = ut[0, j, k]
+ *                     utdx = utxy - ut[1, j, k]             # <<<<<<<<<<<<<<
+ *                     utdy = utxy - (ut[0, j-1, k] + ut[0, j+1, k])/2
+ * 
+ */
+                            __pyx_t_145 = 1;
                             __pyx_t_146 = __pyx_v_j;
                             __pyx_t_147 = __pyx_v_k;
-                            *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_145 * __pyx_v_out.strides[0]) ) + __pyx_t_146 * __pyx_v_out.strides[1]) ) + __pyx_t_147 * __pyx_v_out.strides[2]) )) = (((__pyx_v_udx / (fabsf(__pyx_v_udx) + __pyx_v_epsilon)) / ((fabsf(__pyx_v_utdx) + __pyx_v_epsilon) + __pyx_v_tau)) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_142 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_143 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_144 * __pyx_v_im_convo.strides[2]) )))));
+                            __pyx_v_utdx = (__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_145 * __pyx_v_ut.strides[0]) ) + __pyx_t_146 * __pyx_v_ut.strides[1]) ) + __pyx_t_147 * __pyx_v_ut.strides[2]) ))));
+
+                            /* "lib/deconvolution.pyx":418
+ *                     utxy = ut[0, j, k]
+ *                     utdx = utxy - ut[1, j, k]
+ *                     utdy = utxy - (ut[0, j-1, k] + ut[0, j+1, k])/2             # <<<<<<<<<<<<<<
+ * 
+ *                     out[0, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[0, j, k]
+ */
+                            __pyx_t_148 = 0;
+                            __pyx_t_149 = (__pyx_v_j - 1);
+                            __pyx_t_150 = __pyx_v_k;
+                            __pyx_t_151 = 0;
+                            __pyx_t_152 = (__pyx_v_j + 1);
+                            __pyx_t_153 = __pyx_v_k;
+                            __pyx_v_utdy = (__pyx_v_utxy - (((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_148 * __pyx_v_ut.strides[0]) ) + __pyx_t_149 * __pyx_v_ut.strides[1]) ) + __pyx_t_150 * __pyx_v_ut.strides[2]) ))) + (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_151 * __pyx_v_ut.strides[0]) ) + __pyx_t_152 * __pyx_v_ut.strides[1]) ) + __pyx_t_153 * __pyx_v_ut.strides[2]) )))) / 2.0));
+
+                            /* "lib/deconvolution.pyx":420
+ *                     utdy = utxy - (ut[0, j-1, k] + ut[0, j+1, k])/2
+ * 
+ *                     out[0, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[0, j, k]             # <<<<<<<<<<<<<<
+ * 
+ *     # Last row
+ */
+                            __pyx_t_154 = 0;
+                            __pyx_t_155 = __pyx_v_j;
+                            __pyx_t_156 = __pyx_v_k;
+                            __pyx_t_157 = 0;
+                            __pyx_t_158 = __pyx_v_j;
+                            __pyx_t_159 = __pyx_v_k;
+                            *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_157 * __pyx_v_out.strides[0]) ) + __pyx_t_158 * __pyx_v_out.strides[1]) ) + __pyx_t_159 * __pyx_v_out.strides[2]) )) = (((((__pyx_v_udx + __pyx_v_udy) / ((fabsf(__pyx_v_udx) + fabsf(__pyx_v_udy)) + __pyx_v_epsilon)) / (((fabsf(__pyx_v_utdx) + fabsf(__pyx_v_utdy)) + __pyx_v_epsilon) + __pyx_v_tau)) / 2.0) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_154 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_155 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_156 * __pyx_v_im_convo.strides[2]) )))));
                           }
                       }
                   }
@@ -7050,11 +7185,11 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
       #define unlikely(x) __builtin_expect(!!(x), 0)
   #endif
 
-  /* "lib/deconvolution.pyx":418
+  /* "lib/deconvolution.pyx":423
  * 
  *     # Last row
  *     with parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
- *             for j in prange(N):
+ *             for j in prange(1, N-1):
  *                 for k in range(3):
  */
   {
@@ -7065,199 +7200,140 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
           #define unlikely(x) (x)
       #endif
       #ifdef _OPENMP
-      #pragma omp parallel  private(__pyx_t_104, __pyx_t_105, __pyx_t_148, __pyx_t_149, __pyx_t_150, __pyx_t_151, __pyx_t_152, __pyx_t_153, __pyx_t_154, __pyx_t_155, __pyx_t_156, __pyx_t_157, __pyx_t_158, __pyx_t_159, __pyx_t_160, __pyx_t_161, __pyx_t_162, __pyx_t_163, __pyx_t_164, __pyx_t_165, __pyx_t_5, __pyx_t_6) num_threads(__pyx_v_3lib_13deconvolution_CPU)
+      #pragma omp parallel  private(__pyx_t_1, __pyx_t_160, __pyx_t_161, __pyx_t_162, __pyx_t_163, __pyx_t_164, __pyx_t_165, __pyx_t_166, __pyx_t_167, __pyx_t_168, __pyx_t_169, __pyx_t_170, __pyx_t_171, __pyx_t_172, __pyx_t_173, __pyx_t_174, __pyx_t_175, __pyx_t_176, __pyx_t_177, __pyx_t_178, __pyx_t_179, __pyx_t_180, __pyx_t_181, __pyx_t_182, __pyx_t_183, __pyx_t_184, __pyx_t_185, __pyx_t_186, __pyx_t_187, __pyx_t_188, __pyx_t_189, __pyx_t_2, __pyx_t_3, __pyx_t_5) num_threads(__pyx_v_3lib_13deconvolution_CPU)
       #endif /* _OPENMP */
       {
 
-          /* "lib/deconvolution.pyx":419
+          /* "lib/deconvolution.pyx":424
  *     # Last row
  *     with parallel(num_threads=CPU):
- *             for j in prange(N):             # <<<<<<<<<<<<<<
+ *             for j in prange(1, N-1):             # <<<<<<<<<<<<<<
  *                 for k in range(3):
- *                     udx = u[M-1, j, k] - u[M-2, j, k]
+ *                     uxy = u[M-1, j, k]
  */
-          __pyx_t_104 = __pyx_v_N;
+          __pyx_t_3 = (__pyx_v_N - 1);
           if (1 == 0) abort();
           {
-              __pyx_t_5 = (__pyx_t_104 - 0 + 1 - 1/abs(1)) / 1;
-              if (__pyx_t_5 > 0)
+              __pyx_t_2 = (__pyx_t_3 - 1 + 1 - 1/abs(1)) / 1;
+              if (__pyx_t_2 > 0)
               {
                   #ifdef _OPENMP
-                  #pragma omp for firstprivate(__pyx_v_j) lastprivate(__pyx_v_j) lastprivate(__pyx_v_k) lastprivate(__pyx_v_udx) lastprivate(__pyx_v_utdx)
+                  #pragma omp for firstprivate(__pyx_v_j) lastprivate(__pyx_v_j) lastprivate(__pyx_v_k) lastprivate(__pyx_v_udx) lastprivate(__pyx_v_udy) lastprivate(__pyx_v_utdx) lastprivate(__pyx_v_utdy) lastprivate(__pyx_v_utxy) lastprivate(__pyx_v_uxy)
                   #endif /* _OPENMP */
-                  for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6++){
+                  for (__pyx_t_1 = 0; __pyx_t_1 < __pyx_t_2; __pyx_t_1++){
                       {
-                          __pyx_v_j = (int)(0 + 1 * __pyx_t_6);
+                          __pyx_v_j = (int)(1 + 1 * __pyx_t_1);
                           /* Initialize private variables to invalid values */
                           __pyx_v_k = ((int)0xbad0bad0);
                           __pyx_v_udx = ((float)__PYX_NAN());
+                          __pyx_v_udy = ((float)__PYX_NAN());
                           __pyx_v_utdx = ((float)__PYX_NAN());
+                          __pyx_v_utdy = ((float)__PYX_NAN());
+                          __pyx_v_utxy = ((float)__PYX_NAN());
+                          __pyx_v_uxy = ((float)__PYX_NAN());
 
-                          /* "lib/deconvolution.pyx":420
+                          /* "lib/deconvolution.pyx":425
  *     with parallel(num_threads=CPU):
- *             for j in prange(N):
+ *             for j in prange(1, N-1):
  *                 for k in range(3):             # <<<<<<<<<<<<<<
- *                     udx = u[M-1, j, k] - u[M-2, j, k]
- *                     utdx = ut[M-1, j, k] - ut[M-2, j, k]
+ *                     uxy = u[M-1, j, k]
+ *                     udx = uxy - u[M-2, j, k]
  */
-                          for (__pyx_t_105 = 0; __pyx_t_105 < 3; __pyx_t_105+=1) {
-                            __pyx_v_k = __pyx_t_105;
+                          for (__pyx_t_5 = 0; __pyx_t_5 < 3; __pyx_t_5+=1) {
+                            __pyx_v_k = __pyx_t_5;
 
-                            /* "lib/deconvolution.pyx":421
- *             for j in prange(N):
+                            /* "lib/deconvolution.pyx":426
+ *             for j in prange(1, N-1):
  *                 for k in range(3):
- *                     udx = u[M-1, j, k] - u[M-2, j, k]             # <<<<<<<<<<<<<<
- *                     utdx = ut[M-1, j, k] - ut[M-2, j, k]
- * 
- */
-                            __pyx_t_148 = (__pyx_v_M - 1);
-                            __pyx_t_149 = __pyx_v_j;
-                            __pyx_t_150 = __pyx_v_k;
-                            __pyx_t_151 = (__pyx_v_M - 2);
-                            __pyx_t_152 = __pyx_v_j;
-                            __pyx_t_153 = __pyx_v_k;
-                            __pyx_v_udx = ((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_148 * __pyx_v_u.strides[0]) ) + __pyx_t_149 * __pyx_v_u.strides[1]) ) + __pyx_t_150 * __pyx_v_u.strides[2]) ))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_151 * __pyx_v_u.strides[0]) ) + __pyx_t_152 * __pyx_v_u.strides[1]) ) + __pyx_t_153 * __pyx_v_u.strides[2]) ))));
-
-                            /* "lib/deconvolution.pyx":422
- *                 for k in range(3):
- *                     udx = u[M-1, j, k] - u[M-2, j, k]
- *                     utdx = ut[M-1, j, k] - ut[M-2, j, k]             # <<<<<<<<<<<<<<
- * 
- *                     out[M-1, j, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[M-1, j, k]
- */
-                            __pyx_t_154 = (__pyx_v_M - 1);
-                            __pyx_t_155 = __pyx_v_j;
-                            __pyx_t_156 = __pyx_v_k;
-                            __pyx_t_157 = (__pyx_v_M - 2);
-                            __pyx_t_158 = __pyx_v_j;
-                            __pyx_t_159 = __pyx_v_k;
-                            __pyx_v_utdx = ((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_154 * __pyx_v_ut.strides[0]) ) + __pyx_t_155 * __pyx_v_ut.strides[1]) ) + __pyx_t_156 * __pyx_v_ut.strides[2]) ))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_157 * __pyx_v_ut.strides[0]) ) + __pyx_t_158 * __pyx_v_ut.strides[1]) ) + __pyx_t_159 * __pyx_v_ut.strides[2]) ))));
-
-                            /* "lib/deconvolution.pyx":424
- *                     utdx = ut[M-1, j, k] - ut[M-2, j, k]
- * 
- *                     out[M-1, j, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[M-1, j, k]             # <<<<<<<<<<<<<<
- * 
- *     # First column
+ *                     uxy = u[M-1, j, k]             # <<<<<<<<<<<<<<
+ *                     udx = uxy - u[M-2, j, k]
+ *                     udy = uxy - (u[M-1, j-1, k] + u[M-1, j+1, k])/2
  */
                             __pyx_t_160 = (__pyx_v_M - 1);
                             __pyx_t_161 = __pyx_v_j;
                             __pyx_t_162 = __pyx_v_k;
-                            __pyx_t_163 = (__pyx_v_M - 1);
+                            __pyx_v_uxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_160 * __pyx_v_u.strides[0]) ) + __pyx_t_161 * __pyx_v_u.strides[1]) ) + __pyx_t_162 * __pyx_v_u.strides[2]) )));
+
+                            /* "lib/deconvolution.pyx":427
+ *                 for k in range(3):
+ *                     uxy = u[M-1, j, k]
+ *                     udx = uxy - u[M-2, j, k]             # <<<<<<<<<<<<<<
+ *                     udy = uxy - (u[M-1, j-1, k] + u[M-1, j+1, k])/2
+ * 
+ */
+                            __pyx_t_163 = (__pyx_v_M - 2);
                             __pyx_t_164 = __pyx_v_j;
                             __pyx_t_165 = __pyx_v_k;
-                            *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_163 * __pyx_v_out.strides[0]) ) + __pyx_t_164 * __pyx_v_out.strides[1]) ) + __pyx_t_165 * __pyx_v_out.strides[2]) )) = (((__pyx_v_udx / (fabsf(__pyx_v_udx) + __pyx_v_epsilon)) / ((fabsf(__pyx_v_utdx) + __pyx_v_epsilon) + __pyx_v_tau)) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_160 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_161 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_162 * __pyx_v_im_convo.strides[2]) )))));
-                          }
-                      }
-                  }
-              }
-          }
-      }
-  }
-  #if ((defined(__APPLE__) || defined(__OSX__)) && (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)))))
-      #undef likely
-      #undef unlikely
-      #define likely(x)   __builtin_expect(!!(x), 1)
-      #define unlikely(x) __builtin_expect(!!(x), 0)
-  #endif
+                            __pyx_v_udx = (__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_163 * __pyx_v_u.strides[0]) ) + __pyx_t_164 * __pyx_v_u.strides[1]) ) + __pyx_t_165 * __pyx_v_u.strides[2]) ))));
 
-  /* "lib/deconvolution.pyx":427
+                            /* "lib/deconvolution.pyx":428
+ *                     uxy = u[M-1, j, k]
+ *                     udx = uxy - u[M-2, j, k]
+ *                     udy = uxy - (u[M-1, j-1, k] + u[M-1, j+1, k])/2             # <<<<<<<<<<<<<<
  * 
- *     # First column
- *     with parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
- *             for i in prange(M):
- *                 for k in range(3):
+ *                     utxy = ut[M-1, j, k]
  */
-  {
-      #if ((defined(__APPLE__) || defined(__OSX__)) && (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)))))
-          #undef likely
-          #undef unlikely
-          #define likely(x)   (x)
-          #define unlikely(x) (x)
-      #endif
-      #ifdef _OPENMP
-      #pragma omp parallel  private(__pyx_t_104, __pyx_t_105, __pyx_t_166, __pyx_t_167, __pyx_t_168, __pyx_t_169, __pyx_t_170, __pyx_t_171, __pyx_t_172, __pyx_t_173, __pyx_t_174, __pyx_t_175, __pyx_t_176, __pyx_t_177, __pyx_t_178, __pyx_t_179, __pyx_t_180, __pyx_t_181, __pyx_t_182, __pyx_t_183, __pyx_t_5, __pyx_t_6) num_threads(__pyx_v_3lib_13deconvolution_CPU)
-      #endif /* _OPENMP */
-      {
-
-          /* "lib/deconvolution.pyx":428
- *     # First column
- *     with parallel(num_threads=CPU):
- *             for i in prange(M):             # <<<<<<<<<<<<<<
- *                 for k in range(3):
- *                     udx = u[i, 0, k] - u[i, 1, k]
- */
-          __pyx_t_5 = __pyx_v_M;
-          if (1 == 0) abort();
-          {
-              __pyx_t_104 = (__pyx_t_5 - 0 + 1 - 1/abs(1)) / 1;
-              if (__pyx_t_104 > 0)
-              {
-                  #ifdef _OPENMP
-                  #pragma omp for firstprivate(__pyx_v_i) lastprivate(__pyx_v_i) lastprivate(__pyx_v_k) lastprivate(__pyx_v_udx) lastprivate(__pyx_v_utdx)
-                  #endif /* _OPENMP */
-                  for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_104; __pyx_t_6++){
-                      {
-                          __pyx_v_i = (int)(0 + 1 * __pyx_t_6);
-                          /* Initialize private variables to invalid values */
-                          __pyx_v_k = ((int)0xbad0bad0);
-                          __pyx_v_udx = ((float)__PYX_NAN());
-                          __pyx_v_utdx = ((float)__PYX_NAN());
-
-                          /* "lib/deconvolution.pyx":429
- *     with parallel(num_threads=CPU):
- *             for i in prange(M):
- *                 for k in range(3):             # <<<<<<<<<<<<<<
- *                     udx = u[i, 0, k] - u[i, 1, k]
- *                     utdx = ut[i, 0, k] - ut[i, 1, k]
- */
-                          for (__pyx_t_105 = 0; __pyx_t_105 < 3; __pyx_t_105+=1) {
-                            __pyx_v_k = __pyx_t_105;
+                            __pyx_t_166 = (__pyx_v_M - 1);
+                            __pyx_t_167 = (__pyx_v_j - 1);
+                            __pyx_t_168 = __pyx_v_k;
+                            __pyx_t_169 = (__pyx_v_M - 1);
+                            __pyx_t_170 = (__pyx_v_j + 1);
+                            __pyx_t_171 = __pyx_v_k;
+                            __pyx_v_udy = (__pyx_v_uxy - (((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_166 * __pyx_v_u.strides[0]) ) + __pyx_t_167 * __pyx_v_u.strides[1]) ) + __pyx_t_168 * __pyx_v_u.strides[2]) ))) + (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_169 * __pyx_v_u.strides[0]) ) + __pyx_t_170 * __pyx_v_u.strides[1]) ) + __pyx_t_171 * __pyx_v_u.strides[2]) )))) / 2.0));
 
                             /* "lib/deconvolution.pyx":430
- *             for i in prange(M):
- *                 for k in range(3):
- *                     udx = u[i, 0, k] - u[i, 1, k]             # <<<<<<<<<<<<<<
- *                     utdx = ut[i, 0, k] - ut[i, 1, k]
+ *                     udy = uxy - (u[M-1, j-1, k] + u[M-1, j+1, k])/2
  * 
+ *                     utxy = ut[M-1, j, k]             # <<<<<<<<<<<<<<
+ *                     utdx = utxy - ut[M-2, j, k]
+ *                     utdy = utxy - (ut[M-1, j-1, k] + ut[M-1, j+1, k])/2
  */
-                            __pyx_t_166 = __pyx_v_i;
-                            __pyx_t_167 = 0;
-                            __pyx_t_168 = __pyx_v_k;
-                            __pyx_t_169 = __pyx_v_i;
-                            __pyx_t_170 = 1;
-                            __pyx_t_171 = __pyx_v_k;
-                            __pyx_v_udx = ((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_166 * __pyx_v_u.strides[0]) ) + __pyx_t_167 * __pyx_v_u.strides[1]) ) + __pyx_t_168 * __pyx_v_u.strides[2]) ))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_169 * __pyx_v_u.strides[0]) ) + __pyx_t_170 * __pyx_v_u.strides[1]) ) + __pyx_t_171 * __pyx_v_u.strides[2]) ))));
+                            __pyx_t_172 = (__pyx_v_M - 1);
+                            __pyx_t_173 = __pyx_v_j;
+                            __pyx_t_174 = __pyx_v_k;
+                            __pyx_v_utxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_172 * __pyx_v_ut.strides[0]) ) + __pyx_t_173 * __pyx_v_ut.strides[1]) ) + __pyx_t_174 * __pyx_v_ut.strides[2]) )));
 
                             /* "lib/deconvolution.pyx":431
- *                 for k in range(3):
- *                     udx = u[i, 0, k] - u[i, 1, k]
- *                     utdx = ut[i, 0, k] - ut[i, 1, k]             # <<<<<<<<<<<<<<
  * 
- *                     out[i, 0, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[i, 0, k]
+ *                     utxy = ut[M-1, j, k]
+ *                     utdx = utxy - ut[M-2, j, k]             # <<<<<<<<<<<<<<
+ *                     utdy = utxy - (ut[M-1, j-1, k] + ut[M-1, j+1, k])/2
+ * 
  */
-                            __pyx_t_172 = __pyx_v_i;
-                            __pyx_t_173 = 0;
-                            __pyx_t_174 = __pyx_v_k;
-                            __pyx_t_175 = __pyx_v_i;
-                            __pyx_t_176 = 1;
+                            __pyx_t_175 = (__pyx_v_M - 2);
+                            __pyx_t_176 = __pyx_v_j;
                             __pyx_t_177 = __pyx_v_k;
-                            __pyx_v_utdx = ((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_172 * __pyx_v_ut.strides[0]) ) + __pyx_t_173 * __pyx_v_ut.strides[1]) ) + __pyx_t_174 * __pyx_v_ut.strides[2]) ))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_175 * __pyx_v_ut.strides[0]) ) + __pyx_t_176 * __pyx_v_ut.strides[1]) ) + __pyx_t_177 * __pyx_v_ut.strides[2]) ))));
+                            __pyx_v_utdx = (__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_175 * __pyx_v_ut.strides[0]) ) + __pyx_t_176 * __pyx_v_ut.strides[1]) ) + __pyx_t_177 * __pyx_v_ut.strides[2]) ))));
 
-                            /* "lib/deconvolution.pyx":433
- *                     utdx = ut[i, 0, k] - ut[i, 1, k]
+                            /* "lib/deconvolution.pyx":432
+ *                     utxy = ut[M-1, j, k]
+ *                     utdx = utxy - ut[M-2, j, k]
+ *                     utdy = utxy - (ut[M-1, j-1, k] + ut[M-1, j+1, k])/2             # <<<<<<<<<<<<<<
  * 
- *                     out[i, 0, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[i, 0, k]             # <<<<<<<<<<<<<<
- * 
- * 
+ *                     out[M-1, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[M-1, j, k]
  */
-                            __pyx_t_178 = __pyx_v_i;
-                            __pyx_t_179 = 0;
+                            __pyx_t_178 = (__pyx_v_M - 1);
+                            __pyx_t_179 = (__pyx_v_j - 1);
                             __pyx_t_180 = __pyx_v_k;
-                            __pyx_t_181 = __pyx_v_i;
-                            __pyx_t_182 = 0;
+                            __pyx_t_181 = (__pyx_v_M - 1);
+                            __pyx_t_182 = (__pyx_v_j + 1);
                             __pyx_t_183 = __pyx_v_k;
-                            *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_181 * __pyx_v_out.strides[0]) ) + __pyx_t_182 * __pyx_v_out.strides[1]) ) + __pyx_t_183 * __pyx_v_out.strides[2]) )) = (((__pyx_v_udx / (fabsf(__pyx_v_udx) + __pyx_v_epsilon)) / ((fabsf(__pyx_v_utdx) + __pyx_v_epsilon) + __pyx_v_tau)) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_178 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_179 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_180 * __pyx_v_im_convo.strides[2]) )))));
+                            __pyx_v_utdy = (__pyx_v_utxy - (((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_178 * __pyx_v_ut.strides[0]) ) + __pyx_t_179 * __pyx_v_ut.strides[1]) ) + __pyx_t_180 * __pyx_v_ut.strides[2]) ))) + (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_181 * __pyx_v_ut.strides[0]) ) + __pyx_t_182 * __pyx_v_ut.strides[1]) ) + __pyx_t_183 * __pyx_v_ut.strides[2]) )))) / 2.0));
+
+                            /* "lib/deconvolution.pyx":434
+ *                     utdy = utxy - (ut[M-1, j-1, k] + ut[M-1, j+1, k])/2
+ * 
+ *                     out[M-1, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[M-1, j, k]             # <<<<<<<<<<<<<<
+ * 
+ *     # First column
+ */
+                            __pyx_t_184 = (__pyx_v_M - 1);
+                            __pyx_t_185 = __pyx_v_j;
+                            __pyx_t_186 = __pyx_v_k;
+                            __pyx_t_187 = (__pyx_v_M - 1);
+                            __pyx_t_188 = __pyx_v_j;
+                            __pyx_t_189 = __pyx_v_k;
+                            *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_187 * __pyx_v_out.strides[0]) ) + __pyx_t_188 * __pyx_v_out.strides[1]) ) + __pyx_t_189 * __pyx_v_out.strides[2]) )) = (((((__pyx_v_udx + __pyx_v_udy) / ((fabsf(__pyx_v_udx) + fabsf(__pyx_v_udy)) + __pyx_v_epsilon)) / (((fabsf(__pyx_v_utdx) + fabsf(__pyx_v_utdy)) + __pyx_v_epsilon) + __pyx_v_tau)) / 2.0) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_184 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_185 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_186 * __pyx_v_im_convo.strides[2]) )))));
                           }
                       }
                   }
@@ -7274,9 +7350,9 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
 
   /* "lib/deconvolution.pyx":437
  * 
- *     # Last column
+ *     # First column
  *     with parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
- *             for i in prange(M):
+ *             for i in prange(1, M-1):
  *                 for k in range(3):
  */
   {
@@ -7287,88 +7363,140 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
           #define unlikely(x) (x)
       #endif
       #ifdef _OPENMP
-      #pragma omp parallel  private(__pyx_t_104, __pyx_t_105, __pyx_t_184, __pyx_t_185, __pyx_t_186, __pyx_t_187, __pyx_t_188, __pyx_t_189, __pyx_t_190, __pyx_t_191, __pyx_t_192, __pyx_t_193, __pyx_t_194, __pyx_t_195, __pyx_t_196, __pyx_t_197, __pyx_t_198, __pyx_t_199, __pyx_t_200, __pyx_t_201, __pyx_t_5, __pyx_t_6) num_threads(__pyx_v_3lib_13deconvolution_CPU)
+      #pragma omp parallel  private(__pyx_t_1, __pyx_t_190, __pyx_t_191, __pyx_t_192, __pyx_t_193, __pyx_t_194, __pyx_t_195, __pyx_t_196, __pyx_t_197, __pyx_t_198, __pyx_t_199, __pyx_t_2, __pyx_t_200, __pyx_t_201, __pyx_t_202, __pyx_t_203, __pyx_t_204, __pyx_t_205, __pyx_t_206, __pyx_t_207, __pyx_t_208, __pyx_t_209, __pyx_t_210, __pyx_t_211, __pyx_t_212, __pyx_t_213, __pyx_t_214, __pyx_t_215, __pyx_t_216, __pyx_t_217, __pyx_t_218, __pyx_t_219, __pyx_t_3, __pyx_t_5) num_threads(__pyx_v_3lib_13deconvolution_CPU)
       #endif /* _OPENMP */
       {
 
           /* "lib/deconvolution.pyx":438
- *     # Last column
+ *     # First column
  *     with parallel(num_threads=CPU):
- *             for i in prange(M):             # <<<<<<<<<<<<<<
+ *             for i in prange(1, M-1):             # <<<<<<<<<<<<<<
  *                 for k in range(3):
- *                     udx = u[i, N-1, k] - u[i, N-2, k]
+ *                     uxy = u[i, 0, k]
  */
-          __pyx_t_104 = __pyx_v_M;
+          __pyx_t_2 = (__pyx_v_M - 1);
           if (1 == 0) abort();
           {
-              __pyx_t_5 = (__pyx_t_104 - 0 + 1 - 1/abs(1)) / 1;
-              if (__pyx_t_5 > 0)
+              __pyx_t_3 = (__pyx_t_2 - 1 + 1 - 1/abs(1)) / 1;
+              if (__pyx_t_3 > 0)
               {
                   #ifdef _OPENMP
-                  #pragma omp for firstprivate(__pyx_v_i) lastprivate(__pyx_v_i) lastprivate(__pyx_v_k) lastprivate(__pyx_v_udx) lastprivate(__pyx_v_utdx)
+                  #pragma omp for firstprivate(__pyx_v_i) lastprivate(__pyx_v_i) lastprivate(__pyx_v_k) lastprivate(__pyx_v_udx) lastprivate(__pyx_v_udy) lastprivate(__pyx_v_utdx) lastprivate(__pyx_v_utdy) lastprivate(__pyx_v_utxy) lastprivate(__pyx_v_uxy)
                   #endif /* _OPENMP */
-                  for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6++){
+                  for (__pyx_t_1 = 0; __pyx_t_1 < __pyx_t_3; __pyx_t_1++){
                       {
-                          __pyx_v_i = (int)(0 + 1 * __pyx_t_6);
+                          __pyx_v_i = (int)(1 + 1 * __pyx_t_1);
                           /* Initialize private variables to invalid values */
                           __pyx_v_k = ((int)0xbad0bad0);
                           __pyx_v_udx = ((float)__PYX_NAN());
+                          __pyx_v_udy = ((float)__PYX_NAN());
                           __pyx_v_utdx = ((float)__PYX_NAN());
+                          __pyx_v_utdy = ((float)__PYX_NAN());
+                          __pyx_v_utxy = ((float)__PYX_NAN());
+                          __pyx_v_uxy = ((float)__PYX_NAN());
 
                           /* "lib/deconvolution.pyx":439
  *     with parallel(num_threads=CPU):
- *             for i in prange(M):
+ *             for i in prange(1, M-1):
  *                 for k in range(3):             # <<<<<<<<<<<<<<
- *                     udx = u[i, N-1, k] - u[i, N-2, k]
- *                     utdx = ut[i, N-1, k] - ut[i, N-2, k]
+ *                     uxy = u[i, 0, k]
+ *                     udx = uxy - u[i, 1, k]
  */
-                          for (__pyx_t_105 = 0; __pyx_t_105 < 3; __pyx_t_105+=1) {
-                            __pyx_v_k = __pyx_t_105;
+                          for (__pyx_t_5 = 0; __pyx_t_5 < 3; __pyx_t_5+=1) {
+                            __pyx_v_k = __pyx_t_5;
 
                             /* "lib/deconvolution.pyx":440
- *             for i in prange(M):
+ *             for i in prange(1, M-1):
  *                 for k in range(3):
- *                     udx = u[i, N-1, k] - u[i, N-2, k]             # <<<<<<<<<<<<<<
- *                     utdx = ut[i, N-1, k] - ut[i, N-2, k]
- * 
+ *                     uxy = u[i, 0, k]             # <<<<<<<<<<<<<<
+ *                     udx = uxy - u[i, 1, k]
+ *                     udy = uxy - (u[i-1, 0, k] + u[i+1, 0, k])/2
  */
-                            __pyx_t_184 = __pyx_v_i;
-                            __pyx_t_185 = (__pyx_v_N - 1);
-                            __pyx_t_186 = __pyx_v_k;
-                            __pyx_t_187 = __pyx_v_i;
-                            __pyx_t_188 = (__pyx_v_N - 2);
-                            __pyx_t_189 = __pyx_v_k;
-                            __pyx_v_udx = ((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_184 * __pyx_v_u.strides[0]) ) + __pyx_t_185 * __pyx_v_u.strides[1]) ) + __pyx_t_186 * __pyx_v_u.strides[2]) ))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_187 * __pyx_v_u.strides[0]) ) + __pyx_t_188 * __pyx_v_u.strides[1]) ) + __pyx_t_189 * __pyx_v_u.strides[2]) ))));
+                            __pyx_t_190 = __pyx_v_i;
+                            __pyx_t_191 = 0;
+                            __pyx_t_192 = __pyx_v_k;
+                            __pyx_v_uxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_190 * __pyx_v_u.strides[0]) ) + __pyx_t_191 * __pyx_v_u.strides[1]) ) + __pyx_t_192 * __pyx_v_u.strides[2]) )));
 
                             /* "lib/deconvolution.pyx":441
  *                 for k in range(3):
- *                     udx = u[i, N-1, k] - u[i, N-2, k]
- *                     utdx = ut[i, N-1, k] - ut[i, N-2, k]             # <<<<<<<<<<<<<<
+ *                     uxy = u[i, 0, k]
+ *                     udx = uxy - u[i, 1, k]             # <<<<<<<<<<<<<<
+ *                     udy = uxy - (u[i-1, 0, k] + u[i+1, 0, k])/2
  * 
- *                     out[i, N-1, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[i, N-1, k]
  */
-                            __pyx_t_190 = __pyx_v_i;
-                            __pyx_t_191 = (__pyx_v_N - 1);
-                            __pyx_t_192 = __pyx_v_k;
                             __pyx_t_193 = __pyx_v_i;
-                            __pyx_t_194 = (__pyx_v_N - 2);
+                            __pyx_t_194 = 1;
                             __pyx_t_195 = __pyx_v_k;
-                            __pyx_v_utdx = ((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_190 * __pyx_v_ut.strides[0]) ) + __pyx_t_191 * __pyx_v_ut.strides[1]) ) + __pyx_t_192 * __pyx_v_ut.strides[2]) ))) - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_193 * __pyx_v_ut.strides[0]) ) + __pyx_t_194 * __pyx_v_ut.strides[1]) ) + __pyx_t_195 * __pyx_v_ut.strides[2]) ))));
+                            __pyx_v_udx = (__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_193 * __pyx_v_u.strides[0]) ) + __pyx_t_194 * __pyx_v_u.strides[1]) ) + __pyx_t_195 * __pyx_v_u.strides[2]) ))));
 
-                            /* "lib/deconvolution.pyx":443
- *                     utdx = ut[i, N-1, k] - ut[i, N-2, k]
+                            /* "lib/deconvolution.pyx":442
+ *                     uxy = u[i, 0, k]
+ *                     udx = uxy - u[i, 1, k]
+ *                     udy = uxy - (u[i-1, 0, k] + u[i+1, 0, k])/2             # <<<<<<<<<<<<<<
  * 
- *                     out[i, N-1, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[i, N-1, k]             # <<<<<<<<<<<<<<
+ *                     utxy = ut[i, 0, k]
+ */
+                            __pyx_t_196 = (__pyx_v_i - 1);
+                            __pyx_t_197 = 0;
+                            __pyx_t_198 = __pyx_v_k;
+                            __pyx_t_199 = (__pyx_v_i + 1);
+                            __pyx_t_200 = 0;
+                            __pyx_t_201 = __pyx_v_k;
+                            __pyx_v_udy = (__pyx_v_uxy - (((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_196 * __pyx_v_u.strides[0]) ) + __pyx_t_197 * __pyx_v_u.strides[1]) ) + __pyx_t_198 * __pyx_v_u.strides[2]) ))) + (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_199 * __pyx_v_u.strides[0]) ) + __pyx_t_200 * __pyx_v_u.strides[1]) ) + __pyx_t_201 * __pyx_v_u.strides[2]) )))) / 2.0));
+
+                            /* "lib/deconvolution.pyx":444
+ *                     udy = uxy - (u[i-1, 0, k] + u[i+1, 0, k])/2
  * 
+ *                     utxy = ut[i, 0, k]             # <<<<<<<<<<<<<<
+ *                     utdx = utxy - ut[i, 1, k]
+ *                     utdy = utxy - (ut[i-1, 0, k] + ut[i+1, 0, k])/2
+ */
+                            __pyx_t_202 = __pyx_v_i;
+                            __pyx_t_203 = 0;
+                            __pyx_t_204 = __pyx_v_k;
+                            __pyx_v_utxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_202 * __pyx_v_ut.strides[0]) ) + __pyx_t_203 * __pyx_v_ut.strides[1]) ) + __pyx_t_204 * __pyx_v_ut.strides[2]) )));
+
+                            /* "lib/deconvolution.pyx":445
+ * 
+ *                     utxy = ut[i, 0, k]
+ *                     utdx = utxy - ut[i, 1, k]             # <<<<<<<<<<<<<<
+ *                     utdy = utxy - (ut[i-1, 0, k] + ut[i+1, 0, k])/2
  * 
  */
-                            __pyx_t_196 = __pyx_v_i;
-                            __pyx_t_197 = (__pyx_v_N - 1);
-                            __pyx_t_198 = __pyx_v_k;
-                            __pyx_t_199 = __pyx_v_i;
-                            __pyx_t_200 = (__pyx_v_N - 1);
-                            __pyx_t_201 = __pyx_v_k;
-                            *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_199 * __pyx_v_out.strides[0]) ) + __pyx_t_200 * __pyx_v_out.strides[1]) ) + __pyx_t_201 * __pyx_v_out.strides[2]) )) = (((__pyx_v_udx / (fabsf(__pyx_v_udx) + __pyx_v_epsilon)) / ((fabsf(__pyx_v_utdx) + __pyx_v_epsilon) + __pyx_v_tau)) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_196 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_197 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_198 * __pyx_v_im_convo.strides[2]) )))));
+                            __pyx_t_205 = __pyx_v_i;
+                            __pyx_t_206 = 1;
+                            __pyx_t_207 = __pyx_v_k;
+                            __pyx_v_utdx = (__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_205 * __pyx_v_ut.strides[0]) ) + __pyx_t_206 * __pyx_v_ut.strides[1]) ) + __pyx_t_207 * __pyx_v_ut.strides[2]) ))));
+
+                            /* "lib/deconvolution.pyx":446
+ *                     utxy = ut[i, 0, k]
+ *                     utdx = utxy - ut[i, 1, k]
+ *                     utdy = utxy - (ut[i-1, 0, k] + ut[i+1, 0, k])/2             # <<<<<<<<<<<<<<
+ * 
+ *                     out[i, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[i, 0, k]
+ */
+                            __pyx_t_208 = (__pyx_v_i - 1);
+                            __pyx_t_209 = 0;
+                            __pyx_t_210 = __pyx_v_k;
+                            __pyx_t_211 = (__pyx_v_i + 1);
+                            __pyx_t_212 = 0;
+                            __pyx_t_213 = __pyx_v_k;
+                            __pyx_v_utdy = (__pyx_v_utxy - (((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_208 * __pyx_v_ut.strides[0]) ) + __pyx_t_209 * __pyx_v_ut.strides[1]) ) + __pyx_t_210 * __pyx_v_ut.strides[2]) ))) + (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_211 * __pyx_v_ut.strides[0]) ) + __pyx_t_212 * __pyx_v_ut.strides[1]) ) + __pyx_t_213 * __pyx_v_ut.strides[2]) )))) / 2.0));
+
+                            /* "lib/deconvolution.pyx":448
+ *                     utdy = utxy - (ut[i-1, 0, k] + ut[i+1, 0, k])/2
+ * 
+ *                     out[i, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[i, 0, k]             # <<<<<<<<<<<<<<
+ * 
+ *     # Last column
+ */
+                            __pyx_t_214 = __pyx_v_i;
+                            __pyx_t_215 = 0;
+                            __pyx_t_216 = __pyx_v_k;
+                            __pyx_t_217 = __pyx_v_i;
+                            __pyx_t_218 = 0;
+                            __pyx_t_219 = __pyx_v_k;
+                            *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_217 * __pyx_v_out.strides[0]) ) + __pyx_t_218 * __pyx_v_out.strides[1]) ) + __pyx_t_219 * __pyx_v_out.strides[2]) )) = (((((__pyx_v_udx + __pyx_v_udy) / ((fabsf(__pyx_v_udx) + fabsf(__pyx_v_udy)) + __pyx_v_epsilon)) / (((fabsf(__pyx_v_utdx) + fabsf(__pyx_v_utdy)) + __pyx_v_epsilon) + __pyx_v_tau)) / 2.0) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_214 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_215 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_216 * __pyx_v_im_convo.strides[2]) )))));
                           }
                       }
                   }
@@ -7383,7 +7511,562 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
       #define unlikely(x) __builtin_expect(!!(x), 0)
   #endif
 
-  /* "lib/deconvolution.pyx":314
+  /* "lib/deconvolution.pyx":451
+ * 
+ *     # Last column
+ *     with parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
+ *             for i in prange(1, M-1):
+ *                 for k in range(3):
+ */
+  {
+      #if ((defined(__APPLE__) || defined(__OSX__)) && (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)))))
+          #undef likely
+          #undef unlikely
+          #define likely(x)   (x)
+          #define unlikely(x) (x)
+      #endif
+      #ifdef _OPENMP
+      #pragma omp parallel  private(__pyx_t_1, __pyx_t_2, __pyx_t_220, __pyx_t_221, __pyx_t_222, __pyx_t_223, __pyx_t_224, __pyx_t_225, __pyx_t_226, __pyx_t_227, __pyx_t_228, __pyx_t_229, __pyx_t_230, __pyx_t_231, __pyx_t_232, __pyx_t_233, __pyx_t_234, __pyx_t_235, __pyx_t_236, __pyx_t_237, __pyx_t_238, __pyx_t_239, __pyx_t_240, __pyx_t_241, __pyx_t_242, __pyx_t_243, __pyx_t_244, __pyx_t_245, __pyx_t_246, __pyx_t_247, __pyx_t_248, __pyx_t_249, __pyx_t_3, __pyx_t_5) num_threads(__pyx_v_3lib_13deconvolution_CPU)
+      #endif /* _OPENMP */
+      {
+
+          /* "lib/deconvolution.pyx":452
+ *     # Last column
+ *     with parallel(num_threads=CPU):
+ *             for i in prange(1, M-1):             # <<<<<<<<<<<<<<
+ *                 for k in range(3):
+ *                     uxy = u[i, N-1, k]
+ */
+          __pyx_t_3 = (__pyx_v_M - 1);
+          if (1 == 0) abort();
+          {
+              __pyx_t_2 = (__pyx_t_3 - 1 + 1 - 1/abs(1)) / 1;
+              if (__pyx_t_2 > 0)
+              {
+                  #ifdef _OPENMP
+                  #pragma omp for firstprivate(__pyx_v_i) lastprivate(__pyx_v_i) lastprivate(__pyx_v_k) lastprivate(__pyx_v_udx) lastprivate(__pyx_v_udy) lastprivate(__pyx_v_utdx) lastprivate(__pyx_v_utdy) lastprivate(__pyx_v_utxy) lastprivate(__pyx_v_uxy)
+                  #endif /* _OPENMP */
+                  for (__pyx_t_1 = 0; __pyx_t_1 < __pyx_t_2; __pyx_t_1++){
+                      {
+                          __pyx_v_i = (int)(1 + 1 * __pyx_t_1);
+                          /* Initialize private variables to invalid values */
+                          __pyx_v_k = ((int)0xbad0bad0);
+                          __pyx_v_udx = ((float)__PYX_NAN());
+                          __pyx_v_udy = ((float)__PYX_NAN());
+                          __pyx_v_utdx = ((float)__PYX_NAN());
+                          __pyx_v_utdy = ((float)__PYX_NAN());
+                          __pyx_v_utxy = ((float)__PYX_NAN());
+                          __pyx_v_uxy = ((float)__PYX_NAN());
+
+                          /* "lib/deconvolution.pyx":453
+ *     with parallel(num_threads=CPU):
+ *             for i in prange(1, M-1):
+ *                 for k in range(3):             # <<<<<<<<<<<<<<
+ *                     uxy = u[i, N-1, k]
+ *                     udx = uxy - u[i, N-2, k]
+ */
+                          for (__pyx_t_5 = 0; __pyx_t_5 < 3; __pyx_t_5+=1) {
+                            __pyx_v_k = __pyx_t_5;
+
+                            /* "lib/deconvolution.pyx":454
+ *             for i in prange(1, M-1):
+ *                 for k in range(3):
+ *                     uxy = u[i, N-1, k]             # <<<<<<<<<<<<<<
+ *                     udx = uxy - u[i, N-2, k]
+ *                     udy = uxy - (u[i-1, N-1, k] + u[i+1, N-1, k])/2
+ */
+                            __pyx_t_220 = __pyx_v_i;
+                            __pyx_t_221 = (__pyx_v_N - 1);
+                            __pyx_t_222 = __pyx_v_k;
+                            __pyx_v_uxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_220 * __pyx_v_u.strides[0]) ) + __pyx_t_221 * __pyx_v_u.strides[1]) ) + __pyx_t_222 * __pyx_v_u.strides[2]) )));
+
+                            /* "lib/deconvolution.pyx":455
+ *                 for k in range(3):
+ *                     uxy = u[i, N-1, k]
+ *                     udx = uxy - u[i, N-2, k]             # <<<<<<<<<<<<<<
+ *                     udy = uxy - (u[i-1, N-1, k] + u[i+1, N-1, k])/2
+ * 
+ */
+                            __pyx_t_223 = __pyx_v_i;
+                            __pyx_t_224 = (__pyx_v_N - 2);
+                            __pyx_t_225 = __pyx_v_k;
+                            __pyx_v_udx = (__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_223 * __pyx_v_u.strides[0]) ) + __pyx_t_224 * __pyx_v_u.strides[1]) ) + __pyx_t_225 * __pyx_v_u.strides[2]) ))));
+
+                            /* "lib/deconvolution.pyx":456
+ *                     uxy = u[i, N-1, k]
+ *                     udx = uxy - u[i, N-2, k]
+ *                     udy = uxy - (u[i-1, N-1, k] + u[i+1, N-1, k])/2             # <<<<<<<<<<<<<<
+ * 
+ *                     utxy = ut[i, N-1, k]
+ */
+                            __pyx_t_226 = (__pyx_v_i - 1);
+                            __pyx_t_227 = (__pyx_v_N - 1);
+                            __pyx_t_228 = __pyx_v_k;
+                            __pyx_t_229 = (__pyx_v_i + 1);
+                            __pyx_t_230 = (__pyx_v_N - 1);
+                            __pyx_t_231 = __pyx_v_k;
+                            __pyx_v_udy = (__pyx_v_uxy - (((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_226 * __pyx_v_u.strides[0]) ) + __pyx_t_227 * __pyx_v_u.strides[1]) ) + __pyx_t_228 * __pyx_v_u.strides[2]) ))) + (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_229 * __pyx_v_u.strides[0]) ) + __pyx_t_230 * __pyx_v_u.strides[1]) ) + __pyx_t_231 * __pyx_v_u.strides[2]) )))) / 2.0));
+
+                            /* "lib/deconvolution.pyx":458
+ *                     udy = uxy - (u[i-1, N-1, k] + u[i+1, N-1, k])/2
+ * 
+ *                     utxy = ut[i, N-1, k]             # <<<<<<<<<<<<<<
+ *                     utdx = utxy - ut[i, N-2, k]
+ *                     utdy = utxy - (ut[i-1, N-1, k] + ut[i+1, N-1, k])/2
+ */
+                            __pyx_t_232 = __pyx_v_i;
+                            __pyx_t_233 = (__pyx_v_N - 1);
+                            __pyx_t_234 = __pyx_v_k;
+                            __pyx_v_utxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_232 * __pyx_v_ut.strides[0]) ) + __pyx_t_233 * __pyx_v_ut.strides[1]) ) + __pyx_t_234 * __pyx_v_ut.strides[2]) )));
+
+                            /* "lib/deconvolution.pyx":459
+ * 
+ *                     utxy = ut[i, N-1, k]
+ *                     utdx = utxy - ut[i, N-2, k]             # <<<<<<<<<<<<<<
+ *                     utdy = utxy - (ut[i-1, N-1, k] + ut[i+1, N-1, k])/2
+ * 
+ */
+                            __pyx_t_235 = __pyx_v_i;
+                            __pyx_t_236 = (__pyx_v_N - 2);
+                            __pyx_t_237 = __pyx_v_k;
+                            __pyx_v_utdx = (__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_235 * __pyx_v_ut.strides[0]) ) + __pyx_t_236 * __pyx_v_ut.strides[1]) ) + __pyx_t_237 * __pyx_v_ut.strides[2]) ))));
+
+                            /* "lib/deconvolution.pyx":460
+ *                     utxy = ut[i, N-1, k]
+ *                     utdx = utxy - ut[i, N-2, k]
+ *                     utdy = utxy - (ut[i-1, N-1, k] + ut[i+1, N-1, k])/2             # <<<<<<<<<<<<<<
+ * 
+ *                     out[i, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[i, N-1, k]
+ */
+                            __pyx_t_238 = (__pyx_v_i - 1);
+                            __pyx_t_239 = (__pyx_v_N - 1);
+                            __pyx_t_240 = __pyx_v_k;
+                            __pyx_t_241 = (__pyx_v_i + 1);
+                            __pyx_t_242 = (__pyx_v_N - 1);
+                            __pyx_t_243 = __pyx_v_k;
+                            __pyx_v_utdy = (__pyx_v_utxy - (((*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_238 * __pyx_v_ut.strides[0]) ) + __pyx_t_239 * __pyx_v_ut.strides[1]) ) + __pyx_t_240 * __pyx_v_ut.strides[2]) ))) + (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_241 * __pyx_v_ut.strides[0]) ) + __pyx_t_242 * __pyx_v_ut.strides[1]) ) + __pyx_t_243 * __pyx_v_ut.strides[2]) )))) / 2.0));
+
+                            /* "lib/deconvolution.pyx":462
+ *                     utdy = utxy - (ut[i-1, N-1, k] + ut[i+1, N-1, k])/2
+ * 
+ *                     out[i, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[i, N-1, k]             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+                            __pyx_t_244 = __pyx_v_i;
+                            __pyx_t_245 = (__pyx_v_N - 1);
+                            __pyx_t_246 = __pyx_v_k;
+                            __pyx_t_247 = __pyx_v_i;
+                            __pyx_t_248 = (__pyx_v_N - 1);
+                            __pyx_t_249 = __pyx_v_k;
+                            *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_247 * __pyx_v_out.strides[0]) ) + __pyx_t_248 * __pyx_v_out.strides[1]) ) + __pyx_t_249 * __pyx_v_out.strides[2]) )) = (((((__pyx_v_udx + __pyx_v_udy) / ((fabsf(__pyx_v_udx) + fabsf(__pyx_v_udy)) + __pyx_v_epsilon)) / (((fabsf(__pyx_v_utdx) + fabsf(__pyx_v_utdy)) + __pyx_v_epsilon) + __pyx_v_tau)) / 2.0) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_244 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_245 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_246 * __pyx_v_im_convo.strides[2]) )))));
+                          }
+                      }
+                  }
+              }
+          }
+      }
+  }
+  #if ((defined(__APPLE__) || defined(__OSX__)) && (defined(__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)))))
+      #undef likely
+      #undef unlikely
+      #define likely(x)   __builtin_expect(!!(x), 1)
+      #define unlikely(x) __builtin_expect(!!(x), 0)
+  #endif
+
+  /* "lib/deconvolution.pyx":466
+ * 
+ *     # North-West corder
+ *     for k in range(3):             # <<<<<<<<<<<<<<
+ *         uxy = u[0, 0, k]
+ *         udx = uxy - u[0, 1, k]
+ */
+  for (__pyx_t_5 = 0; __pyx_t_5 < 3; __pyx_t_5+=1) {
+    __pyx_v_k = __pyx_t_5;
+
+    /* "lib/deconvolution.pyx":467
+ *     # North-West corder
+ *     for k in range(3):
+ *         uxy = u[0, 0, k]             # <<<<<<<<<<<<<<
+ *         udx = uxy - u[0, 1, k]
+ *         udy = uxy - u[1, 0, k]
+ */
+    __pyx_t_250 = 0;
+    __pyx_t_251 = 0;
+    __pyx_t_252 = __pyx_v_k;
+    __pyx_v_uxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_250 * __pyx_v_u.strides[0]) ) + __pyx_t_251 * __pyx_v_u.strides[1]) ) + __pyx_t_252 * __pyx_v_u.strides[2]) )));
+
+    /* "lib/deconvolution.pyx":468
+ *     for k in range(3):
+ *         uxy = u[0, 0, k]
+ *         udx = uxy - u[0, 1, k]             # <<<<<<<<<<<<<<
+ *         udy = uxy - u[1, 0, k]
+ * 
+ */
+    __pyx_t_253 = 0;
+    __pyx_t_254 = 1;
+    __pyx_t_255 = __pyx_v_k;
+    __pyx_v_udx = (__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_253 * __pyx_v_u.strides[0]) ) + __pyx_t_254 * __pyx_v_u.strides[1]) ) + __pyx_t_255 * __pyx_v_u.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":469
+ *         uxy = u[0, 0, k]
+ *         udx = uxy - u[0, 1, k]
+ *         udy = uxy - u[1, 0, k]             # <<<<<<<<<<<<<<
+ * 
+ *         utxy = ut[0, 0, k]
+ */
+    __pyx_t_256 = 1;
+    __pyx_t_257 = 0;
+    __pyx_t_258 = __pyx_v_k;
+    __pyx_v_udy = (__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_256 * __pyx_v_u.strides[0]) ) + __pyx_t_257 * __pyx_v_u.strides[1]) ) + __pyx_t_258 * __pyx_v_u.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":471
+ *         udy = uxy - u[1, 0, k]
+ * 
+ *         utxy = ut[0, 0, k]             # <<<<<<<<<<<<<<
+ *         utdx = utxy - ut[0, 1, k]
+ *         utdy = utxy - ut[1, 0, k]
+ */
+    __pyx_t_259 = 0;
+    __pyx_t_260 = 0;
+    __pyx_t_261 = __pyx_v_k;
+    __pyx_v_utxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_259 * __pyx_v_ut.strides[0]) ) + __pyx_t_260 * __pyx_v_ut.strides[1]) ) + __pyx_t_261 * __pyx_v_ut.strides[2]) )));
+
+    /* "lib/deconvolution.pyx":472
+ * 
+ *         utxy = ut[0, 0, k]
+ *         utdx = utxy - ut[0, 1, k]             # <<<<<<<<<<<<<<
+ *         utdy = utxy - ut[1, 0, k]
+ * 
+ */
+    __pyx_t_262 = 0;
+    __pyx_t_263 = 1;
+    __pyx_t_264 = __pyx_v_k;
+    __pyx_v_utdx = (__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_262 * __pyx_v_ut.strides[0]) ) + __pyx_t_263 * __pyx_v_ut.strides[1]) ) + __pyx_t_264 * __pyx_v_ut.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":473
+ *         utxy = ut[0, 0, k]
+ *         utdx = utxy - ut[0, 1, k]
+ *         utdy = utxy - ut[1, 0, k]             # <<<<<<<<<<<<<<
+ * 
+ *         out[0, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[0, 0, k]
+ */
+    __pyx_t_265 = 1;
+    __pyx_t_266 = 0;
+    __pyx_t_267 = __pyx_v_k;
+    __pyx_v_utdy = (__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_265 * __pyx_v_ut.strides[0]) ) + __pyx_t_266 * __pyx_v_ut.strides[1]) ) + __pyx_t_267 * __pyx_v_ut.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":475
+ *         utdy = utxy - ut[1, 0, k]
+ * 
+ *         out[0, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[0, 0, k]             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+    __pyx_t_268 = 0;
+    __pyx_t_269 = 0;
+    __pyx_t_270 = __pyx_v_k;
+    __pyx_t_271 = 0;
+    __pyx_t_272 = 0;
+    __pyx_t_273 = __pyx_v_k;
+    *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_271 * __pyx_v_out.strides[0]) ) + __pyx_t_272 * __pyx_v_out.strides[1]) ) + __pyx_t_273 * __pyx_v_out.strides[2]) )) = (((((__pyx_v_udx + __pyx_v_udy) / ((fabsf(__pyx_v_udx) + fabsf(__pyx_v_udy)) + __pyx_v_epsilon)) / (((fabsf(__pyx_v_utdx) + fabsf(__pyx_v_utdy)) + __pyx_v_epsilon) + __pyx_v_tau)) / 2.0) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_268 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_269 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_270 * __pyx_v_im_convo.strides[2]) )))));
+  }
+
+  /* "lib/deconvolution.pyx":479
+ * 
+ *     # North-East corner
+ *     for k in range(3):             # <<<<<<<<<<<<<<
+ *         uxy = u[0, N-1, k]
+ *         udx = uxy - u[0, N-2, k]
+ */
+  for (__pyx_t_5 = 0; __pyx_t_5 < 3; __pyx_t_5+=1) {
+    __pyx_v_k = __pyx_t_5;
+
+    /* "lib/deconvolution.pyx":480
+ *     # North-East corner
+ *     for k in range(3):
+ *         uxy = u[0, N-1, k]             # <<<<<<<<<<<<<<
+ *         udx = uxy - u[0, N-2, k]
+ *         udy = uxy - u[1, N-1, k]
+ */
+    __pyx_t_274 = 0;
+    __pyx_t_275 = (__pyx_v_N - 1);
+    __pyx_t_276 = __pyx_v_k;
+    __pyx_v_uxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_274 * __pyx_v_u.strides[0]) ) + __pyx_t_275 * __pyx_v_u.strides[1]) ) + __pyx_t_276 * __pyx_v_u.strides[2]) )));
+
+    /* "lib/deconvolution.pyx":481
+ *     for k in range(3):
+ *         uxy = u[0, N-1, k]
+ *         udx = uxy - u[0, N-2, k]             # <<<<<<<<<<<<<<
+ *         udy = uxy - u[1, N-1, k]
+ * 
+ */
+    __pyx_t_277 = 0;
+    __pyx_t_278 = (__pyx_v_N - 2);
+    __pyx_t_279 = __pyx_v_k;
+    __pyx_v_udx = (__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_277 * __pyx_v_u.strides[0]) ) + __pyx_t_278 * __pyx_v_u.strides[1]) ) + __pyx_t_279 * __pyx_v_u.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":482
+ *         uxy = u[0, N-1, k]
+ *         udx = uxy - u[0, N-2, k]
+ *         udy = uxy - u[1, N-1, k]             # <<<<<<<<<<<<<<
+ * 
+ *         utxy = ut[0, N-1, k]
+ */
+    __pyx_t_280 = 1;
+    __pyx_t_281 = (__pyx_v_N - 1);
+    __pyx_t_282 = __pyx_v_k;
+    __pyx_v_udy = (__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_280 * __pyx_v_u.strides[0]) ) + __pyx_t_281 * __pyx_v_u.strides[1]) ) + __pyx_t_282 * __pyx_v_u.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":484
+ *         udy = uxy - u[1, N-1, k]
+ * 
+ *         utxy = ut[0, N-1, k]             # <<<<<<<<<<<<<<
+ *         utdx = utxy - ut[0, N-2, k]
+ *         utdy = utxy - ut[1, N-1, k]
+ */
+    __pyx_t_283 = 0;
+    __pyx_t_284 = (__pyx_v_N - 1);
+    __pyx_t_285 = __pyx_v_k;
+    __pyx_v_utxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_283 * __pyx_v_ut.strides[0]) ) + __pyx_t_284 * __pyx_v_ut.strides[1]) ) + __pyx_t_285 * __pyx_v_ut.strides[2]) )));
+
+    /* "lib/deconvolution.pyx":485
+ * 
+ *         utxy = ut[0, N-1, k]
+ *         utdx = utxy - ut[0, N-2, k]             # <<<<<<<<<<<<<<
+ *         utdy = utxy - ut[1, N-1, k]
+ * 
+ */
+    __pyx_t_286 = 0;
+    __pyx_t_287 = (__pyx_v_N - 2);
+    __pyx_t_288 = __pyx_v_k;
+    __pyx_v_utdx = (__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_286 * __pyx_v_ut.strides[0]) ) + __pyx_t_287 * __pyx_v_ut.strides[1]) ) + __pyx_t_288 * __pyx_v_ut.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":486
+ *         utxy = ut[0, N-1, k]
+ *         utdx = utxy - ut[0, N-2, k]
+ *         utdy = utxy - ut[1, N-1, k]             # <<<<<<<<<<<<<<
+ * 
+ *         out[0, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[0, N-1, k]
+ */
+    __pyx_t_289 = 1;
+    __pyx_t_290 = (__pyx_v_N - 1);
+    __pyx_t_291 = __pyx_v_k;
+    __pyx_v_utdy = (__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_289 * __pyx_v_ut.strides[0]) ) + __pyx_t_290 * __pyx_v_ut.strides[1]) ) + __pyx_t_291 * __pyx_v_ut.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":488
+ *         utdy = utxy - ut[1, N-1, k]
+ * 
+ *         out[0, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[0, N-1, k]             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+    __pyx_t_292 = 0;
+    __pyx_t_293 = (__pyx_v_N - 1);
+    __pyx_t_294 = __pyx_v_k;
+    __pyx_t_295 = 0;
+    __pyx_t_296 = (__pyx_v_N - 1);
+    __pyx_t_297 = __pyx_v_k;
+    *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_295 * __pyx_v_out.strides[0]) ) + __pyx_t_296 * __pyx_v_out.strides[1]) ) + __pyx_t_297 * __pyx_v_out.strides[2]) )) = (((((__pyx_v_udx + __pyx_v_udy) / ((fabsf(__pyx_v_udx) + fabsf(__pyx_v_udy)) + __pyx_v_epsilon)) / (((fabsf(__pyx_v_utdx) + fabsf(__pyx_v_utdy)) + __pyx_v_epsilon) + __pyx_v_tau)) / 2.0) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_292 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_293 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_294 * __pyx_v_im_convo.strides[2]) )))));
+  }
+
+  /* "lib/deconvolution.pyx":492
+ * 
+ *     # South-East
+ *     for k in range(3):             # <<<<<<<<<<<<<<
+ *         uxy = u[M-1, N-1, k]
+ *         udx = uxy - u[M-1, N-2, k]
+ */
+  for (__pyx_t_5 = 0; __pyx_t_5 < 3; __pyx_t_5+=1) {
+    __pyx_v_k = __pyx_t_5;
+
+    /* "lib/deconvolution.pyx":493
+ *     # South-East
+ *     for k in range(3):
+ *         uxy = u[M-1, N-1, k]             # <<<<<<<<<<<<<<
+ *         udx = uxy - u[M-1, N-2, k]
+ *         udy = uxy - u[M-2, N-1, k]
+ */
+    __pyx_t_298 = (__pyx_v_M - 1);
+    __pyx_t_299 = (__pyx_v_N - 1);
+    __pyx_t_300 = __pyx_v_k;
+    __pyx_v_uxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_298 * __pyx_v_u.strides[0]) ) + __pyx_t_299 * __pyx_v_u.strides[1]) ) + __pyx_t_300 * __pyx_v_u.strides[2]) )));
+
+    /* "lib/deconvolution.pyx":494
+ *     for k in range(3):
+ *         uxy = u[M-1, N-1, k]
+ *         udx = uxy - u[M-1, N-2, k]             # <<<<<<<<<<<<<<
+ *         udy = uxy - u[M-2, N-1, k]
+ * 
+ */
+    __pyx_t_301 = (__pyx_v_M - 1);
+    __pyx_t_302 = (__pyx_v_N - 2);
+    __pyx_t_303 = __pyx_v_k;
+    __pyx_v_udx = (__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_301 * __pyx_v_u.strides[0]) ) + __pyx_t_302 * __pyx_v_u.strides[1]) ) + __pyx_t_303 * __pyx_v_u.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":495
+ *         uxy = u[M-1, N-1, k]
+ *         udx = uxy - u[M-1, N-2, k]
+ *         udy = uxy - u[M-2, N-1, k]             # <<<<<<<<<<<<<<
+ * 
+ *         utxy = ut[M-1, N-1, k]
+ */
+    __pyx_t_304 = (__pyx_v_M - 2);
+    __pyx_t_305 = (__pyx_v_N - 1);
+    __pyx_t_306 = __pyx_v_k;
+    __pyx_v_udy = (__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_304 * __pyx_v_u.strides[0]) ) + __pyx_t_305 * __pyx_v_u.strides[1]) ) + __pyx_t_306 * __pyx_v_u.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":497
+ *         udy = uxy - u[M-2, N-1, k]
+ * 
+ *         utxy = ut[M-1, N-1, k]             # <<<<<<<<<<<<<<
+ *         utdx = utxy - ut[M-1, N-2, k]
+ *         utdy = utxy - ut[M-2, N-1, k]
+ */
+    __pyx_t_307 = (__pyx_v_M - 1);
+    __pyx_t_308 = (__pyx_v_N - 1);
+    __pyx_t_309 = __pyx_v_k;
+    __pyx_v_utxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_307 * __pyx_v_ut.strides[0]) ) + __pyx_t_308 * __pyx_v_ut.strides[1]) ) + __pyx_t_309 * __pyx_v_ut.strides[2]) )));
+
+    /* "lib/deconvolution.pyx":498
+ * 
+ *         utxy = ut[M-1, N-1, k]
+ *         utdx = utxy - ut[M-1, N-2, k]             # <<<<<<<<<<<<<<
+ *         utdy = utxy - ut[M-2, N-1, k]
+ * 
+ */
+    __pyx_t_310 = (__pyx_v_M - 1);
+    __pyx_t_311 = (__pyx_v_N - 2);
+    __pyx_t_312 = __pyx_v_k;
+    __pyx_v_utdx = (__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_310 * __pyx_v_ut.strides[0]) ) + __pyx_t_311 * __pyx_v_ut.strides[1]) ) + __pyx_t_312 * __pyx_v_ut.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":499
+ *         utxy = ut[M-1, N-1, k]
+ *         utdx = utxy - ut[M-1, N-2, k]
+ *         utdy = utxy - ut[M-2, N-1, k]             # <<<<<<<<<<<<<<
+ * 
+ *         out[M-1, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[M-1, N-1, k]
+ */
+    __pyx_t_313 = (__pyx_v_M - 2);
+    __pyx_t_314 = (__pyx_v_N - 1);
+    __pyx_t_315 = __pyx_v_k;
+    __pyx_v_utdy = (__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_313 * __pyx_v_ut.strides[0]) ) + __pyx_t_314 * __pyx_v_ut.strides[1]) ) + __pyx_t_315 * __pyx_v_ut.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":501
+ *         utdy = utxy - ut[M-2, N-1, k]
+ * 
+ *         out[M-1, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[M-1, N-1, k]             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+    __pyx_t_316 = (__pyx_v_M - 1);
+    __pyx_t_317 = (__pyx_v_N - 1);
+    __pyx_t_318 = __pyx_v_k;
+    __pyx_t_319 = (__pyx_v_M - 1);
+    __pyx_t_320 = (__pyx_v_N - 1);
+    __pyx_t_321 = __pyx_v_k;
+    *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_319 * __pyx_v_out.strides[0]) ) + __pyx_t_320 * __pyx_v_out.strides[1]) ) + __pyx_t_321 * __pyx_v_out.strides[2]) )) = (((((__pyx_v_udx + __pyx_v_udy) / ((fabsf(__pyx_v_udx) + fabsf(__pyx_v_udy)) + __pyx_v_epsilon)) / (((fabsf(__pyx_v_utdx) + fabsf(__pyx_v_utdy)) + __pyx_v_epsilon) + __pyx_v_tau)) / 2.0) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_316 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_317 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_318 * __pyx_v_im_convo.strides[2]) )))));
+  }
+
+  /* "lib/deconvolution.pyx":505
+ * 
+ *     # South-West
+ *     for k in range(3):             # <<<<<<<<<<<<<<
+ *         uxy = u[M-1, 0, k]
+ *         udx = uxy - u[M-2, 0, k]
+ */
+  for (__pyx_t_5 = 0; __pyx_t_5 < 3; __pyx_t_5+=1) {
+    __pyx_v_k = __pyx_t_5;
+
+    /* "lib/deconvolution.pyx":506
+ *     # South-West
+ *     for k in range(3):
+ *         uxy = u[M-1, 0, k]             # <<<<<<<<<<<<<<
+ *         udx = uxy - u[M-2, 0, k]
+ *         udy = uxy - u[M-1, 1, k]
+ */
+    __pyx_t_322 = (__pyx_v_M - 1);
+    __pyx_t_323 = 0;
+    __pyx_t_324 = __pyx_v_k;
+    __pyx_v_uxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_322 * __pyx_v_u.strides[0]) ) + __pyx_t_323 * __pyx_v_u.strides[1]) ) + __pyx_t_324 * __pyx_v_u.strides[2]) )));
+
+    /* "lib/deconvolution.pyx":507
+ *     for k in range(3):
+ *         uxy = u[M-1, 0, k]
+ *         udx = uxy - u[M-2, 0, k]             # <<<<<<<<<<<<<<
+ *         udy = uxy - u[M-1, 1, k]
+ * 
+ */
+    __pyx_t_325 = (__pyx_v_M - 2);
+    __pyx_t_326 = 0;
+    __pyx_t_327 = __pyx_v_k;
+    __pyx_v_udx = (__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_325 * __pyx_v_u.strides[0]) ) + __pyx_t_326 * __pyx_v_u.strides[1]) ) + __pyx_t_327 * __pyx_v_u.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":508
+ *         uxy = u[M-1, 0, k]
+ *         udx = uxy - u[M-2, 0, k]
+ *         udy = uxy - u[M-1, 1, k]             # <<<<<<<<<<<<<<
+ * 
+ *         utxy = ut[M-1, 0, k]
+ */
+    __pyx_t_328 = (__pyx_v_M - 1);
+    __pyx_t_329 = 1;
+    __pyx_t_330 = __pyx_v_k;
+    __pyx_v_udy = (__pyx_v_uxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_u.data + __pyx_t_328 * __pyx_v_u.strides[0]) ) + __pyx_t_329 * __pyx_v_u.strides[1]) ) + __pyx_t_330 * __pyx_v_u.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":510
+ *         udy = uxy - u[M-1, 1, k]
+ * 
+ *         utxy = ut[M-1, 0, k]             # <<<<<<<<<<<<<<
+ *         utdx = utxy - ut[M-2, 0, k]
+ *         utdy = utxy - ut[M-1, 1, k]
+ */
+    __pyx_t_331 = (__pyx_v_M - 1);
+    __pyx_t_332 = 0;
+    __pyx_t_333 = __pyx_v_k;
+    __pyx_v_utxy = (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_331 * __pyx_v_ut.strides[0]) ) + __pyx_t_332 * __pyx_v_ut.strides[1]) ) + __pyx_t_333 * __pyx_v_ut.strides[2]) )));
+
+    /* "lib/deconvolution.pyx":511
+ * 
+ *         utxy = ut[M-1, 0, k]
+ *         utdx = utxy - ut[M-2, 0, k]             # <<<<<<<<<<<<<<
+ *         utdy = utxy - ut[M-1, 1, k]
+ * 
+ */
+    __pyx_t_334 = (__pyx_v_M - 2);
+    __pyx_t_335 = 0;
+    __pyx_t_336 = __pyx_v_k;
+    __pyx_v_utdx = (__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_334 * __pyx_v_ut.strides[0]) ) + __pyx_t_335 * __pyx_v_ut.strides[1]) ) + __pyx_t_336 * __pyx_v_ut.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":512
+ *         utxy = ut[M-1, 0, k]
+ *         utdx = utxy - ut[M-2, 0, k]
+ *         utdy = utxy - ut[M-1, 1, k]             # <<<<<<<<<<<<<<
+ * 
+ *         out[M-1, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[M-1, 0, k]
+ */
+    __pyx_t_337 = (__pyx_v_M - 1);
+    __pyx_t_338 = 1;
+    __pyx_t_339 = __pyx_v_k;
+    __pyx_v_utdy = (__pyx_v_utxy - (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_ut.data + __pyx_t_337 * __pyx_v_ut.strides[0]) ) + __pyx_t_338 * __pyx_v_ut.strides[1]) ) + __pyx_t_339 * __pyx_v_ut.strides[2]) ))));
+
+    /* "lib/deconvolution.pyx":514
+ *         utdy = utxy - ut[M-1, 1, k]
+ * 
+ *         out[M-1, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[M-1, 0, k]             # <<<<<<<<<<<<<<
+ * 
+ * 
+ */
+    __pyx_t_340 = (__pyx_v_M - 1);
+    __pyx_t_341 = 0;
+    __pyx_t_342 = __pyx_v_k;
+    __pyx_t_343 = (__pyx_v_M - 1);
+    __pyx_t_344 = 0;
+    __pyx_t_345 = __pyx_v_k;
+    *((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_out.data + __pyx_t_343 * __pyx_v_out.strides[0]) ) + __pyx_t_344 * __pyx_v_out.strides[1]) ) + __pyx_t_345 * __pyx_v_out.strides[2]) )) = (((((__pyx_v_udx + __pyx_v_udy) / ((fabsf(__pyx_v_udx) + fabsf(__pyx_v_udy)) + __pyx_v_epsilon)) / (((fabsf(__pyx_v_utdx) + fabsf(__pyx_v_utdy)) + __pyx_v_epsilon) + __pyx_v_tau)) / 2.0) + (__pyx_v_lambd * (*((float *) ( /* dim=2 */ (( /* dim=1 */ (( /* dim=0 */ (__pyx_v_im_convo.data + __pyx_t_340 * __pyx_v_im_convo.strides[0]) ) + __pyx_t_341 * __pyx_v_im_convo.strides[1]) ) + __pyx_t_342 * __pyx_v_im_convo.strides[2]) )))));
+  }
+
+  /* "lib/deconvolution.pyx":309
  * 
  * 
  * cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, float tau, float[:, :, :] im_convo, float lambd, float[:, :, :] out, float[3] max_u, int M, int N, int neighbours) nogil:             # <<<<<<<<<<<<<<
@@ -7394,7 +8077,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_gradTVEM(__Pyx_memviewsli
   /* function exit code */
 }
 
-/* "lib/deconvolution.pyx":449
+/* "lib/deconvolution.pyx":517
  * 
  * 
  * cdef inline void rotate_180(float[:, :, :] array, int M, int N, float[:, :, :] out) nogil:             # <<<<<<<<<<<<<<
@@ -7419,7 +8102,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_rotate_180(__Pyx_memviews
   Py_ssize_t __pyx_t_11;
   Py_ssize_t __pyx_t_12;
 
-  /* "lib/deconvolution.pyx":455
+  /* "lib/deconvolution.pyx":523
  *         int i, j, k
  * 
  *     with parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
@@ -7438,7 +8121,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_rotate_180(__Pyx_memviews
       #endif /* _OPENMP */
       {
 
-          /* "lib/deconvolution.pyx":456
+          /* "lib/deconvolution.pyx":524
  * 
  *     with parallel(num_threads=CPU):
  *         for i in prange(M):             # <<<<<<<<<<<<<<
@@ -7461,7 +8144,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_rotate_180(__Pyx_memviews
                           __pyx_v_j = ((int)0xbad0bad0);
                           __pyx_v_k = ((int)0xbad0bad0);
 
-                          /* "lib/deconvolution.pyx":457
+                          /* "lib/deconvolution.pyx":525
  *     with parallel(num_threads=CPU):
  *         for i in prange(M):
  *             for k in range(3):             # <<<<<<<<<<<<<<
@@ -7471,7 +8154,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_rotate_180(__Pyx_memviews
                           for (__pyx_t_4 = 0; __pyx_t_4 < 3; __pyx_t_4+=1) {
                             __pyx_v_k = __pyx_t_4;
 
-                            /* "lib/deconvolution.pyx":458
+                            /* "lib/deconvolution.pyx":526
  *         for i in prange(M):
  *             for k in range(3):
  *                 for j in range(N):             # <<<<<<<<<<<<<<
@@ -7482,7 +8165,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_rotate_180(__Pyx_memviews
                             for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
                               __pyx_v_j = __pyx_t_6;
 
-                              /* "lib/deconvolution.pyx":459
+                              /* "lib/deconvolution.pyx":527
  *             for k in range(3):
  *                 for j in range(N):
  *                     out[i, N-1 -j, k] = array[M - i - 1, j, k]             # <<<<<<<<<<<<<<
@@ -7511,7 +8194,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_rotate_180(__Pyx_memviews
       #define unlikely(x) __builtin_expect(!!(x), 0)
   #endif
 
-  /* "lib/deconvolution.pyx":449
+  /* "lib/deconvolution.pyx":517
  * 
  * 
  * cdef inline void rotate_180(float[:, :, :] array, int M, int N, float[:, :, :] out) nogil:             # <<<<<<<<<<<<<<
@@ -7522,7 +8205,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_rotate_180(__Pyx_memviews
   /* function exit code */
 }
 
-/* "lib/deconvolution.pyx":462
+/* "lib/deconvolution.pyx":530
  * 
  * 
  * cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,             # <<<<<<<<<<<<<<
@@ -7532,7 +8215,7 @@ static CYTHON_INLINE void __pyx_f_3lib_13deconvolution_rotate_180(__Pyx_memviews
 
 static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__pyx_v_image, PyArrayObject *__pyx_v_u, PyArrayObject *__pyx_v_psf, float __pyx_v_tau, int __pyx_v_M, int __pyx_v_N, int __pyx_v_C, int __pyx_v_MK, int __pyx_v_iterations, float __pyx_v_step_factor, float __pyx_v_lambd, int __pyx_v_neighbours, struct __pyx_opt_args_3lib_13deconvolution__richardson_lucy_MM *__pyx_optional_args) {
 
-  /* "lib/deconvolution.pyx":463
+  /* "lib/deconvolution.pyx":531
  * 
  * cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,
  *                               float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int neighbours, int blind=True):             # <<<<<<<<<<<<<<
@@ -7684,21 +8367,21 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
   __pyx_pybuffernd_psf.rcbuffer = &__pyx_pybuffer_psf;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_image.rcbuffer->pybuffer, (PyObject*)__pyx_v_image, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 462, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_image.rcbuffer->pybuffer, (PyObject*)__pyx_v_image, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 530, __pyx_L1_error)
   }
   __pyx_pybuffernd_image.diminfo[0].strides = __pyx_pybuffernd_image.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_image.diminfo[0].shape = __pyx_pybuffernd_image.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_image.diminfo[1].strides = __pyx_pybuffernd_image.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_image.diminfo[1].shape = __pyx_pybuffernd_image.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_image.diminfo[2].strides = __pyx_pybuffernd_image.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_image.diminfo[2].shape = __pyx_pybuffernd_image.rcbuffer->pybuffer.shape[2];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_u.rcbuffer->pybuffer, (PyObject*)__pyx_v_u, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 462, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_u.rcbuffer->pybuffer, (PyObject*)__pyx_v_u, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 530, __pyx_L1_error)
   }
   __pyx_pybuffernd_u.diminfo[0].strides = __pyx_pybuffernd_u.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_u.diminfo[0].shape = __pyx_pybuffernd_u.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_u.diminfo[1].strides = __pyx_pybuffernd_u.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_u.diminfo[1].shape = __pyx_pybuffernd_u.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_u.diminfo[2].strides = __pyx_pybuffernd_u.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_u.diminfo[2].shape = __pyx_pybuffernd_u.rcbuffer->pybuffer.shape[2];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_psf.rcbuffer->pybuffer, (PyObject*)__pyx_v_psf, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 462, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_psf.rcbuffer->pybuffer, (PyObject*)__pyx_v_psf, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 530, __pyx_L1_error)
   }
   __pyx_pybuffernd_psf.diminfo[0].strides = __pyx_pybuffernd_psf.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_psf.diminfo[0].shape = __pyx_pybuffernd_psf.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_psf.diminfo[1].strides = __pyx_pybuffernd_psf.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_psf.diminfo[1].shape = __pyx_pybuffernd_psf.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_psf.diminfo[2].strides = __pyx_pybuffernd_psf.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_psf.diminfo[2].shape = __pyx_pybuffernd_psf.rcbuffer->pybuffer.shape[2];
 
-  /* "lib/deconvolution.pyx":495
+  /* "lib/deconvolution.pyx":563
  *     cdef float epsilon, dtpsf
  * 
  *     cdef int u_M = u.shape[0]             # <<<<<<<<<<<<<<
@@ -7707,7 +8390,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
  */
   __pyx_v_u_M = (__pyx_v_u->dimensions[0]);
 
-  /* "lib/deconvolution.pyx":496
+  /* "lib/deconvolution.pyx":564
  * 
  *     cdef int u_M = u.shape[0]
  *     cdef int u_N = u.shape[1]             # <<<<<<<<<<<<<<
@@ -7716,41 +8399,41 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
  */
   __pyx_v_u_N = (__pyx_v_u->dimensions[1]);
 
-  /* "lib/deconvolution.pyx":498
+  /* "lib/deconvolution.pyx":566
  *     cdef int u_N = u.shape[1]
  * 
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] gradk = np.empty_like(psf, dtype=DTYPE)             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] ut = np.empty_like(u, dtype=DTYPE)
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] gradu = np.zeros((u_M, u_N, 3), dtype=DTYPE)
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 498, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 566, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty_like); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 498, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty_like); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 566, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 498, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 566, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(((PyObject *)__pyx_v_psf));
   __Pyx_GIVEREF(((PyObject *)__pyx_v_psf));
   PyTuple_SET_ITEM(__pyx_t_1, 0, ((PyObject *)__pyx_v_psf));
-  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 498, __pyx_L1_error)
+  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 566, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 498, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 566, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 498, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_4) < 0) __PYX_ERR(0, 566, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 498, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 566, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 498, __pyx_L1_error)
+  if (!(likely(((__pyx_t_4) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_4, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 566, __pyx_L1_error)
   __pyx_t_5 = ((PyArrayObject *)__pyx_t_4);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_gradk.rcbuffer->pybuffer, (PyObject*)__pyx_t_5, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_gradk = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_gradk.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 498, __pyx_L1_error)
+      __PYX_ERR(0, 566, __pyx_L1_error)
     } else {__pyx_pybuffernd_gradk.diminfo[0].strides = __pyx_pybuffernd_gradk.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_gradk.diminfo[0].shape = __pyx_pybuffernd_gradk.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_gradk.diminfo[1].strides = __pyx_pybuffernd_gradk.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_gradk.diminfo[1].shape = __pyx_pybuffernd_gradk.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_gradk.diminfo[2].strides = __pyx_pybuffernd_gradk.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_gradk.diminfo[2].shape = __pyx_pybuffernd_gradk.rcbuffer->pybuffer.shape[2];
     }
   }
@@ -7758,41 +8441,41 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
   __pyx_v_gradk = ((PyArrayObject *)__pyx_t_4);
   __pyx_t_4 = 0;
 
-  /* "lib/deconvolution.pyx":499
+  /* "lib/deconvolution.pyx":567
  * 
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] gradk = np.empty_like(psf, dtype=DTYPE)
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] ut = np.empty_like(u, dtype=DTYPE)             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] gradu = np.zeros((u_M, u_N, 3), dtype=DTYPE)
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] im_convo = np.empty_like(u, dtype=DTYPE)
  */
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 499, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 567, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_empty_like); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 499, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_empty_like); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 567, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 499, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 567, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_INCREF(((PyObject *)__pyx_v_u));
   __Pyx_GIVEREF(((PyObject *)__pyx_v_u));
   PyTuple_SET_ITEM(__pyx_t_4, 0, ((PyObject *)__pyx_v_u));
-  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 499, __pyx_L1_error)
+  __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 567, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 499, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 567, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_2) < 0) __PYX_ERR(0, 499, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_1, __pyx_n_s_dtype, __pyx_t_2) < 0) __PYX_ERR(0, 567, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 499, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_4, __pyx_t_1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 567, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 499, __pyx_L1_error)
+  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 567, __pyx_L1_error)
   __pyx_t_6 = ((PyArrayObject *)__pyx_t_2);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_ut.rcbuffer->pybuffer, (PyObject*)__pyx_t_6, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_ut = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_ut.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 499, __pyx_L1_error)
+      __PYX_ERR(0, 567, __pyx_L1_error)
     } else {__pyx_pybuffernd_ut.diminfo[0].strides = __pyx_pybuffernd_ut.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_ut.diminfo[0].shape = __pyx_pybuffernd_ut.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_ut.diminfo[1].strides = __pyx_pybuffernd_ut.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_ut.diminfo[1].shape = __pyx_pybuffernd_ut.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_ut.diminfo[2].strides = __pyx_pybuffernd_ut.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_ut.diminfo[2].shape = __pyx_pybuffernd_ut.rcbuffer->pybuffer.shape[2];
     }
   }
@@ -7800,23 +8483,23 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
   __pyx_v_ut = ((PyArrayObject *)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "lib/deconvolution.pyx":500
+  /* "lib/deconvolution.pyx":568
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] gradk = np.empty_like(psf, dtype=DTYPE)
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] ut = np.empty_like(u, dtype=DTYPE)
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] gradu = np.zeros((u_M, u_N, 3), dtype=DTYPE)             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] im_convo = np.empty_like(u, dtype=DTYPE)
  *     cdef np.ndarray[DTYPE_t, ndim=3] error = np.empty_like(image, dtype=DTYPE)
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 500, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 568, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 500, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_zeros); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 568, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_u_M); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 500, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_u_M); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 568, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_u_N); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 500, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_u_N); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 568, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 500, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 568, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_2);
@@ -7827,29 +8510,29 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
   PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_int_3);
   __pyx_t_2 = 0;
   __pyx_t_4 = 0;
-  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 500, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 568, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_3);
   __pyx_t_3 = 0;
-  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 500, __pyx_L1_error)
+  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 568, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 500, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 568, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_2) < 0) __PYX_ERR(0, 500, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_dtype, __pyx_t_2) < 0) __PYX_ERR(0, 568, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_4, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 500, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_4, __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 568, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 500, __pyx_L1_error)
+  if (!(likely(((__pyx_t_2) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_2, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 568, __pyx_L1_error)
   __pyx_t_7 = ((PyArrayObject *)__pyx_t_2);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_gradu.rcbuffer->pybuffer, (PyObject*)__pyx_t_7, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_gradu = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_gradu.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 500, __pyx_L1_error)
+      __PYX_ERR(0, 568, __pyx_L1_error)
     } else {__pyx_pybuffernd_gradu.diminfo[0].strides = __pyx_pybuffernd_gradu.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_gradu.diminfo[0].shape = __pyx_pybuffernd_gradu.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_gradu.diminfo[1].strides = __pyx_pybuffernd_gradu.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_gradu.diminfo[1].shape = __pyx_pybuffernd_gradu.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_gradu.diminfo[2].strides = __pyx_pybuffernd_gradu.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_gradu.diminfo[2].shape = __pyx_pybuffernd_gradu.rcbuffer->pybuffer.shape[2];
     }
   }
@@ -7857,41 +8540,41 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
   __pyx_v_gradu = ((PyArrayObject *)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "lib/deconvolution.pyx":501
+  /* "lib/deconvolution.pyx":569
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] ut = np.empty_like(u, dtype=DTYPE)
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] gradu = np.zeros((u_M, u_N, 3), dtype=DTYPE)
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] im_convo = np.empty_like(u, dtype=DTYPE)             # <<<<<<<<<<<<<<
  *     cdef np.ndarray[DTYPE_t, ndim=3] error = np.empty_like(image, dtype=DTYPE)
  * 
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 501, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 569, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty_like); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 501, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty_like); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 569, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 501, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 569, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_INCREF(((PyObject *)__pyx_v_u));
   __Pyx_GIVEREF(((PyObject *)__pyx_v_u));
   PyTuple_SET_ITEM(__pyx_t_2, 0, ((PyObject *)__pyx_v_u));
-  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 501, __pyx_L1_error)
+  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 569, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 501, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 569, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_1) < 0) __PYX_ERR(0, 501, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_1) < 0) __PYX_ERR(0, 569, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 501, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 569, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 501, __pyx_L1_error)
+  if (!(likely(((__pyx_t_1) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_1, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 569, __pyx_L1_error)
   __pyx_t_8 = ((PyArrayObject *)__pyx_t_1);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_im_convo.rcbuffer->pybuffer, (PyObject*)__pyx_t_8, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_C_CONTIGUOUS, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_im_convo = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_im_convo.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 501, __pyx_L1_error)
+      __PYX_ERR(0, 569, __pyx_L1_error)
     } else {__pyx_pybuffernd_im_convo.diminfo[0].strides = __pyx_pybuffernd_im_convo.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_im_convo.diminfo[0].shape = __pyx_pybuffernd_im_convo.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_im_convo.diminfo[1].strides = __pyx_pybuffernd_im_convo.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_im_convo.diminfo[1].shape = __pyx_pybuffernd_im_convo.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_im_convo.diminfo[2].strides = __pyx_pybuffernd_im_convo.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_im_convo.diminfo[2].shape = __pyx_pybuffernd_im_convo.rcbuffer->pybuffer.shape[2];
     }
   }
@@ -7899,41 +8582,41 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
   __pyx_v_im_convo = ((PyArrayObject *)__pyx_t_1);
   __pyx_t_1 = 0;
 
-  /* "lib/deconvolution.pyx":502
+  /* "lib/deconvolution.pyx":570
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] gradu = np.zeros((u_M, u_N, 3), dtype=DTYPE)
  *     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] im_convo = np.empty_like(u, dtype=DTYPE)
  *     cdef np.ndarray[DTYPE_t, ndim=3] error = np.empty_like(image, dtype=DTYPE)             # <<<<<<<<<<<<<<
  * 
  *     cdef float dt[3]
  */
-  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 502, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 570, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty_like); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 502, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_empty_like); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 570, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 502, __pyx_L1_error)
+  __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 570, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_INCREF(((PyObject *)__pyx_v_image));
   __Pyx_GIVEREF(((PyObject *)__pyx_v_image));
   PyTuple_SET_ITEM(__pyx_t_1, 0, ((PyObject *)__pyx_v_image));
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 502, __pyx_L1_error)
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 570, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 502, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 570, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_3) < 0) __PYX_ERR(0, 502, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_3) < 0) __PYX_ERR(0, 570, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 502, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 570, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 502, __pyx_L1_error)
+  if (!(likely(((__pyx_t_3) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_3, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 570, __pyx_L1_error)
   __pyx_t_9 = ((PyArrayObject *)__pyx_t_3);
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
     if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_error.rcbuffer->pybuffer, (PyObject*)__pyx_t_9, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 3, 0, __pyx_stack) == -1)) {
       __pyx_v_error = ((PyArrayObject *)Py_None); __Pyx_INCREF(Py_None); __pyx_pybuffernd_error.rcbuffer->pybuffer.buf = NULL;
-      __PYX_ERR(0, 502, __pyx_L1_error)
+      __PYX_ERR(0, 570, __pyx_L1_error)
     } else {__pyx_pybuffernd_error.diminfo[0].strides = __pyx_pybuffernd_error.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_error.diminfo[0].shape = __pyx_pybuffernd_error.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_error.diminfo[1].strides = __pyx_pybuffernd_error.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_error.diminfo[1].shape = __pyx_pybuffernd_error.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_error.diminfo[2].strides = __pyx_pybuffernd_error.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_error.diminfo[2].shape = __pyx_pybuffernd_error.rcbuffer->pybuffer.shape[2];
     }
   }
@@ -7941,7 +8624,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
   __pyx_v_error = ((PyArrayObject *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "lib/deconvolution.pyx":508
+  /* "lib/deconvolution.pyx":576
  *     cdef float max_grad_u[3]
  *     cdef float max_grad_psf[3]
  *     cdef float stop = 1e14             # <<<<<<<<<<<<<<
@@ -7950,7 +8633,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
  */
   __pyx_v_stop = 1e14;
 
-  /* "lib/deconvolution.pyx":509
+  /* "lib/deconvolution.pyx":577
  *     cdef float max_grad_psf[3]
  *     cdef float stop = 1e14
  *     cdef float stop_previous = 1e15             # <<<<<<<<<<<<<<
@@ -7959,7 +8642,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
  */
   __pyx_v_stop_previous = 1e15;
 
-  /* "lib/deconvolution.pyx":510
+  /* "lib/deconvolution.pyx":578
  *     cdef float stop = 1e14
  *     cdef float stop_previous = 1e15
  *     cdef float stop_2 = 1e14             # <<<<<<<<<<<<<<
@@ -7968,7 +8651,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
  */
   __pyx_v_stop_2 = 1e14;
 
-  /* "lib/deconvolution.pyx":511
+  /* "lib/deconvolution.pyx":579
  *     cdef float stop_previous = 1e15
  *     cdef float stop_2 = 1e14
  *     cdef float stop_previous_2 = 1e15             # <<<<<<<<<<<<<<
@@ -7977,7 +8660,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
  */
   __pyx_v_stop_previous_2 = 1e15;
 
-  /* "lib/deconvolution.pyx":515
+  /* "lib/deconvolution.pyx":583
  * 
  *     # Once convergence is detected on the PSF, the stop_flag allows it to perform another last round to be sure
  *     cdef int stop_flag = False             # <<<<<<<<<<<<<<
@@ -7986,7 +8669,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
  */
   __pyx_v_stop_flag = 0;
 
-  /* "lib/deconvolution.pyx":516
+  /* "lib/deconvolution.pyx":584
  *     # Once convergence is detected on the PSF, the stop_flag allows it to perform another last round to be sure
  *     cdef int stop_flag = False
  *     cdef int convergence_flag = False             # <<<<<<<<<<<<<<
@@ -7995,20 +8678,20 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
  */
   __pyx_v_convergence_flag = 0;
 
-  /* "lib/deconvolution.pyx":520
+  /* "lib/deconvolution.pyx":588
  * 
  *     # Temporary buffers for intermediate computations - we declare them here to avoid Python calls in sub-routines
  *     cdef float[:, :] psf_temp_buffer_2D = cvarray(shape=(MK, MK), itemsize=sizeof(float), format="f")             # <<<<<<<<<<<<<<
  *     cdef float[:, :] u_temp_buffer_2D = cvarray(shape=(u_M, u_N), itemsize=sizeof(float), format="f")
  * 
  */
-  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 520, __pyx_L1_error)
+  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 588, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 520, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 588, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 520, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 588, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 520, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 588, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2);
@@ -8016,37 +8699,37 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
   PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_1);
   __pyx_t_2 = 0;
   __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_shape, __pyx_t_4) < 0) __PYX_ERR(0, 520, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_shape, __pyx_t_4) < 0) __PYX_ERR(0, 588, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyInt_FromSize_t((sizeof(float))); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 520, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_FromSize_t((sizeof(float))); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 588, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_itemsize, __pyx_t_4) < 0) __PYX_ERR(0, 520, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_itemsize, __pyx_t_4) < 0) __PYX_ERR(0, 588, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_format, __pyx_n_s_f) < 0) __PYX_ERR(0, 520, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_array_type), __pyx_empty_tuple, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 520, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_format, __pyx_n_s_f) < 0) __PYX_ERR(0, 588, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_array_type), __pyx_empty_tuple, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 588, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(__pyx_t_4);
-  if (unlikely(!__pyx_t_10.memview)) __PYX_ERR(0, 520, __pyx_L1_error)
+  if (unlikely(!__pyx_t_10.memview)) __PYX_ERR(0, 588, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_v_psf_temp_buffer_2D = __pyx_t_10;
   __pyx_t_10.memview = NULL;
   __pyx_t_10.data = NULL;
 
-  /* "lib/deconvolution.pyx":521
+  /* "lib/deconvolution.pyx":589
  *     # Temporary buffers for intermediate computations - we declare them here to avoid Python calls in sub-routines
  *     cdef float[:, :] psf_temp_buffer_2D = cvarray(shape=(MK, MK), itemsize=sizeof(float), format="f")
  *     cdef float[:, :] u_temp_buffer_2D = cvarray(shape=(u_M, u_N), itemsize=sizeof(float), format="f")             # <<<<<<<<<<<<<<
  * 
  *     cdef float[:, :, :] psf_rotated = cvarray(shape=(MK, MK, 3), itemsize=sizeof(float), format="f")
  */
-  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 521, __pyx_L1_error)
+  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 589, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_u_M); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 521, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_u_M); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 589, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_u_N); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 521, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_u_N); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 589, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 521, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 589, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3);
@@ -8054,37 +8737,37 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
   PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_1);
   __pyx_t_3 = 0;
   __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_shape, __pyx_t_2) < 0) __PYX_ERR(0, 521, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_shape, __pyx_t_2) < 0) __PYX_ERR(0, 589, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyInt_FromSize_t((sizeof(float))); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 521, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_FromSize_t((sizeof(float))); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 589, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_itemsize, __pyx_t_2) < 0) __PYX_ERR(0, 521, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_itemsize, __pyx_t_2) < 0) __PYX_ERR(0, 589, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_format, __pyx_n_s_f) < 0) __PYX_ERR(0, 521, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_array_type), __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 521, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_format, __pyx_n_s_f) < 0) __PYX_ERR(0, 589, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_array_type), __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 589, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_dsds_float(__pyx_t_2);
-  if (unlikely(!__pyx_t_10.memview)) __PYX_ERR(0, 521, __pyx_L1_error)
+  if (unlikely(!__pyx_t_10.memview)) __PYX_ERR(0, 589, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_u_temp_buffer_2D = __pyx_t_10;
   __pyx_t_10.memview = NULL;
   __pyx_t_10.data = NULL;
 
-  /* "lib/deconvolution.pyx":523
+  /* "lib/deconvolution.pyx":591
  *     cdef float[:, :] u_temp_buffer_2D = cvarray(shape=(u_M, u_N), itemsize=sizeof(float), format="f")
  * 
  *     cdef float[:, :, :] psf_rotated = cvarray(shape=(MK, MK, 3), itemsize=sizeof(float), format="f")             # <<<<<<<<<<<<<<
  *     rotate_180(psf, MK, MK, psf_rotated)
  *     cdef float[:, :, :] u_rotated = cvarray(shape=(u_M, u_N, 3), itemsize=sizeof(float), format="f")
  */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 523, __pyx_L1_error)
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 591, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 523, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 591, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 523, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 591, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 523, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 591, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_GIVEREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4);
@@ -8095,24 +8778,24 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
   PyTuple_SET_ITEM(__pyx_t_3, 2, __pyx_int_3);
   __pyx_t_4 = 0;
   __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_shape, __pyx_t_3) < 0) __PYX_ERR(0, 523, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_shape, __pyx_t_3) < 0) __PYX_ERR(0, 591, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyInt_FromSize_t((sizeof(float))); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 523, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_FromSize_t((sizeof(float))); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 591, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_itemsize, __pyx_t_3) < 0) __PYX_ERR(0, 523, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_itemsize, __pyx_t_3) < 0) __PYX_ERR(0, 591, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_format, __pyx_n_s_f) < 0) __PYX_ERR(0, 523, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_array_type), __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 523, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_format, __pyx_n_s_f) < 0) __PYX_ERR(0, 591, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_array_type), __pyx_empty_tuple, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 591, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_t_11 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(__pyx_t_3);
-  if (unlikely(!__pyx_t_11.memview)) __PYX_ERR(0, 523, __pyx_L1_error)
+  if (unlikely(!__pyx_t_11.memview)) __PYX_ERR(0, 591, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_v_psf_rotated = __pyx_t_11;
   __pyx_t_11.memview = NULL;
   __pyx_t_11.data = NULL;
 
-  /* "lib/deconvolution.pyx":524
+  /* "lib/deconvolution.pyx":592
  * 
  *     cdef float[:, :, :] psf_rotated = cvarray(shape=(MK, MK, 3), itemsize=sizeof(float), format="f")
  *     rotate_180(psf, MK, MK, psf_rotated)             # <<<<<<<<<<<<<<
@@ -8120,26 +8803,26 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
  * 
  */
   __pyx_t_11 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_psf));
-  if (unlikely(!__pyx_t_11.memview)) __PYX_ERR(0, 524, __pyx_L1_error)
+  if (unlikely(!__pyx_t_11.memview)) __PYX_ERR(0, 592, __pyx_L1_error)
   __pyx_f_3lib_13deconvolution_rotate_180(__pyx_t_11, __pyx_v_MK, __pyx_v_MK, __pyx_v_psf_rotated);
   __PYX_XDEC_MEMVIEW(&__pyx_t_11, 1);
   __pyx_t_11.memview = NULL;
   __pyx_t_11.data = NULL;
 
-  /* "lib/deconvolution.pyx":525
+  /* "lib/deconvolution.pyx":593
  *     cdef float[:, :, :] psf_rotated = cvarray(shape=(MK, MK, 3), itemsize=sizeof(float), format="f")
  *     rotate_180(psf, MK, MK, psf_rotated)
  *     cdef float[:, :, :] u_rotated = cvarray(shape=(u_M, u_N, 3), itemsize=sizeof(float), format="f")             # <<<<<<<<<<<<<<
  * 
  *     print("The program is profiling your system to optimize its performance. This can take some time.")
  */
-  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 525, __pyx_L1_error)
+  __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 593, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_u_M); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 525, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_u_M); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 593, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_u_N); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 525, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_u_N); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 593, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = PyTuple_New(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 525, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 593, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2);
@@ -8150,48 +8833,48 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
   PyTuple_SET_ITEM(__pyx_t_4, 2, __pyx_int_3);
   __pyx_t_2 = 0;
   __pyx_t_1 = 0;
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_shape, __pyx_t_4) < 0) __PYX_ERR(0, 525, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_shape, __pyx_t_4) < 0) __PYX_ERR(0, 593, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyInt_FromSize_t((sizeof(float))); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 525, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_FromSize_t((sizeof(float))); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 593, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_itemsize, __pyx_t_4) < 0) __PYX_ERR(0, 525, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_itemsize, __pyx_t_4) < 0) __PYX_ERR(0, 593, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_format, __pyx_n_s_f) < 0) __PYX_ERR(0, 525, __pyx_L1_error)
-  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_array_type), __pyx_empty_tuple, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 525, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_format, __pyx_n_s_f) < 0) __PYX_ERR(0, 593, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)__pyx_array_type), __pyx_empty_tuple, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 593, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_11 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(__pyx_t_4);
-  if (unlikely(!__pyx_t_11.memview)) __PYX_ERR(0, 525, __pyx_L1_error)
+  if (unlikely(!__pyx_t_11.memview)) __PYX_ERR(0, 593, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_v_u_rotated = __pyx_t_11;
   __pyx_t_11.memview = NULL;
   __pyx_t_11.data = NULL;
 
-  /* "lib/deconvolution.pyx":527
+  /* "lib/deconvolution.pyx":595
  *     cdef float[:, :, :] u_rotated = cvarray(shape=(u_M, u_N, 3), itemsize=sizeof(float), format="f")
  * 
  *     print("The program is profiling your system to optimize its performance. This can take some time.")             # <<<<<<<<<<<<<<
  *     cdef convolve FFT_valid = convolve(u_M, u_N, MK, MK, "valid")
  *     print("Optimization 1/3 done !")
  */
-  if (__Pyx_PrintOne(0, __pyx_kp_s_The_program_is_profiling_your_sy) < 0) __PYX_ERR(0, 527, __pyx_L1_error)
+  if (__Pyx_PrintOne(0, __pyx_kp_s_The_program_is_profiling_your_sy) < 0) __PYX_ERR(0, 595, __pyx_L1_error)
 
-  /* "lib/deconvolution.pyx":528
+  /* "lib/deconvolution.pyx":596
  * 
  *     print("The program is profiling your system to optimize its performance. This can take some time.")
  *     cdef convolve FFT_valid = convolve(u_M, u_N, MK, MK, "valid")             # <<<<<<<<<<<<<<
  *     print("Optimization 1/3 done !")
  *     cdef convolve FFT_full = convolve(M, N, MK, MK, "full")
  */
-  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_u_M); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 528, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_u_M); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 596, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_u_N); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 528, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_u_N); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 596, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 528, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 596, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 528, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 596, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_12 = PyTuple_New(5); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 528, __pyx_L1_error)
+  __pyx_t_12 = PyTuple_New(5); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 596, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_12);
   __Pyx_GIVEREF(__pyx_t_4);
   PyTuple_SET_ITEM(__pyx_t_12, 0, __pyx_t_4);
@@ -8208,37 +8891,37 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
   __pyx_t_3 = 0;
   __pyx_t_1 = 0;
   __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_3lib_13deconvolution_convolve), __pyx_t_12, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 528, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_3lib_13deconvolution_convolve), __pyx_t_12, NULL); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 596, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
   __pyx_v_FFT_valid = ((struct __pyx_obj_3lib_13deconvolution_convolve *)__pyx_t_2);
   __pyx_t_2 = 0;
 
-  /* "lib/deconvolution.pyx":529
+  /* "lib/deconvolution.pyx":597
  *     print("The program is profiling your system to optimize its performance. This can take some time.")
  *     cdef convolve FFT_valid = convolve(u_M, u_N, MK, MK, "valid")
  *     print("Optimization 1/3 done !")             # <<<<<<<<<<<<<<
  *     cdef convolve FFT_full = convolve(M, N, MK, MK, "full")
  *     print("Optimization 2/3 done !")
  */
-  if (__Pyx_PrintOne(0, __pyx_kp_s_Optimization_1_3_done) < 0) __PYX_ERR(0, 529, __pyx_L1_error)
+  if (__Pyx_PrintOne(0, __pyx_kp_s_Optimization_1_3_done) < 0) __PYX_ERR(0, 597, __pyx_L1_error)
 
-  /* "lib/deconvolution.pyx":530
+  /* "lib/deconvolution.pyx":598
  *     cdef convolve FFT_valid = convolve(u_M, u_N, MK, MK, "valid")
  *     print("Optimization 1/3 done !")
  *     cdef convolve FFT_full = convolve(M, N, MK, MK, "full")             # <<<<<<<<<<<<<<
  *     print("Optimization 2/3 done !")
  *     cdef convolve FFT_kern_valid = convolve(u_M, u_N, M, N, "valid")
  */
-  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_M); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 530, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_M); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 598, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_12 = __Pyx_PyInt_From_int(__pyx_v_N); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 530, __pyx_L1_error)
+  __pyx_t_12 = __Pyx_PyInt_From_int(__pyx_v_N); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 598, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_12);
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 530, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 598, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 530, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_MK); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 598, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = PyTuple_New(5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 530, __pyx_L1_error)
+  __pyx_t_4 = PyTuple_New(5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 598, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_GIVEREF(__pyx_t_2);
   PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_2);
@@ -8255,37 +8938,37 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
   __pyx_t_12 = 0;
   __pyx_t_1 = 0;
   __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_3lib_13deconvolution_convolve), __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 530, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_3lib_13deconvolution_convolve), __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 598, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
   __pyx_v_FFT_full = ((struct __pyx_obj_3lib_13deconvolution_convolve *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "lib/deconvolution.pyx":531
+  /* "lib/deconvolution.pyx":599
  *     print("Optimization 1/3 done !")
  *     cdef convolve FFT_full = convolve(M, N, MK, MK, "full")
  *     print("Optimization 2/3 done !")             # <<<<<<<<<<<<<<
  *     cdef convolve FFT_kern_valid = convolve(u_M, u_N, M, N, "valid")
  *     print("The profiling is done ! Moving on to the next step")
  */
-  if (__Pyx_PrintOne(0, __pyx_kp_s_Optimization_2_3_done) < 0) __PYX_ERR(0, 531, __pyx_L1_error)
+  if (__Pyx_PrintOne(0, __pyx_kp_s_Optimization_2_3_done) < 0) __PYX_ERR(0, 599, __pyx_L1_error)
 
-  /* "lib/deconvolution.pyx":532
+  /* "lib/deconvolution.pyx":600
  *     cdef convolve FFT_full = convolve(M, N, MK, MK, "full")
  *     print("Optimization 2/3 done !")
  *     cdef convolve FFT_kern_valid = convolve(u_M, u_N, M, N, "valid")             # <<<<<<<<<<<<<<
  *     print("The profiling is done ! Moving on to the next step")
  * 
  */
-  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_u_M); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 532, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_u_M); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 600, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_u_N); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 532, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_From_int(__pyx_v_u_N); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 600, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_M); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 532, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_M); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 600, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_12 = __Pyx_PyInt_From_int(__pyx_v_N); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 532, __pyx_L1_error)
+  __pyx_t_12 = __Pyx_PyInt_From_int(__pyx_v_N); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 600, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_12);
-  __pyx_t_2 = PyTuple_New(5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 532, __pyx_L1_error)
+  __pyx_t_2 = PyTuple_New(5); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 600, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_3);
   PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_3);
@@ -8302,22 +8985,22 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
   __pyx_t_4 = 0;
   __pyx_t_1 = 0;
   __pyx_t_12 = 0;
-  __pyx_t_12 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_3lib_13deconvolution_convolve), __pyx_t_2, NULL); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 532, __pyx_L1_error)
+  __pyx_t_12 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_3lib_13deconvolution_convolve), __pyx_t_2, NULL); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 600, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_12);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_FFT_kern_valid = ((struct __pyx_obj_3lib_13deconvolution_convolve *)__pyx_t_12);
   __pyx_t_12 = 0;
 
-  /* "lib/deconvolution.pyx":533
+  /* "lib/deconvolution.pyx":601
  *     print("Optimization 2/3 done !")
  *     cdef convolve FFT_kern_valid = convolve(u_M, u_N, M, N, "valid")
  *     print("The profiling is done ! Moving on to the next step")             # <<<<<<<<<<<<<<
  * 
  *     cdef int it, itt, i, j, k
  */
-  if (__Pyx_PrintOne(0, __pyx_kp_s_The_profiling_is_done_Moving_on) < 0) __PYX_ERR(0, 533, __pyx_L1_error)
+  if (__Pyx_PrintOne(0, __pyx_kp_s_The_profiling_is_done_Moving_on) < 0) __PYX_ERR(0, 601, __pyx_L1_error)
 
-  /* "lib/deconvolution.pyx":537
+  /* "lib/deconvolution.pyx":605
  *     cdef int it, itt, i, j, k
  * 
  *     it = 0             # <<<<<<<<<<<<<<
@@ -8326,7 +9009,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
  */
   __pyx_v_it = 0;
 
-  /* "lib/deconvolution.pyx":540
+  /* "lib/deconvolution.pyx":608
  * 
  *     # Compute the minimal eps parameter that won't degenerate the sharp solution into a constant one
  *     epsilon = best_param(image, lambd, M, N)             # <<<<<<<<<<<<<<
@@ -8334,13 +9017,13 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
  *     # This problem is supposed to be convex so, as soon as the error increases, we shut the solver down because we won't do better
  */
   __pyx_t_11 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_image));
-  if (unlikely(!__pyx_t_11.memview)) __PYX_ERR(0, 540, __pyx_L1_error)
+  if (unlikely(!__pyx_t_11.memview)) __PYX_ERR(0, 608, __pyx_L1_error)
   __pyx_v_epsilon = __pyx_f_3lib_13deconvolution_best_param(__pyx_t_11, __pyx_v_lambd, __pyx_v_M, __pyx_v_N);
   __PYX_XDEC_MEMVIEW(&__pyx_t_11, 1);
   __pyx_t_11.memview = NULL;
   __pyx_t_11.data = NULL;
 
-  /* "lib/deconvolution.pyx":543
+  /* "lib/deconvolution.pyx":611
  * 
  *     # This problem is supposed to be convex so, as soon as the error increases, we shut the solver down because we won't do better
  *     while it < iterations and not stop_flag:             # <<<<<<<<<<<<<<
@@ -8359,14 +9042,14 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
     __pyx_L5_bool_binop_done:;
     if (!__pyx_t_13) break;
 
-    /* "lib/deconvolution.pyx":545
+    /* "lib/deconvolution.pyx":613
  *     while it < iterations and not stop_flag:
  *         # Prepare the deconvolution
  *         ut[:] = u.copy()             # <<<<<<<<<<<<<<
  *         itt = 0
  * 
  */
-    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_u), __pyx_n_s_copy); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 545, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_u), __pyx_n_s_copy); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 613, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __pyx_t_1 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_2))) {
@@ -8379,55 +9062,27 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
       }
     }
     if (__pyx_t_1) {
-      __pyx_t_12 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 545, __pyx_L1_error)
+      __pyx_t_12 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 613, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     } else {
-      __pyx_t_12 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 545, __pyx_L1_error)
+      __pyx_t_12 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 613, __pyx_L1_error)
     }
     __Pyx_GOTREF(__pyx_t_12);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v_ut), __pyx_slice__3, __pyx_t_12) < 0)) __PYX_ERR(0, 545, __pyx_L1_error)
+    if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v_ut), __pyx_slice__3, __pyx_t_12) < 0)) __PYX_ERR(0, 613, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
 
-    /* "lib/deconvolution.pyx":546
+    /* "lib/deconvolution.pyx":614
  *         # Prepare the deconvolution
  *         ut[:] = u.copy()
  *         itt = 0             # <<<<<<<<<<<<<<
  * 
- *         if lambd > 45000:
+ *         stop_previous = stop
  */
     __pyx_v_itt = 0;
 
-    /* "lib/deconvolution.pyx":548
+    /* "lib/deconvolution.pyx":616
  *         itt = 0
- * 
- *         if lambd > 45000:             # <<<<<<<<<<<<<<
- *             lambd = 45000
- * 
- */
-    __pyx_t_13 = ((__pyx_v_lambd > 45000.0) != 0);
-    if (__pyx_t_13) {
-
-      /* "lib/deconvolution.pyx":549
- * 
- *         if lambd > 45000:
- *             lambd = 45000             # <<<<<<<<<<<<<<
- * 
- * 
- */
-      __pyx_v_lambd = 45000.0;
-
-      /* "lib/deconvolution.pyx":548
- *         itt = 0
- * 
- *         if lambd > 45000:             # <<<<<<<<<<<<<<
- *             lambd = 45000
- * 
- */
-    }
-
-    /* "lib/deconvolution.pyx":552
- * 
  * 
  *         stop_previous = stop             # <<<<<<<<<<<<<<
  *         stop_previous_2 = stop_2
@@ -8435,7 +9090,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
  */
     __pyx_v_stop_previous = __pyx_v_stop;
 
-    /* "lib/deconvolution.pyx":553
+    /* "lib/deconvolution.pyx":617
  * 
  *         stop_previous = stop
  *         stop_previous_2 = stop_2             # <<<<<<<<<<<<<<
@@ -8444,7 +9099,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
  */
     __pyx_v_stop_previous_2 = __pyx_v_stop_2;
 
-    /* "lib/deconvolution.pyx":555
+    /* "lib/deconvolution.pyx":619
  *         stop_previous_2 = stop_2
  * 
  *         while itt < 5:             # <<<<<<<<<<<<<<
@@ -8455,23 +9110,23 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
       __pyx_t_13 = ((__pyx_v_itt < 5) != 0);
       if (!__pyx_t_13) break;
 
-      /* "lib/deconvolution.pyx":557
+      /* "lib/deconvolution.pyx":621
  *         while itt < 5:
  * 
  *             gradu = np.zeros((u_M, u_N, 3), dtype=DTYPE)             # <<<<<<<<<<<<<<
  * 
  *             # Compute the new image
  */
-      __pyx_t_12 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 557, __pyx_L1_error)
+      __pyx_t_12 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 621, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_12);
-      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_12, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 557, __pyx_L1_error)
+      __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_12, __pyx_n_s_zeros); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 621, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_2);
       __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
-      __pyx_t_12 = __Pyx_PyInt_From_int(__pyx_v_u_M); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 557, __pyx_L1_error)
+      __pyx_t_12 = __Pyx_PyInt_From_int(__pyx_v_u_M); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 621, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_12);
-      __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_u_N); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 557, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_u_N); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 621, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_4 = PyTuple_New(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 557, __pyx_L1_error)
+      __pyx_t_4 = PyTuple_New(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 621, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_GIVEREF(__pyx_t_12);
       PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_12);
@@ -8482,23 +9137,23 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
       PyTuple_SET_ITEM(__pyx_t_4, 2, __pyx_int_3);
       __pyx_t_12 = 0;
       __pyx_t_1 = 0;
-      __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 557, __pyx_L1_error)
+      __pyx_t_1 = PyTuple_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 621, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_GIVEREF(__pyx_t_4);
       PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_4);
       __pyx_t_4 = 0;
-      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 557, __pyx_L1_error)
+      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 621, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_12 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 557, __pyx_L1_error)
+      __pyx_t_12 = __Pyx_GetModuleGlobalName(__pyx_n_s_DTYPE); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 621, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_12);
-      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_12) < 0) __PYX_ERR(0, 557, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_dtype, __pyx_t_12) < 0) __PYX_ERR(0, 621, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
-      __pyx_t_12 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, __pyx_t_4); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 557, __pyx_L1_error)
+      __pyx_t_12 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, __pyx_t_4); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 621, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_12);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      if (!(likely(((__pyx_t_12) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_12, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 557, __pyx_L1_error)
+      if (!(likely(((__pyx_t_12) == Py_None) || likely(__Pyx_TypeTest(__pyx_t_12, __pyx_ptype_5numpy_ndarray))))) __PYX_ERR(0, 621, __pyx_L1_error)
       __pyx_t_7 = ((PyArrayObject *)__pyx_t_12);
       {
         __Pyx_BufFmt_StackElem __pyx_stack[1];
@@ -8514,13 +9169,13 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
           }
         }
         __pyx_pybuffernd_gradu.diminfo[0].strides = __pyx_pybuffernd_gradu.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_gradu.diminfo[0].shape = __pyx_pybuffernd_gradu.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_gradu.diminfo[1].strides = __pyx_pybuffernd_gradu.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_gradu.diminfo[1].shape = __pyx_pybuffernd_gradu.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_gradu.diminfo[2].strides = __pyx_pybuffernd_gradu.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_gradu.diminfo[2].shape = __pyx_pybuffernd_gradu.rcbuffer->pybuffer.shape[2];
-        if (unlikely(__pyx_t_15 < 0)) __PYX_ERR(0, 557, __pyx_L1_error)
+        if (unlikely(__pyx_t_15 < 0)) __PYX_ERR(0, 621, __pyx_L1_error)
       }
       __pyx_t_7 = 0;
       __Pyx_DECREF_SET(__pyx_v_gradu, ((PyArrayObject *)__pyx_t_12));
       __pyx_t_12 = 0;
 
-      /* "lib/deconvolution.pyx":560
+      /* "lib/deconvolution.pyx":624
  * 
  *             # Compute the new image
  *             for chan in range(3):             # <<<<<<<<<<<<<<
@@ -8530,16 +9185,16 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
       for (__pyx_t_19 = 0; __pyx_t_19 < 3; __pyx_t_19+=1) {
         __pyx_v_chan = __pyx_t_19;
 
-        /* "lib/deconvolution.pyx":561
+        /* "lib/deconvolution.pyx":625
  *             # Compute the new image
  *             for chan in range(3):
  *                 error[..., chan] = FFT_valid(u[..., chan], psf[..., chan])             # <<<<<<<<<<<<<<
  * 
  *             with nogil, parallel(num_threads=CPU):
  */
-        __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 561, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 625, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
-        __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 561, __pyx_L1_error)
+        __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 625, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_INCREF(Py_Ellipsis);
         __Pyx_GIVEREF(Py_Ellipsis);
@@ -8547,12 +9202,12 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
         __Pyx_GIVEREF(__pyx_t_4);
         PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_t_4);
         __pyx_t_4 = 0;
-        __pyx_t_4 = PyObject_GetItem(((PyObject *)__pyx_v_u), __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 561, __pyx_L1_error)
+        __pyx_t_4 = PyObject_GetItem(((PyObject *)__pyx_v_u), __pyx_t_1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 625, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 561, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 625, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 561, __pyx_L1_error)
+        __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 625, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_INCREF(Py_Ellipsis);
         __Pyx_GIVEREF(Py_Ellipsis);
@@ -8560,7 +9215,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
         __Pyx_GIVEREF(__pyx_t_1);
         PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_1);
         __pyx_t_1 = 0;
-        __pyx_t_1 = PyObject_GetItem(((PyObject *)__pyx_v_psf), __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 561, __pyx_L1_error)
+        __pyx_t_1 = PyObject_GetItem(((PyObject *)__pyx_v_psf), __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 625, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_INCREF(((PyObject *)__pyx_v_FFT_valid));
@@ -8579,7 +9234,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_2)) {
           PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_t_4, __pyx_t_1};
-          __pyx_t_12 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_15, 2+__pyx_t_15); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 561, __pyx_L1_error)
+          __pyx_t_12 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_15, 2+__pyx_t_15); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 625, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_GOTREF(__pyx_t_12);
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -8589,7 +9244,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
           PyObject *__pyx_temp[3] = {__pyx_t_3, __pyx_t_4, __pyx_t_1};
-          __pyx_t_12 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_15, 2+__pyx_t_15); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 561, __pyx_L1_error)
+          __pyx_t_12 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_15, 2+__pyx_t_15); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 625, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_GOTREF(__pyx_t_12);
           __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -8597,7 +9252,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
         } else
         #endif
         {
-          __pyx_t_20 = PyTuple_New(2+__pyx_t_15); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 561, __pyx_L1_error)
+          __pyx_t_20 = PyTuple_New(2+__pyx_t_15); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 625, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_20);
           if (__pyx_t_3) {
             __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_20, 0, __pyx_t_3); __pyx_t_3 = NULL;
@@ -8608,14 +9263,14 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
           PyTuple_SET_ITEM(__pyx_t_20, 1+__pyx_t_15, __pyx_t_1);
           __pyx_t_4 = 0;
           __pyx_t_1 = 0;
-          __pyx_t_12 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_20, NULL); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 561, __pyx_L1_error)
+          __pyx_t_12 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_20, NULL); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 625, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_12);
           __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
         }
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 561, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 625, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
-        __pyx_t_20 = PyTuple_New(2); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 561, __pyx_L1_error)
+        __pyx_t_20 = PyTuple_New(2); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 625, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_20);
         __Pyx_INCREF(Py_Ellipsis);
         __Pyx_GIVEREF(Py_Ellipsis);
@@ -8623,12 +9278,12 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
         __Pyx_GIVEREF(__pyx_t_2);
         PyTuple_SET_ITEM(__pyx_t_20, 1, __pyx_t_2);
         __pyx_t_2 = 0;
-        if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v_error), __pyx_t_20, __pyx_t_12) < 0)) __PYX_ERR(0, 561, __pyx_L1_error)
+        if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v_error), __pyx_t_20, __pyx_t_12) < 0)) __PYX_ERR(0, 625, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
         __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
       }
 
-      /* "lib/deconvolution.pyx":563
+      /* "lib/deconvolution.pyx":627
  *                 error[..., chan] = FFT_valid(u[..., chan], psf[..., chan])
  * 
  *             with nogil, parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
@@ -8654,7 +9309,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
                 #endif /* _OPENMP */
                 {
 
-                    /* "lib/deconvolution.pyx":564
+                    /* "lib/deconvolution.pyx":628
  * 
  *             with nogil, parallel(num_threads=CPU):
  *                 for i in prange(M):             # <<<<<<<<<<<<<<
@@ -8677,7 +9332,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
                                     __pyx_v_j = ((int)0xbad0bad0);
                                     __pyx_v_k = ((int)0xbad0bad0);
 
-                                    /* "lib/deconvolution.pyx":565
+                                    /* "lib/deconvolution.pyx":629
  *             with nogil, parallel(num_threads=CPU):
  *                 for i in prange(M):
  *                     for k in range(3):             # <<<<<<<<<<<<<<
@@ -8687,7 +9342,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
                                     for (__pyx_t_23 = 0; __pyx_t_23 < 3; __pyx_t_23+=1) {
                                       __pyx_v_k = __pyx_t_23;
 
-                                      /* "lib/deconvolution.pyx":566
+                                      /* "lib/deconvolution.pyx":630
  *                 for i in prange(M):
  *                     for k in range(3):
  *                         for j in range(N):             # <<<<<<<<<<<<<<
@@ -8698,7 +9353,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
                                       for (__pyx_t_25 = 0; __pyx_t_25 < __pyx_t_24; __pyx_t_25+=1) {
                                         __pyx_v_j = __pyx_t_25;
 
-                                        /* "lib/deconvolution.pyx":567
+                                        /* "lib/deconvolution.pyx":631
  *                     for k in range(3):
  *                         for j in range(N):
  *                             error[i, j, k] -= image[i, j, k]             # <<<<<<<<<<<<<<
@@ -8728,7 +9383,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
             #endif
           }
 
-          /* "lib/deconvolution.pyx":563
+          /* "lib/deconvolution.pyx":627
  *                 error[..., chan] = FFT_valid(u[..., chan], psf[..., chan])
  * 
  *             with nogil, parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
@@ -8741,13 +9396,13 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
               __Pyx_FastGIL_Forget();
               Py_BLOCK_THREADS
               #endif
-              goto __pyx_L16;
+              goto __pyx_L15;
             }
-            __pyx_L16:;
+            __pyx_L15:;
           }
       }
 
-      /* "lib/deconvolution.pyx":569
+      /* "lib/deconvolution.pyx":633
  *                             error[i, j, k] -= image[i, j, k]
  * 
  *             for chan in range(3):             # <<<<<<<<<<<<<<
@@ -8757,16 +9412,16 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
       for (__pyx_t_19 = 0; __pyx_t_19 < 3; __pyx_t_19+=1) {
         __pyx_v_chan = __pyx_t_19;
 
-        /* "lib/deconvolution.pyx":570
+        /* "lib/deconvolution.pyx":634
  * 
  *             for chan in range(3):
  *                 im_convo[..., chan] = FFT_full(error[..., chan], psf_rotated[..., chan])             # <<<<<<<<<<<<<<
  * 
  *             # Compute the ratio of the norm of Total Variation between the current major and minor deblured images
  */
-        __pyx_t_20 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 570, __pyx_L1_error)
+        __pyx_t_20 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 634, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_20);
-        __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 570, __pyx_L1_error)
+        __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 634, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_INCREF(Py_Ellipsis);
         __Pyx_GIVEREF(Py_Ellipsis);
@@ -8774,7 +9429,7 @@ static void __pyx_f_3lib_13deconvolution__richardson_lucy_MM(PyArrayObject *__py
         __Pyx_GIVEREF(__pyx_t_20);
         PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_20);
         __pyx_t_20 = 0;
-        __pyx_t_20 = PyObject_GetItem(((PyObject *)__pyx_v_error), __pyx_t_2); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 570, __pyx_L1_error)
+        __pyx_t_20 = PyObject_GetItem(((PyObject *)__pyx_v_error), __pyx_t_2); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 634, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_20);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         __pyx_t_10.data = __pyx_v_psf_rotated.data;
@@ -8796,12 +9451,12 @@ __pyx_t_10.strides[1] = __pyx_v_psf_rotated.strides[1];
         __pyx_tmp_idx += __pyx_tmp_shape;
     if (0 && (__pyx_tmp_idx < 0 || __pyx_tmp_idx >= __pyx_tmp_shape)) {
         PyErr_SetString(PyExc_IndexError, "Index out of bounds (axis 2)");
-        __PYX_ERR(0, 570, __pyx_L1_error)
+        __PYX_ERR(0, 634, __pyx_L1_error)
     }
         __pyx_t_10.data += __pyx_tmp_idx * __pyx_tmp_stride;
 }
 
-__pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 570, __pyx_L1_error)
+__pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 634, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __PYX_XDEC_MEMVIEW(&__pyx_t_10, 1);
         __pyx_t_10.memview = NULL;
@@ -8822,7 +9477,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_1)) {
           PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_t_20, __pyx_t_2};
-          __pyx_t_12 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_22, 2+__pyx_t_22); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 570, __pyx_L1_error)
+          __pyx_t_12 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_22, 2+__pyx_t_22); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 634, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_12);
           __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
@@ -8832,7 +9487,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
           PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_t_20, __pyx_t_2};
-          __pyx_t_12 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_22, 2+__pyx_t_22); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 570, __pyx_L1_error)
+          __pyx_t_12 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-__pyx_t_22, 2+__pyx_t_22); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 634, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
           __Pyx_GOTREF(__pyx_t_12);
           __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
@@ -8840,7 +9495,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
         } else
         #endif
         {
-          __pyx_t_3 = PyTuple_New(2+__pyx_t_22); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 570, __pyx_L1_error)
+          __pyx_t_3 = PyTuple_New(2+__pyx_t_22); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 634, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_3);
           if (__pyx_t_4) {
             __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -8851,14 +9506,14 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
           PyTuple_SET_ITEM(__pyx_t_3, 1+__pyx_t_22, __pyx_t_2);
           __pyx_t_20 = 0;
           __pyx_t_2 = 0;
-          __pyx_t_12 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, NULL); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 570, __pyx_L1_error)
+          __pyx_t_12 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, NULL); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 634, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_12);
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         }
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 570, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 634, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 570, __pyx_L1_error)
+        __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 634, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_INCREF(Py_Ellipsis);
         __Pyx_GIVEREF(Py_Ellipsis);
@@ -8866,12 +9521,12 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
         __Pyx_GIVEREF(__pyx_t_1);
         PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_1);
         __pyx_t_1 = 0;
-        if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v_im_convo), __pyx_t_3, __pyx_t_12) < 0)) __PYX_ERR(0, 570, __pyx_L1_error)
+        if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v_im_convo), __pyx_t_3, __pyx_t_12) < 0)) __PYX_ERR(0, 634, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
       }
 
-      /* "lib/deconvolution.pyx":573
+      /* "lib/deconvolution.pyx":637
  * 
  *             # Compute the ratio of the norm of Total Variation between the current major and minor deblured images
  *             gradTVEM(u, ut, epsilon, tau, im_convo, lambd, gradu, max_grad_u, u_M, u_N, neighbours)             # <<<<<<<<<<<<<<
@@ -8879,13 +9534,13 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
  *             for k in range(3):
  */
       __pyx_t_11 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_u));
-      if (unlikely(!__pyx_t_11.memview)) __PYX_ERR(0, 573, __pyx_L1_error)
+      if (unlikely(!__pyx_t_11.memview)) __PYX_ERR(0, 637, __pyx_L1_error)
       __pyx_t_32 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_ut));
-      if (unlikely(!__pyx_t_32.memview)) __PYX_ERR(0, 573, __pyx_L1_error)
+      if (unlikely(!__pyx_t_32.memview)) __PYX_ERR(0, 637, __pyx_L1_error)
       __pyx_t_33 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_im_convo));
-      if (unlikely(!__pyx_t_33.memview)) __PYX_ERR(0, 573, __pyx_L1_error)
+      if (unlikely(!__pyx_t_33.memview)) __PYX_ERR(0, 637, __pyx_L1_error)
       __pyx_t_34 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_gradu));
-      if (unlikely(!__pyx_t_34.memview)) __PYX_ERR(0, 573, __pyx_L1_error)
+      if (unlikely(!__pyx_t_34.memview)) __PYX_ERR(0, 637, __pyx_L1_error)
       __pyx_f_3lib_13deconvolution_gradTVEM(__pyx_t_11, __pyx_t_32, __pyx_v_epsilon, __pyx_v_tau, __pyx_t_33, __pyx_v_lambd, __pyx_t_34, __pyx_v_max_grad_u, __pyx_v_u_M, __pyx_v_u_N, __pyx_v_neighbours);
       __PYX_XDEC_MEMVIEW(&__pyx_t_11, 1);
       __pyx_t_11.memview = NULL;
@@ -8900,7 +9555,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
       __pyx_t_34.memview = NULL;
       __pyx_t_34.data = NULL;
 
-      /* "lib/deconvolution.pyx":575
+      /* "lib/deconvolution.pyx":639
  *             gradTVEM(u, ut, epsilon, tau, im_convo, lambd, gradu, max_grad_u, u_M, u_N, neighbours)
  * 
  *             for k in range(3):             # <<<<<<<<<<<<<<
@@ -8910,23 +9565,23 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
       for (__pyx_t_22 = 0; __pyx_t_22 < 3; __pyx_t_22+=1) {
         __pyx_v_k = __pyx_t_22;
 
-        /* "lib/deconvolution.pyx":576
+        /* "lib/deconvolution.pyx":640
  * 
  *             for k in range(3):
  *                 dt[k] = step_factor * (np.amax(u[..., k]) + 1/(u_M * u_N)) / (max_grad_u[k] + float(1e-31))             # <<<<<<<<<<<<<<
  * 
  *             with nogil, parallel(num_threads=CPU):
  */
-        __pyx_t_12 = PyFloat_FromDouble(__pyx_v_step_factor); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 576, __pyx_L1_error)
+        __pyx_t_12 = PyFloat_FromDouble(__pyx_v_step_factor); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 640, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_12);
-        __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 576, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 640, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_amax); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 576, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_t_1, __pyx_n_s_amax); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 640, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_k); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 576, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyInt_From_int(__pyx_v_k); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 640, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_20 = PyTuple_New(2); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 576, __pyx_L1_error)
+        __pyx_t_20 = PyTuple_New(2); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 640, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_20);
         __Pyx_INCREF(Py_Ellipsis);
         __Pyx_GIVEREF(Py_Ellipsis);
@@ -8934,7 +9589,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
         __Pyx_GIVEREF(__pyx_t_1);
         PyTuple_SET_ITEM(__pyx_t_20, 1, __pyx_t_1);
         __pyx_t_1 = 0;
-        __pyx_t_1 = PyObject_GetItem(((PyObject *)__pyx_v_u), __pyx_t_20); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 576, __pyx_L1_error)
+        __pyx_t_1 = PyObject_GetItem(((PyObject *)__pyx_v_u), __pyx_t_20); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 640, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
         __pyx_t_20 = NULL;
@@ -8948,14 +9603,14 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
           }
         }
         if (!__pyx_t_20) {
-          __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 576, __pyx_L1_error)
+          __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 640, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
           __Pyx_GOTREF(__pyx_t_3);
         } else {
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_2)) {
             PyObject *__pyx_temp[2] = {__pyx_t_20, __pyx_t_1};
-            __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 576, __pyx_L1_error)
+            __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 640, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_20); __pyx_t_20 = 0;
             __Pyx_GOTREF(__pyx_t_3);
             __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -8964,47 +9619,47 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
             PyObject *__pyx_temp[2] = {__pyx_t_20, __pyx_t_1};
-            __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 576, __pyx_L1_error)
+            __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 640, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_20); __pyx_t_20 = 0;
             __Pyx_GOTREF(__pyx_t_3);
             __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
           } else
           #endif
           {
-            __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 576, __pyx_L1_error)
+            __pyx_t_4 = PyTuple_New(1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 640, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_4);
             __Pyx_GIVEREF(__pyx_t_20); PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_20); __pyx_t_20 = NULL;
             __Pyx_GIVEREF(__pyx_t_1);
             PyTuple_SET_ITEM(__pyx_t_4, 0+1, __pyx_t_1);
             __pyx_t_1 = 0;
-            __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 576, __pyx_L1_error)
+            __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_4, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 640, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_3);
             __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
           }
         }
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __pyx_t_2 = __Pyx_PyInt_From_long((1 / (__pyx_v_u_M * __pyx_v_u_N))); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 576, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_PyInt_From_long((1 / (__pyx_v_u_M * __pyx_v_u_N))); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 640, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
-        __pyx_t_4 = PyNumber_Add(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 576, __pyx_L1_error)
+        __pyx_t_4 = PyNumber_Add(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 640, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-        __pyx_t_2 = PyNumber_Multiply(__pyx_t_12, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 576, __pyx_L1_error)
+        __pyx_t_2 = PyNumber_Multiply(__pyx_t_12, __pyx_t_4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 640, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
         __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __pyx_t_4 = PyFloat_FromDouble(((__pyx_v_max_grad_u[__pyx_v_k]) + 1e-31)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 576, __pyx_L1_error)
+        __pyx_t_4 = PyFloat_FromDouble(((__pyx_v_max_grad_u[__pyx_v_k]) + 1e-31)); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 640, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
-        __pyx_t_12 = __Pyx_PyNumber_Divide(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 576, __pyx_L1_error)
+        __pyx_t_12 = __Pyx_PyNumber_Divide(__pyx_t_2, __pyx_t_4); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 640, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_12);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __pyx_t_35 = __pyx_PyFloat_AsFloat(__pyx_t_12); if (unlikely((__pyx_t_35 == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 576, __pyx_L1_error)
+        __pyx_t_35 = __pyx_PyFloat_AsFloat(__pyx_t_12); if (unlikely((__pyx_t_35 == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 640, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
         (__pyx_v_dt[__pyx_v_k]) = __pyx_t_35;
       }
 
-      /* "lib/deconvolution.pyx":578
+      /* "lib/deconvolution.pyx":642
  *                 dt[k] = step_factor * (np.amax(u[..., k]) + 1/(u_M * u_N)) / (max_grad_u[k] + float(1e-31))
  * 
  *             with nogil, parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
@@ -9030,7 +9685,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
                 #endif /* _OPENMP */
                 {
 
-                    /* "lib/deconvolution.pyx":579
+                    /* "lib/deconvolution.pyx":643
  * 
  *             with nogil, parallel(num_threads=CPU):
  *                 for i in prange(u_M):             # <<<<<<<<<<<<<<
@@ -9053,7 +9708,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
                                     __pyx_v_j = ((int)0xbad0bad0);
                                     __pyx_v_k = ((int)0xbad0bad0);
 
-                                    /* "lib/deconvolution.pyx":580
+                                    /* "lib/deconvolution.pyx":644
  *             with nogil, parallel(num_threads=CPU):
  *                 for i in prange(u_M):
  *                     for k in range(3):             # <<<<<<<<<<<<<<
@@ -9063,7 +9718,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
                                     for (__pyx_t_23 = 0; __pyx_t_23 < 3; __pyx_t_23+=1) {
                                       __pyx_v_k = __pyx_t_23;
 
-                                      /* "lib/deconvolution.pyx":581
+                                      /* "lib/deconvolution.pyx":645
  *                 for i in prange(u_M):
  *                     for k in range(3):
  *                         for j in range(u_N):             # <<<<<<<<<<<<<<
@@ -9074,7 +9729,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
                                       for (__pyx_t_25 = 0; __pyx_t_25 < __pyx_t_24; __pyx_t_25+=1) {
                                         __pyx_v_j = __pyx_t_25;
 
-                                        /* "lib/deconvolution.pyx":582
+                                        /* "lib/deconvolution.pyx":646
  *                     for k in range(3):
  *                         for j in range(u_N):
  *                             u[i, j, k] = u[i, j, k] - dt[k] * gradu[i, j, k]             # <<<<<<<<<<<<<<
@@ -9107,7 +9762,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
             #endif
           }
 
-          /* "lib/deconvolution.pyx":578
+          /* "lib/deconvolution.pyx":642
  *                 dt[k] = step_factor * (np.amax(u[..., k]) + 1/(u_M * u_N)) / (max_grad_u[k] + float(1e-31))
  * 
  *             with nogil, parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
@@ -9120,13 +9775,13 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
               __Pyx_FastGIL_Forget();
               Py_BLOCK_THREADS
               #endif
-              goto __pyx_L41;
+              goto __pyx_L40;
             }
-            __pyx_L41:;
+            __pyx_L40:;
           }
       }
 
-      /* "lib/deconvolution.pyx":584
+      /* "lib/deconvolution.pyx":648
  *                             u[i, j, k] = u[i, j, k] - dt[k] * gradu[i, j, k]
  * 
  *             if blind:             # <<<<<<<<<<<<<<
@@ -9136,7 +9791,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
       __pyx_t_13 = (__pyx_v_blind != 0);
       if (__pyx_t_13) {
 
-        /* "lib/deconvolution.pyx":586
+        /* "lib/deconvolution.pyx":650
  *             if blind:
  *                 # PSF update
  *                 for chan in range(C):             # <<<<<<<<<<<<<<
@@ -9147,16 +9802,16 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
         for (__pyx_t_19 = 0; __pyx_t_19 < __pyx_t_15; __pyx_t_19+=1) {
           __pyx_v_chan = __pyx_t_19;
 
-          /* "lib/deconvolution.pyx":587
+          /* "lib/deconvolution.pyx":651
  *                 # PSF update
  *                 for chan in range(C):
  *                     error[..., chan] = FFT_valid(u[..., chan], psf[..., chan])             # <<<<<<<<<<<<<<
  * 
  *                 with nogil, parallel(num_threads=CPU):
  */
-          __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 587, __pyx_L1_error)
+          __pyx_t_4 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 651, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_4);
-          __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 587, __pyx_L1_error)
+          __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 651, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_INCREF(Py_Ellipsis);
           __Pyx_GIVEREF(Py_Ellipsis);
@@ -9164,12 +9819,12 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
           __Pyx_GIVEREF(__pyx_t_4);
           PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_4);
           __pyx_t_4 = 0;
-          __pyx_t_4 = PyObject_GetItem(((PyObject *)__pyx_v_u), __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 587, __pyx_L1_error)
+          __pyx_t_4 = PyObject_GetItem(((PyObject *)__pyx_v_u), __pyx_t_2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 651, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_4);
           __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-          __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 587, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 651, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
-          __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 587, __pyx_L1_error)
+          __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 651, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_3);
           __Pyx_INCREF(Py_Ellipsis);
           __Pyx_GIVEREF(Py_Ellipsis);
@@ -9177,7 +9832,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
           __Pyx_GIVEREF(__pyx_t_2);
           PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_2);
           __pyx_t_2 = 0;
-          __pyx_t_2 = PyObject_GetItem(((PyObject *)__pyx_v_psf), __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 587, __pyx_L1_error)
+          __pyx_t_2 = PyObject_GetItem(((PyObject *)__pyx_v_psf), __pyx_t_3); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 651, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
           __Pyx_INCREF(((PyObject *)__pyx_v_FFT_valid));
@@ -9196,7 +9851,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_3)) {
             PyObject *__pyx_temp[3] = {__pyx_t_1, __pyx_t_4, __pyx_t_2};
-            __pyx_t_12 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_21, 2+__pyx_t_21); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 587, __pyx_L1_error)
+            __pyx_t_12 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_21, 2+__pyx_t_21); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 651, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
             __Pyx_GOTREF(__pyx_t_12);
             __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -9206,7 +9861,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
             PyObject *__pyx_temp[3] = {__pyx_t_1, __pyx_t_4, __pyx_t_2};
-            __pyx_t_12 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_21, 2+__pyx_t_21); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 587, __pyx_L1_error)
+            __pyx_t_12 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_21, 2+__pyx_t_21); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 651, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_1); __pyx_t_1 = 0;
             __Pyx_GOTREF(__pyx_t_12);
             __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -9214,7 +9869,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
           } else
           #endif
           {
-            __pyx_t_20 = PyTuple_New(2+__pyx_t_21); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 587, __pyx_L1_error)
+            __pyx_t_20 = PyTuple_New(2+__pyx_t_21); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 651, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_20);
             if (__pyx_t_1) {
               __Pyx_GIVEREF(__pyx_t_1); PyTuple_SET_ITEM(__pyx_t_20, 0, __pyx_t_1); __pyx_t_1 = NULL;
@@ -9225,14 +9880,14 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
             PyTuple_SET_ITEM(__pyx_t_20, 1+__pyx_t_21, __pyx_t_2);
             __pyx_t_4 = 0;
             __pyx_t_2 = 0;
-            __pyx_t_12 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_20, NULL); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 587, __pyx_L1_error)
+            __pyx_t_12 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_20, NULL); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 651, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_12);
             __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
           }
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-          __pyx_t_3 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 587, __pyx_L1_error)
+          __pyx_t_3 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 651, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_3);
-          __pyx_t_20 = PyTuple_New(2); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 587, __pyx_L1_error)
+          __pyx_t_20 = PyTuple_New(2); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 651, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_20);
           __Pyx_INCREF(Py_Ellipsis);
           __Pyx_GIVEREF(Py_Ellipsis);
@@ -9240,12 +9895,12 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
           __Pyx_GIVEREF(__pyx_t_3);
           PyTuple_SET_ITEM(__pyx_t_20, 1, __pyx_t_3);
           __pyx_t_3 = 0;
-          if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v_error), __pyx_t_20, __pyx_t_12) < 0)) __PYX_ERR(0, 587, __pyx_L1_error)
+          if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v_error), __pyx_t_20, __pyx_t_12) < 0)) __PYX_ERR(0, 651, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
           __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
         }
 
-        /* "lib/deconvolution.pyx":589
+        /* "lib/deconvolution.pyx":653
  *                     error[..., chan] = FFT_valid(u[..., chan], psf[..., chan])
  * 
  *                 with nogil, parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
@@ -9271,7 +9926,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
                   #endif /* _OPENMP */
                   {
 
-                      /* "lib/deconvolution.pyx":590
+                      /* "lib/deconvolution.pyx":654
  * 
  *                 with nogil, parallel(num_threads=CPU):
  *                     for i in prange(M):             # <<<<<<<<<<<<<<
@@ -9294,7 +9949,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
                                       __pyx_v_j = ((int)0xbad0bad0);
                                       __pyx_v_k = ((int)0xbad0bad0);
 
-                                      /* "lib/deconvolution.pyx":591
+                                      /* "lib/deconvolution.pyx":655
  *                 with nogil, parallel(num_threads=CPU):
  *                     for i in prange(M):
  *                         for k in range(3):             # <<<<<<<<<<<<<<
@@ -9304,7 +9959,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
                                       for (__pyx_t_23 = 0; __pyx_t_23 < 3; __pyx_t_23+=1) {
                                         __pyx_v_k = __pyx_t_23;
 
-                                        /* "lib/deconvolution.pyx":592
+                                        /* "lib/deconvolution.pyx":656
  *                     for i in prange(M):
  *                         for k in range(3):
  *                             for j in range(N):             # <<<<<<<<<<<<<<
@@ -9315,7 +9970,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
                                         for (__pyx_t_25 = 0; __pyx_t_25 < __pyx_t_24; __pyx_t_25+=1) {
                                           __pyx_v_j = __pyx_t_25;
 
-                                          /* "lib/deconvolution.pyx":593
+                                          /* "lib/deconvolution.pyx":657
  *                         for k in range(3):
  *                             for j in range(N):
  *                                 error[i, j, k] -= image[i, j, k]             # <<<<<<<<<<<<<<
@@ -9345,7 +10000,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
               #endif
             }
 
-            /* "lib/deconvolution.pyx":589
+            /* "lib/deconvolution.pyx":653
  *                     error[..., chan] = FFT_valid(u[..., chan], psf[..., chan])
  * 
  *                 with nogil, parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
@@ -9358,13 +10013,13 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
                 __Pyx_FastGIL_Forget();
                 Py_BLOCK_THREADS
                 #endif
-                goto __pyx_L65;
+                goto __pyx_L64;
               }
-              __pyx_L65:;
+              __pyx_L64:;
             }
         }
 
-        /* "lib/deconvolution.pyx":595
+        /* "lib/deconvolution.pyx":659
  *                                 error[i, j, k] -= image[i, j, k]
  * 
  *                 rotate_180(u, u_M, u_N, u_rotated)             # <<<<<<<<<<<<<<
@@ -9372,13 +10027,13 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
  *                 for chan in range(C):
  */
         __pyx_t_34 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_u));
-        if (unlikely(!__pyx_t_34.memview)) __PYX_ERR(0, 595, __pyx_L1_error)
+        if (unlikely(!__pyx_t_34.memview)) __PYX_ERR(0, 659, __pyx_L1_error)
         __pyx_f_3lib_13deconvolution_rotate_180(__pyx_t_34, __pyx_v_u_M, __pyx_v_u_N, __pyx_v_u_rotated);
         __PYX_XDEC_MEMVIEW(&__pyx_t_34, 1);
         __pyx_t_34.memview = NULL;
         __pyx_t_34.data = NULL;
 
-        /* "lib/deconvolution.pyx":597
+        /* "lib/deconvolution.pyx":661
  *                 rotate_180(u, u_M, u_N, u_rotated)
  * 
  *                 for chan in range(C):             # <<<<<<<<<<<<<<
@@ -9389,7 +10044,7 @@ __pyx_t_2 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __
         for (__pyx_t_19 = 0; __pyx_t_19 < __pyx_t_22; __pyx_t_19+=1) {
           __pyx_v_chan = __pyx_t_19;
 
-          /* "lib/deconvolution.pyx":598
+          /* "lib/deconvolution.pyx":662
  * 
  *                 for chan in range(C):
  *                     gradk[..., chan] = FFT_kern_valid(u_rotated[..., chan], error[..., chan])             # <<<<<<<<<<<<<<
@@ -9415,19 +10070,19 @@ __pyx_t_10.strides[1] = __pyx_v_u_rotated.strides[1];
         __pyx_tmp_idx += __pyx_tmp_shape;
     if (0 && (__pyx_tmp_idx < 0 || __pyx_tmp_idx >= __pyx_tmp_shape)) {
         PyErr_SetString(PyExc_IndexError, "Index out of bounds (axis 2)");
-        __PYX_ERR(0, 598, __pyx_L1_error)
+        __PYX_ERR(0, 662, __pyx_L1_error)
     }
         __pyx_t_10.data += __pyx_tmp_idx * __pyx_tmp_stride;
 }
 
-__pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 598, __pyx_L1_error)
+__pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) __pyx_memview_get_float, (int (*)(char *, PyObject *)) __pyx_memview_set_float, 0);; if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 662, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_20);
           __PYX_XDEC_MEMVIEW(&__pyx_t_10, 1);
           __pyx_t_10.memview = NULL;
           __pyx_t_10.data = NULL;
-          __pyx_t_3 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 598, __pyx_L1_error)
+          __pyx_t_3 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 662, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_3);
-          __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 598, __pyx_L1_error)
+          __pyx_t_2 = PyTuple_New(2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 662, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
           __Pyx_INCREF(Py_Ellipsis);
           __Pyx_GIVEREF(Py_Ellipsis);
@@ -9435,7 +10090,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
           __Pyx_GIVEREF(__pyx_t_3);
           PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_3);
           __pyx_t_3 = 0;
-          __pyx_t_3 = PyObject_GetItem(((PyObject *)__pyx_v_error), __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 598, __pyx_L1_error)
+          __pyx_t_3 = PyObject_GetItem(((PyObject *)__pyx_v_error), __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 662, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_3);
           __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
           __Pyx_INCREF(((PyObject *)__pyx_v_FFT_kern_valid));
@@ -9454,7 +10109,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_2)) {
             PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_t_20, __pyx_t_3};
-            __pyx_t_12 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_21, 2+__pyx_t_21); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 598, __pyx_L1_error)
+            __pyx_t_12 = __Pyx_PyFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_21, 2+__pyx_t_21); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 662, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
             __Pyx_GOTREF(__pyx_t_12);
             __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
@@ -9464,7 +10119,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_2)) {
             PyObject *__pyx_temp[3] = {__pyx_t_4, __pyx_t_20, __pyx_t_3};
-            __pyx_t_12 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_21, 2+__pyx_t_21); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 598, __pyx_L1_error)
+            __pyx_t_12 = __Pyx_PyCFunction_FastCall(__pyx_t_2, __pyx_temp+1-__pyx_t_21, 2+__pyx_t_21); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 662, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
             __Pyx_GOTREF(__pyx_t_12);
             __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
@@ -9472,7 +10127,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
           } else
           #endif
           {
-            __pyx_t_1 = PyTuple_New(2+__pyx_t_21); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 598, __pyx_L1_error)
+            __pyx_t_1 = PyTuple_New(2+__pyx_t_21); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 662, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_1);
             if (__pyx_t_4) {
               __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_4); __pyx_t_4 = NULL;
@@ -9483,14 +10138,14 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
             PyTuple_SET_ITEM(__pyx_t_1, 1+__pyx_t_21, __pyx_t_3);
             __pyx_t_20 = 0;
             __pyx_t_3 = 0;
-            __pyx_t_12 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, NULL); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 598, __pyx_L1_error)
+            __pyx_t_12 = __Pyx_PyObject_Call(__pyx_t_2, __pyx_t_1, NULL); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 662, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_12);
             __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
           }
           __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-          __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 598, __pyx_L1_error)
+          __pyx_t_2 = __Pyx_PyInt_From_long(__pyx_v_chan); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 662, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_2);
-          __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 598, __pyx_L1_error)
+          __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 662, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
           __Pyx_INCREF(Py_Ellipsis);
           __Pyx_GIVEREF(Py_Ellipsis);
@@ -9498,23 +10153,23 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
           __Pyx_GIVEREF(__pyx_t_2);
           PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_t_2);
           __pyx_t_2 = 0;
-          if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v_gradk), __pyx_t_1, __pyx_t_12) < 0)) __PYX_ERR(0, 598, __pyx_L1_error)
+          if (unlikely(PyObject_SetItem(((PyObject *)__pyx_v_gradk), __pyx_t_1, __pyx_t_12) < 0)) __PYX_ERR(0, 662, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
           __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
         }
 
-        /* "lib/deconvolution.pyx":603
+        /* "lib/deconvolution.pyx":667
  *                 #amax_abs(gradk, MK, MK, max_grad_psf)
  * 
  *                 dtpsf = step_factor * (np.amax(psf) + 1/(u_M * u_N)) / (np.amax(np.abs(gradk)) + float(1e-31))             # <<<<<<<<<<<<<<
  * 
  *                 with nogil, parallel(num_threads=CPU):
  */
-        __pyx_t_12 = PyFloat_FromDouble(__pyx_v_step_factor); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 603, __pyx_L1_error)
+        __pyx_t_12 = PyFloat_FromDouble(__pyx_v_step_factor); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 667, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_12);
-        __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 603, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 667, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
-        __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_amax); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 603, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_amax); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 667, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         __pyx_t_2 = NULL;
@@ -9528,13 +10183,13 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
           }
         }
         if (!__pyx_t_2) {
-          __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, ((PyObject *)__pyx_v_psf)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 603, __pyx_L1_error)
+          __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, ((PyObject *)__pyx_v_psf)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 667, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_1);
         } else {
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_3)) {
             PyObject *__pyx_temp[2] = {__pyx_t_2, ((PyObject *)__pyx_v_psf)};
-            __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 603, __pyx_L1_error)
+            __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 667, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
             __Pyx_GOTREF(__pyx_t_1);
           } else
@@ -9542,42 +10197,42 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
             PyObject *__pyx_temp[2] = {__pyx_t_2, ((PyObject *)__pyx_v_psf)};
-            __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 603, __pyx_L1_error)
+            __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 667, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
             __Pyx_GOTREF(__pyx_t_1);
           } else
           #endif
           {
-            __pyx_t_20 = PyTuple_New(1+1); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 603, __pyx_L1_error)
+            __pyx_t_20 = PyTuple_New(1+1); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 667, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_20);
             __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_20, 0, __pyx_t_2); __pyx_t_2 = NULL;
             __Pyx_INCREF(((PyObject *)__pyx_v_psf));
             __Pyx_GIVEREF(((PyObject *)__pyx_v_psf));
             PyTuple_SET_ITEM(__pyx_t_20, 0+1, ((PyObject *)__pyx_v_psf));
-            __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_20, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 603, __pyx_L1_error)
+            __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_20, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 667, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_1);
             __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
           }
         }
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __pyx_t_3 = __Pyx_PyInt_From_long((1 / (__pyx_v_u_M * __pyx_v_u_N))); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 603, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyInt_From_long((1 / (__pyx_v_u_M * __pyx_v_u_N))); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 667, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
-        __pyx_t_20 = PyNumber_Add(__pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 603, __pyx_L1_error)
+        __pyx_t_20 = PyNumber_Add(__pyx_t_1, __pyx_t_3); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 667, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_20);
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-        __pyx_t_3 = PyNumber_Multiply(__pyx_t_12, __pyx_t_20); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 603, __pyx_L1_error)
+        __pyx_t_3 = PyNumber_Multiply(__pyx_t_12, __pyx_t_20); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 667, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
         __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
         __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
-        __pyx_t_12 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 603, __pyx_L1_error)
+        __pyx_t_12 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 667, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_12);
-        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_12, __pyx_n_s_amax); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 603, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_t_12, __pyx_n_s_amax); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 667, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
-        __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 603, __pyx_L1_error)
+        __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 667, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_2);
-        __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_abs); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 603, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_abs); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 667, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
         __pyx_t_2 = NULL;
@@ -9591,13 +10246,13 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
           }
         }
         if (!__pyx_t_2) {
-          __pyx_t_12 = __Pyx_PyObject_CallOneArg(__pyx_t_4, ((PyObject *)__pyx_v_gradk)); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 603, __pyx_L1_error)
+          __pyx_t_12 = __Pyx_PyObject_CallOneArg(__pyx_t_4, ((PyObject *)__pyx_v_gradk)); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 667, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_12);
         } else {
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_4)) {
             PyObject *__pyx_temp[2] = {__pyx_t_2, ((PyObject *)__pyx_v_gradk)};
-            __pyx_t_12 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 603, __pyx_L1_error)
+            __pyx_t_12 = __Pyx_PyFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 667, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
             __Pyx_GOTREF(__pyx_t_12);
           } else
@@ -9605,19 +10260,19 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_4)) {
             PyObject *__pyx_temp[2] = {__pyx_t_2, ((PyObject *)__pyx_v_gradk)};
-            __pyx_t_12 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 603, __pyx_L1_error)
+            __pyx_t_12 = __Pyx_PyCFunction_FastCall(__pyx_t_4, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 667, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_2); __pyx_t_2 = 0;
             __Pyx_GOTREF(__pyx_t_12);
           } else
           #endif
           {
-            __pyx_t_51 = PyTuple_New(1+1); if (unlikely(!__pyx_t_51)) __PYX_ERR(0, 603, __pyx_L1_error)
+            __pyx_t_51 = PyTuple_New(1+1); if (unlikely(!__pyx_t_51)) __PYX_ERR(0, 667, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_51);
             __Pyx_GIVEREF(__pyx_t_2); PyTuple_SET_ITEM(__pyx_t_51, 0, __pyx_t_2); __pyx_t_2 = NULL;
             __Pyx_INCREF(((PyObject *)__pyx_v_gradk));
             __Pyx_GIVEREF(((PyObject *)__pyx_v_gradk));
             PyTuple_SET_ITEM(__pyx_t_51, 0+1, ((PyObject *)__pyx_v_gradk));
-            __pyx_t_12 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_51, NULL); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 603, __pyx_L1_error)
+            __pyx_t_12 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_t_51, NULL); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 667, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_12);
             __Pyx_DECREF(__pyx_t_51); __pyx_t_51 = 0;
           }
@@ -9634,14 +10289,14 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
           }
         }
         if (!__pyx_t_4) {
-          __pyx_t_20 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_12); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 603, __pyx_L1_error)
+          __pyx_t_20 = __Pyx_PyObject_CallOneArg(__pyx_t_1, __pyx_t_12); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 667, __pyx_L1_error)
           __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
           __Pyx_GOTREF(__pyx_t_20);
         } else {
           #if CYTHON_FAST_PYCALL
           if (PyFunction_Check(__pyx_t_1)) {
             PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_12};
-            __pyx_t_20 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 603, __pyx_L1_error)
+            __pyx_t_20 = __Pyx_PyFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 667, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
             __Pyx_GOTREF(__pyx_t_20);
             __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
@@ -9650,37 +10305,37 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
           #if CYTHON_FAST_PYCCALL
           if (__Pyx_PyFastCFunction_Check(__pyx_t_1)) {
             PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_12};
-            __pyx_t_20 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 603, __pyx_L1_error)
+            __pyx_t_20 = __Pyx_PyCFunction_FastCall(__pyx_t_1, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 667, __pyx_L1_error)
             __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
             __Pyx_GOTREF(__pyx_t_20);
             __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
           } else
           #endif
           {
-            __pyx_t_51 = PyTuple_New(1+1); if (unlikely(!__pyx_t_51)) __PYX_ERR(0, 603, __pyx_L1_error)
+            __pyx_t_51 = PyTuple_New(1+1); if (unlikely(!__pyx_t_51)) __PYX_ERR(0, 667, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_51);
             __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_51, 0, __pyx_t_4); __pyx_t_4 = NULL;
             __Pyx_GIVEREF(__pyx_t_12);
             PyTuple_SET_ITEM(__pyx_t_51, 0+1, __pyx_t_12);
             __pyx_t_12 = 0;
-            __pyx_t_20 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_51, NULL); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 603, __pyx_L1_error)
+            __pyx_t_20 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_51, NULL); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 667, __pyx_L1_error)
             __Pyx_GOTREF(__pyx_t_20);
             __Pyx_DECREF(__pyx_t_51); __pyx_t_51 = 0;
           }
         }
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        __pyx_t_1 = __Pyx_PyFloat_AddObjC(__pyx_t_20, __pyx_float_1eneg_31, 1e-31, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 603, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyFloat_AddObjC(__pyx_t_20, __pyx_float_1eneg_31, 1e-31, 0); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 667, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
-        __pyx_t_20 = __Pyx_PyNumber_Divide(__pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 603, __pyx_L1_error)
+        __pyx_t_20 = __Pyx_PyNumber_Divide(__pyx_t_3, __pyx_t_1); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 667, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_20);
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        __pyx_t_35 = __pyx_PyFloat_AsFloat(__pyx_t_20); if (unlikely((__pyx_t_35 == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 603, __pyx_L1_error)
+        __pyx_t_35 = __pyx_PyFloat_AsFloat(__pyx_t_20); if (unlikely((__pyx_t_35 == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 667, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
         __pyx_v_dtpsf = __pyx_t_35;
 
-        /* "lib/deconvolution.pyx":605
+        /* "lib/deconvolution.pyx":669
  *                 dtpsf = step_factor * (np.amax(psf) + 1/(u_M * u_N)) / (np.amax(np.abs(gradk)) + float(1e-31))
  * 
  *                 with nogil, parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
@@ -9706,7 +10361,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
                   #endif /* _OPENMP */
                   {
 
-                      /* "lib/deconvolution.pyx":606
+                      /* "lib/deconvolution.pyx":670
  * 
  *                 with nogil, parallel(num_threads=CPU):
  *                     for i in prange(MK):             # <<<<<<<<<<<<<<
@@ -9729,7 +10384,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
                                       __pyx_v_j = ((int)0xbad0bad0);
                                       __pyx_v_k = ((int)0xbad0bad0);
 
-                                      /* "lib/deconvolution.pyx":607
+                                      /* "lib/deconvolution.pyx":671
  *                 with nogil, parallel(num_threads=CPU):
  *                     for i in prange(MK):
  *                         for k in range(3):             # <<<<<<<<<<<<<<
@@ -9739,7 +10394,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
                                       for (__pyx_t_23 = 0; __pyx_t_23 < 3; __pyx_t_23+=1) {
                                         __pyx_v_k = __pyx_t_23;
 
-                                        /* "lib/deconvolution.pyx":608
+                                        /* "lib/deconvolution.pyx":672
  *                     for i in prange(MK):
  *                         for k in range(3):
  *                             for j in range(MK):             # <<<<<<<<<<<<<<
@@ -9750,7 +10405,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
                                         for (__pyx_t_25 = 0; __pyx_t_25 < __pyx_t_24; __pyx_t_25+=1) {
                                           __pyx_v_j = __pyx_t_25;
 
-                                          /* "lib/deconvolution.pyx":609
+                                          /* "lib/deconvolution.pyx":673
  *                         for k in range(3):
  *                             for j in range(MK):
  *                                 psf[i, j, k] -= dtpsf * gradk[i, j, k]             # <<<<<<<<<<<<<<
@@ -9780,7 +10435,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
               #endif
             }
 
-            /* "lib/deconvolution.pyx":605
+            /* "lib/deconvolution.pyx":669
  *                 dtpsf = step_factor * (np.amax(psf) + 1/(u_M * u_N)) / (np.amax(np.abs(gradk)) + float(1e-31))
  * 
  *                 with nogil, parallel(num_threads=CPU):             # <<<<<<<<<<<<<<
@@ -9793,13 +10448,13 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
                 __Pyx_FastGIL_Forget();
                 Py_BLOCK_THREADS
                 #endif
-                goto __pyx_L88;
+                goto __pyx_L87;
               }
-              __pyx_L88:;
+              __pyx_L87:;
             }
         }
 
-        /* "lib/deconvolution.pyx":611
+        /* "lib/deconvolution.pyx":675
  *                                 psf[i, j, k] -= dtpsf * gradk[i, j, k]
  * 
  *                 _normalize_kernel(psf, MK)             # <<<<<<<<<<<<<<
@@ -9807,13 +10462,13 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  *                 rotate_180(psf, MK, MK, psf_rotated)
  */
         __pyx_t_34 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_psf));
-        if (unlikely(!__pyx_t_34.memview)) __PYX_ERR(0, 611, __pyx_L1_error)
+        if (unlikely(!__pyx_t_34.memview)) __PYX_ERR(0, 675, __pyx_L1_error)
         __pyx_f_3lib_13deconvolution__normalize_kernel(__pyx_t_34, __pyx_v_MK);
         __PYX_XDEC_MEMVIEW(&__pyx_t_34, 1);
         __pyx_t_34.memview = NULL;
         __pyx_t_34.data = NULL;
 
-        /* "lib/deconvolution.pyx":613
+        /* "lib/deconvolution.pyx":677
  *                 _normalize_kernel(psf, MK)
  * 
  *                 rotate_180(psf, MK, MK, psf_rotated)             # <<<<<<<<<<<<<<
@@ -9821,13 +10476,13 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  *             # Update loop variables
  */
         __pyx_t_34 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_psf));
-        if (unlikely(!__pyx_t_34.memview)) __PYX_ERR(0, 613, __pyx_L1_error)
+        if (unlikely(!__pyx_t_34.memview)) __PYX_ERR(0, 677, __pyx_L1_error)
         __pyx_f_3lib_13deconvolution_rotate_180(__pyx_t_34, __pyx_v_MK, __pyx_v_MK, __pyx_v_psf_rotated);
         __PYX_XDEC_MEMVIEW(&__pyx_t_34, 1);
         __pyx_t_34.memview = NULL;
         __pyx_t_34.data = NULL;
 
-        /* "lib/deconvolution.pyx":584
+        /* "lib/deconvolution.pyx":648
  *                             u[i, j, k] = u[i, j, k] - dt[k] * gradu[i, j, k]
  * 
  *             if blind:             # <<<<<<<<<<<<<<
@@ -9836,7 +10491,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  */
       }
 
-      /* "lib/deconvolution.pyx":616
+      /* "lib/deconvolution.pyx":680
  * 
  *             # Update loop variables
  *             itt += 1             # <<<<<<<<<<<<<<
@@ -9845,7 +10500,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  */
       __pyx_v_itt = (__pyx_v_itt + 1);
 
-      /* "lib/deconvolution.pyx":617
+      /* "lib/deconvolution.pyx":681
  *             # Update loop variables
  *             itt += 1
  *             it += 1             # <<<<<<<<<<<<<<
@@ -9854,7 +10509,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  */
       __pyx_v_it = (__pyx_v_it + 1);
 
-      /* "lib/deconvolution.pyx":618
+      /* "lib/deconvolution.pyx":682
  *             itt += 1
  *             it += 1
  *             lambd *= 1.001             # <<<<<<<<<<<<<<
@@ -9864,7 +10519,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
       __pyx_v_lambd = (__pyx_v_lambd * 1.001);
     }
 
-    /* "lib/deconvolution.pyx":623
+    /* "lib/deconvolution.pyx":687
  *         # Convergence analysis
  *         # As images statistics show the cost function decreases only after 100 iterations and converge around 1000, we enforce 20 iterations no matter what
  *         stop = norm_L2_3D(gradu, u_M, u_N)/(u_M*u_N)             # <<<<<<<<<<<<<<
@@ -9872,13 +10527,13 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  *         if stop_previous < stop and convergence_flag:
  */
     __pyx_t_34 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_gradu));
-    if (unlikely(!__pyx_t_34.memview)) __PYX_ERR(0, 623, __pyx_L1_error)
+    if (unlikely(!__pyx_t_34.memview)) __PYX_ERR(0, 687, __pyx_L1_error)
     __pyx_v_stop = (__pyx_f_3lib_13deconvolution_norm_L2_3D(__pyx_t_34, __pyx_v_u_M, __pyx_v_u_N) / (__pyx_v_u_M * __pyx_v_u_N));
     __PYX_XDEC_MEMVIEW(&__pyx_t_34, 1);
     __pyx_t_34.memview = NULL;
     __pyx_t_34.data = NULL;
 
-    /* "lib/deconvolution.pyx":625
+    /* "lib/deconvolution.pyx":689
  *         stop = norm_L2_3D(gradu, u_M, u_N)/(u_M*u_N)
  * 
  *         if stop_previous < stop and convergence_flag:             # <<<<<<<<<<<<<<
@@ -9889,14 +10544,14 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
     if (__pyx_t_14) {
     } else {
       __pyx_t_13 = __pyx_t_14;
-      goto __pyx_L106_bool_binop_done;
+      goto __pyx_L105_bool_binop_done;
     }
     __pyx_t_14 = (__pyx_v_convergence_flag != 0);
     __pyx_t_13 = __pyx_t_14;
-    __pyx_L106_bool_binop_done:;
+    __pyx_L105_bool_binop_done:;
     if (__pyx_t_13) {
 
-      /* "lib/deconvolution.pyx":627
+      /* "lib/deconvolution.pyx":691
  *         if stop_previous < stop and convergence_flag:
  *             # Second round where convergence is met : stop the loop after this round
  *             stop_flag = True             # <<<<<<<<<<<<<<
@@ -9905,7 +10560,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  */
       __pyx_v_stop_flag = 1;
 
-      /* "lib/deconvolution.pyx":625
+      /* "lib/deconvolution.pyx":689
  *         stop = norm_L2_3D(gradu, u_M, u_N)/(u_M*u_N)
  * 
  *         if stop_previous < stop and convergence_flag:             # <<<<<<<<<<<<<<
@@ -9914,7 +10569,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  */
     }
 
-    /* "lib/deconvolution.pyx":629
+    /* "lib/deconvolution.pyx":693
  *             stop_flag = True
  * 
  *         if stop_previous < stop:             # <<<<<<<<<<<<<<
@@ -9924,7 +10579,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
     __pyx_t_13 = ((__pyx_v_stop_previous < __pyx_v_stop) != 0);
     if (__pyx_t_13) {
 
-      /* "lib/deconvolution.pyx":631
+      /* "lib/deconvolution.pyx":695
  *         if stop_previous < stop:
  *             # First round where convergence is met : raise a flag, do nothing
  *             convergence_flag = True             # <<<<<<<<<<<<<<
@@ -9933,7 +10588,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  */
       __pyx_v_convergence_flag = 1;
 
-      /* "lib/deconvolution.pyx":629
+      /* "lib/deconvolution.pyx":693
  *             stop_flag = True
  * 
  *         if stop_previous < stop:             # <<<<<<<<<<<<<<
@@ -9942,7 +10597,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  */
     }
 
-    /* "lib/deconvolution.pyx":634
+    /* "lib/deconvolution.pyx":698
  * 
  * 
  *         if blind:             # <<<<<<<<<<<<<<
@@ -9952,7 +10607,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
     __pyx_t_13 = (__pyx_v_blind != 0);
     if (__pyx_t_13) {
 
-      /* "lib/deconvolution.pyx":635
+      /* "lib/deconvolution.pyx":699
  * 
  *         if blind:
  *             stop_2 = norm_L2_3D(gradk, MK, MK)/(MK**2)             # <<<<<<<<<<<<<<
@@ -9960,13 +10615,13 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  *             if stop_previous_2 < stop_2 and convergence_flag:
  */
       __pyx_t_34 = __Pyx_PyObject_to_MemoryviewSlice_dsdsds_float(((PyObject *)__pyx_v_gradk));
-      if (unlikely(!__pyx_t_34.memview)) __PYX_ERR(0, 635, __pyx_L1_error)
+      if (unlikely(!__pyx_t_34.memview)) __PYX_ERR(0, 699, __pyx_L1_error)
       __pyx_v_stop_2 = (__pyx_f_3lib_13deconvolution_norm_L2_3D(__pyx_t_34, __pyx_v_MK, __pyx_v_MK) / __Pyx_pow_long(((long)__pyx_v_MK), 2));
       __PYX_XDEC_MEMVIEW(&__pyx_t_34, 1);
       __pyx_t_34.memview = NULL;
       __pyx_t_34.data = NULL;
 
-      /* "lib/deconvolution.pyx":637
+      /* "lib/deconvolution.pyx":701
  *             stop_2 = norm_L2_3D(gradk, MK, MK)/(MK**2)
  * 
  *             if stop_previous_2 < stop_2 and convergence_flag:             # <<<<<<<<<<<<<<
@@ -9977,14 +10632,14 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
       if (__pyx_t_14) {
       } else {
         __pyx_t_13 = __pyx_t_14;
-        goto __pyx_L111_bool_binop_done;
+        goto __pyx_L110_bool_binop_done;
       }
       __pyx_t_14 = (__pyx_v_convergence_flag != 0);
       __pyx_t_13 = __pyx_t_14;
-      __pyx_L111_bool_binop_done:;
+      __pyx_L110_bool_binop_done:;
       if (__pyx_t_13) {
 
-        /* "lib/deconvolution.pyx":639
+        /* "lib/deconvolution.pyx":703
  *             if stop_previous_2 < stop_2 and convergence_flag:
  *                 # Second round where convergence is met : stop the loop after this round
  *                 stop_flag = True             # <<<<<<<<<<<<<<
@@ -9993,7 +10648,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  */
         __pyx_v_stop_flag = 1;
 
-        /* "lib/deconvolution.pyx":637
+        /* "lib/deconvolution.pyx":701
  *             stop_2 = norm_L2_3D(gradk, MK, MK)/(MK**2)
  * 
  *             if stop_previous_2 < stop_2 and convergence_flag:             # <<<<<<<<<<<<<<
@@ -10002,7 +10657,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  */
       }
 
-      /* "lib/deconvolution.pyx":641
+      /* "lib/deconvolution.pyx":705
  *                 stop_flag = True
  * 
  *             if stop_previous_2 < stop_2:             # <<<<<<<<<<<<<<
@@ -10012,7 +10667,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
       __pyx_t_13 = ((__pyx_v_stop_previous_2 < __pyx_v_stop_2) != 0);
       if (__pyx_t_13) {
 
-        /* "lib/deconvolution.pyx":643
+        /* "lib/deconvolution.pyx":707
  *             if stop_previous_2 < stop_2:
  *                 # First round where convergence is met : raise a flag, do nothing
  *                 convergence_flag = True             # <<<<<<<<<<<<<<
@@ -10021,7 +10676,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  */
         __pyx_v_convergence_flag = 1;
 
-        /* "lib/deconvolution.pyx":641
+        /* "lib/deconvolution.pyx":705
  *                 stop_flag = True
  * 
  *             if stop_previous_2 < stop_2:             # <<<<<<<<<<<<<<
@@ -10030,7 +10685,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  */
       }
 
-      /* "lib/deconvolution.pyx":634
+      /* "lib/deconvolution.pyx":698
  * 
  * 
  *         if blind:             # <<<<<<<<<<<<<<
@@ -10039,23 +10694,23 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  */
     }
 
-    /* "lib/deconvolution.pyx":646
+    /* "lib/deconvolution.pyx":710
  * 
  * 
  *         print("%i iterations completed" % it)             # <<<<<<<<<<<<<<
  * 
  *     if blind:
  */
-    __pyx_t_20 = __Pyx_PyInt_From_int(__pyx_v_it); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 646, __pyx_L1_error)
+    __pyx_t_20 = __Pyx_PyInt_From_int(__pyx_v_it); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 710, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_20);
-    __pyx_t_1 = __Pyx_PyString_Format(__pyx_kp_s_i_iterations_completed, __pyx_t_20); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 646, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyString_Format(__pyx_kp_s_i_iterations_completed, __pyx_t_20); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 710, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
-    if (__Pyx_PrintOne(0, __pyx_t_1) < 0) __PYX_ERR(0, 646, __pyx_L1_error)
+    if (__Pyx_PrintOne(0, __pyx_t_1) < 0) __PYX_ERR(0, 710, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   }
 
-  /* "lib/deconvolution.pyx":648
+  /* "lib/deconvolution.pyx":712
  *         print("%i iterations completed" % it)
  * 
  *     if blind:             # <<<<<<<<<<<<<<
@@ -10065,18 +10720,18 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
   __pyx_t_13 = (__pyx_v_blind != 0);
   if (__pyx_t_13) {
 
-    /* "lib/deconvolution.pyx":649
+    /* "lib/deconvolution.pyx":713
  * 
  *     if blind:
  *         print("Convergence at %.3f (PSF) - %i iterations." %(stop_2, it))             # <<<<<<<<<<<<<<
  * 
  *         if stop_2 > 1:
  */
-    __pyx_t_1 = PyFloat_FromDouble(__pyx_v_stop_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 649, __pyx_L1_error)
+    __pyx_t_1 = PyFloat_FromDouble(__pyx_v_stop_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 713, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_20 = __Pyx_PyInt_From_int(__pyx_v_it); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 649, __pyx_L1_error)
+    __pyx_t_20 = __Pyx_PyInt_From_int(__pyx_v_it); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 713, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_20);
-    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 649, __pyx_L1_error)
+    __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 713, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_GIVEREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_1);
@@ -10084,13 +10739,13 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
     PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_20);
     __pyx_t_1 = 0;
     __pyx_t_20 = 0;
-    __pyx_t_20 = __Pyx_PyString_Format(__pyx_kp_s_Convergence_at_3f_PSF_i_iteratio, __pyx_t_3); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 649, __pyx_L1_error)
+    __pyx_t_20 = __Pyx_PyString_Format(__pyx_kp_s_Convergence_at_3f_PSF_i_iteratio, __pyx_t_3); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 713, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_20);
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    if (__Pyx_PrintOne(0, __pyx_t_20) < 0) __PYX_ERR(0, 649, __pyx_L1_error)
+    if (__Pyx_PrintOne(0, __pyx_t_20) < 0) __PYX_ERR(0, 713, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_20); __pyx_t_20 = 0;
 
-    /* "lib/deconvolution.pyx":651
+    /* "lib/deconvolution.pyx":715
  *         print("Convergence at %.3f (PSF) - %i iterations." %(stop_2, it))
  * 
  *         if stop_2 > 1:             # <<<<<<<<<<<<<<
@@ -10100,16 +10755,16 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
     __pyx_t_13 = ((__pyx_v_stop_2 > 1.0) != 0);
     if (__pyx_t_13) {
 
-      /* "lib/deconvolution.pyx":652
+      /* "lib/deconvolution.pyx":716
  * 
  *         if stop_2 > 1:
  *             print("This blur estimation is likely to be wrong. Increase the confidence, the bias or reduce the blur size.")             # <<<<<<<<<<<<<<
  *     else:
  *         print("Convergence at %.3f (image) - %i iterations." %(stop, it))
  */
-      if (__Pyx_PrintOne(0, __pyx_kp_s_This_blur_estimation_is_likely_t) < 0) __PYX_ERR(0, 652, __pyx_L1_error)
+      if (__Pyx_PrintOne(0, __pyx_kp_s_This_blur_estimation_is_likely_t) < 0) __PYX_ERR(0, 716, __pyx_L1_error)
 
-      /* "lib/deconvolution.pyx":651
+      /* "lib/deconvolution.pyx":715
  *         print("Convergence at %.3f (PSF) - %i iterations." %(stop_2, it))
  * 
  *         if stop_2 > 1:             # <<<<<<<<<<<<<<
@@ -10118,17 +10773,17 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  */
     }
 
-    /* "lib/deconvolution.pyx":648
+    /* "lib/deconvolution.pyx":712
  *         print("%i iterations completed" % it)
  * 
  *     if blind:             # <<<<<<<<<<<<<<
  *         print("Convergence at %.3f (PSF) - %i iterations." %(stop_2, it))
  * 
  */
-    goto __pyx_L114;
+    goto __pyx_L113;
   }
 
-  /* "lib/deconvolution.pyx":654
+  /* "lib/deconvolution.pyx":718
  *             print("This blur estimation is likely to be wrong. Increase the confidence, the bias or reduce the blur size.")
  *     else:
  *         print("Convergence at %.3f (image) - %i iterations." %(stop, it))             # <<<<<<<<<<<<<<
@@ -10136,11 +10791,11 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  *     if it == iterations:
  */
   /*else*/ {
-    __pyx_t_20 = PyFloat_FromDouble(__pyx_v_stop); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 654, __pyx_L1_error)
+    __pyx_t_20 = PyFloat_FromDouble(__pyx_v_stop); if (unlikely(!__pyx_t_20)) __PYX_ERR(0, 718, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_20);
-    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_it); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 654, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_it); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 718, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 654, __pyx_L1_error)
+    __pyx_t_1 = PyTuple_New(2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 718, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
     __Pyx_GIVEREF(__pyx_t_20);
     PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_20);
@@ -10148,15 +10803,15 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
     PyTuple_SET_ITEM(__pyx_t_1, 1, __pyx_t_3);
     __pyx_t_20 = 0;
     __pyx_t_3 = 0;
-    __pyx_t_3 = __Pyx_PyString_Format(__pyx_kp_s_Convergence_at_3f_image_i_iterat, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 654, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyString_Format(__pyx_kp_s_Convergence_at_3f_image_i_iterat, __pyx_t_1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 718, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-    if (__Pyx_PrintOne(0, __pyx_t_3) < 0) __PYX_ERR(0, 654, __pyx_L1_error)
+    if (__Pyx_PrintOne(0, __pyx_t_3) < 0) __PYX_ERR(0, 718, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   }
-  __pyx_L114:;
+  __pyx_L113:;
 
-  /* "lib/deconvolution.pyx":656
+  /* "lib/deconvolution.pyx":720
  *         print("Convergence at %.3f (image) - %i iterations." %(stop, it))
  * 
  *     if it == iterations:             # <<<<<<<<<<<<<<
@@ -10166,26 +10821,26 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
   __pyx_t_13 = ((__pyx_v_it == __pyx_v_iterations) != 0);
   if (__pyx_t_13) {
 
-    /* "lib/deconvolution.pyx":657
+    /* "lib/deconvolution.pyx":721
  * 
  *     if it == iterations:
  *         print("You did not reach a solution inside the number of iterations you set. Allow more iterations or increase the coarseness.")             # <<<<<<<<<<<<<<
  *     else:
  *         if stop > 1 and blind == False:
  */
-    if (__Pyx_PrintOne(0, __pyx_kp_s_You_did_not_reach_a_solution_ins) < 0) __PYX_ERR(0, 657, __pyx_L1_error)
+    if (__Pyx_PrintOne(0, __pyx_kp_s_You_did_not_reach_a_solution_ins) < 0) __PYX_ERR(0, 721, __pyx_L1_error)
 
-    /* "lib/deconvolution.pyx":656
+    /* "lib/deconvolution.pyx":720
  *         print("Convergence at %.3f (image) - %i iterations." %(stop, it))
  * 
  *     if it == iterations:             # <<<<<<<<<<<<<<
  *         print("You did not reach a solution inside the number of iterations you set. Allow more iterations or increase the coarseness.")
  *     else:
  */
-    goto __pyx_L116;
+    goto __pyx_L115;
   }
 
-  /* "lib/deconvolution.pyx":659
+  /* "lib/deconvolution.pyx":723
  *         print("You did not reach a solution inside the number of iterations you set. Allow more iterations or increase the coarseness.")
  *     else:
  *         if stop > 1 and blind == False:             # <<<<<<<<<<<<<<
@@ -10197,23 +10852,23 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
     if (__pyx_t_14) {
     } else {
       __pyx_t_13 = __pyx_t_14;
-      goto __pyx_L118_bool_binop_done;
+      goto __pyx_L117_bool_binop_done;
     }
     __pyx_t_14 = ((__pyx_v_blind == 0) != 0);
     __pyx_t_13 = __pyx_t_14;
-    __pyx_L118_bool_binop_done:;
+    __pyx_L117_bool_binop_done:;
     if (__pyx_t_13) {
 
-      /* "lib/deconvolution.pyx":660
+      /* "lib/deconvolution.pyx":724
  *     else:
  *         if stop > 1 and blind == False:
  *             print("Your solution is likely to be blurred. Increase the bias or the confidence, decrease the bias, or move/increase the mask.")             # <<<<<<<<<<<<<<
  * 
  * 
  */
-      if (__Pyx_PrintOne(0, __pyx_kp_s_Your_solution_is_likely_to_be_bl) < 0) __PYX_ERR(0, 660, __pyx_L1_error)
+      if (__Pyx_PrintOne(0, __pyx_kp_s_Your_solution_is_likely_to_be_bl) < 0) __PYX_ERR(0, 724, __pyx_L1_error)
 
-      /* "lib/deconvolution.pyx":659
+      /* "lib/deconvolution.pyx":723
  *         print("You did not reach a solution inside the number of iterations you set. Allow more iterations or increase the coarseness.")
  *     else:
  *         if stop > 1 and blind == False:             # <<<<<<<<<<<<<<
@@ -10222,9 +10877,9 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
  */
     }
   }
-  __pyx_L116:;
+  __pyx_L115:;
 
-  /* "lib/deconvolution.pyx":462
+  /* "lib/deconvolution.pyx":530
  * 
  * 
  * cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,             # <<<<<<<<<<<<<<
@@ -10287,7 +10942,7 @@ __pyx_t_20 = __pyx_memoryview_fromslice(__pyx_t_10, 2, (PyObject *(*)(char *)) _
   __Pyx_RefNannyFinishContext();
 }
 
-/* "lib/deconvolution.pyx":663
+/* "lib/deconvolution.pyx":727
  * 
  * 
  * def richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,             # <<<<<<<<<<<<<<
@@ -10360,67 +11015,67 @@ static PyObject *__pyx_pw_3lib_13deconvolution_3richardson_lucy_MM(PyObject *__p
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_u)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 1); __PYX_ERR(0, 663, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 1); __PYX_ERR(0, 727, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  2:
         if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_psf)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 2); __PYX_ERR(0, 663, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 2); __PYX_ERR(0, 727, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  3:
         if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_tau)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 3); __PYX_ERR(0, 663, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 3); __PYX_ERR(0, 727, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  4:
         if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_M)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 4); __PYX_ERR(0, 663, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 4); __PYX_ERR(0, 727, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  5:
         if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_N)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 5); __PYX_ERR(0, 663, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 5); __PYX_ERR(0, 727, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  6:
         if (likely((values[6] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_C)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 6); __PYX_ERR(0, 663, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 6); __PYX_ERR(0, 727, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  7:
         if (likely((values[7] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_MK)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 7); __PYX_ERR(0, 663, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 7); __PYX_ERR(0, 727, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  8:
         if (likely((values[8] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_iterations)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 8); __PYX_ERR(0, 663, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 8); __PYX_ERR(0, 727, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case  9:
         if (likely((values[9] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_step_factor)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 9); __PYX_ERR(0, 663, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 9); __PYX_ERR(0, 727, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 10:
         if (likely((values[10] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_lambd)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 10); __PYX_ERR(0, 663, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 10); __PYX_ERR(0, 727, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 11:
         if (likely((values[11] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_neighbours)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 11); __PYX_ERR(0, 663, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, 11); __PYX_ERR(0, 727, __pyx_L3_error)
         }
         CYTHON_FALLTHROUGH;
         case 12:
@@ -10430,7 +11085,7 @@ static PyObject *__pyx_pw_3lib_13deconvolution_3richardson_lucy_MM(PyObject *__p
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "richardson_lucy_MM") < 0)) __PYX_ERR(0, 663, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "richardson_lucy_MM") < 0)) __PYX_ERR(0, 727, __pyx_L3_error)
       }
     } else {
       switch (PyTuple_GET_SIZE(__pyx_args)) {
@@ -10455,20 +11110,20 @@ static PyObject *__pyx_pw_3lib_13deconvolution_3richardson_lucy_MM(PyObject *__p
     __pyx_v_image = ((PyArrayObject *)values[0]);
     __pyx_v_u = ((PyArrayObject *)values[1]);
     __pyx_v_psf = ((PyArrayObject *)values[2]);
-    __pyx_v_tau = __pyx_PyFloat_AsFloat(values[3]); if (unlikely((__pyx_v_tau == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 664, __pyx_L3_error)
-    __pyx_v_M = __Pyx_PyInt_As_int(values[4]); if (unlikely((__pyx_v_M == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 664, __pyx_L3_error)
-    __pyx_v_N = __Pyx_PyInt_As_int(values[5]); if (unlikely((__pyx_v_N == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 664, __pyx_L3_error)
-    __pyx_v_C = __Pyx_PyInt_As_int(values[6]); if (unlikely((__pyx_v_C == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 664, __pyx_L3_error)
-    __pyx_v_MK = __Pyx_PyInt_As_int(values[7]); if (unlikely((__pyx_v_MK == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 664, __pyx_L3_error)
-    __pyx_v_iterations = __Pyx_PyInt_As_int(values[8]); if (unlikely((__pyx_v_iterations == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 664, __pyx_L3_error)
-    __pyx_v_step_factor = __pyx_PyFloat_AsFloat(values[9]); if (unlikely((__pyx_v_step_factor == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 664, __pyx_L3_error)
-    __pyx_v_lambd = __pyx_PyFloat_AsFloat(values[10]); if (unlikely((__pyx_v_lambd == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 664, __pyx_L3_error)
-    __pyx_v_neighbours = __Pyx_PyInt_As_int(values[11]); if (unlikely((__pyx_v_neighbours == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 664, __pyx_L3_error)
+    __pyx_v_tau = __pyx_PyFloat_AsFloat(values[3]); if (unlikely((__pyx_v_tau == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 728, __pyx_L3_error)
+    __pyx_v_M = __Pyx_PyInt_As_int(values[4]); if (unlikely((__pyx_v_M == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 728, __pyx_L3_error)
+    __pyx_v_N = __Pyx_PyInt_As_int(values[5]); if (unlikely((__pyx_v_N == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 728, __pyx_L3_error)
+    __pyx_v_C = __Pyx_PyInt_As_int(values[6]); if (unlikely((__pyx_v_C == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 728, __pyx_L3_error)
+    __pyx_v_MK = __Pyx_PyInt_As_int(values[7]); if (unlikely((__pyx_v_MK == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 728, __pyx_L3_error)
+    __pyx_v_iterations = __Pyx_PyInt_As_int(values[8]); if (unlikely((__pyx_v_iterations == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 728, __pyx_L3_error)
+    __pyx_v_step_factor = __pyx_PyFloat_AsFloat(values[9]); if (unlikely((__pyx_v_step_factor == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 728, __pyx_L3_error)
+    __pyx_v_lambd = __pyx_PyFloat_AsFloat(values[10]); if (unlikely((__pyx_v_lambd == (float)-1) && PyErr_Occurred())) __PYX_ERR(0, 728, __pyx_L3_error)
+    __pyx_v_neighbours = __Pyx_PyInt_As_int(values[11]); if (unlikely((__pyx_v_neighbours == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 728, __pyx_L3_error)
     if (values[12]) {
-      __pyx_v_blind = __Pyx_PyInt_As_int(values[12]); if (unlikely((__pyx_v_blind == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 664, __pyx_L3_error)
+      __pyx_v_blind = __Pyx_PyInt_As_int(values[12]); if (unlikely((__pyx_v_blind == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 728, __pyx_L3_error)
     } else {
 
-      /* "lib/deconvolution.pyx":664
+      /* "lib/deconvolution.pyx":728
  * 
  * def richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,
  *                        float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int neighbours, int blind=True):             # <<<<<<<<<<<<<<
@@ -10480,18 +11135,18 @@ static PyObject *__pyx_pw_3lib_13deconvolution_3richardson_lucy_MM(PyObject *__p
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 663, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("richardson_lucy_MM", 0, 12, 13, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 727, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("lib.deconvolution.richardson_lucy_MM", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_image), __pyx_ptype_5numpy_ndarray, 1, "image", 0))) __PYX_ERR(0, 663, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_u), __pyx_ptype_5numpy_ndarray, 1, "u", 0))) __PYX_ERR(0, 663, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_psf), __pyx_ptype_5numpy_ndarray, 1, "psf", 0))) __PYX_ERR(0, 663, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_image), __pyx_ptype_5numpy_ndarray, 1, "image", 0))) __PYX_ERR(0, 727, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_u), __pyx_ptype_5numpy_ndarray, 1, "u", 0))) __PYX_ERR(0, 727, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_psf), __pyx_ptype_5numpy_ndarray, 1, "psf", 0))) __PYX_ERR(0, 727, __pyx_L1_error)
   __pyx_r = __pyx_pf_3lib_13deconvolution_2richardson_lucy_MM(__pyx_self, __pyx_v_image, __pyx_v_u, __pyx_v_psf, __pyx_v_tau, __pyx_v_M, __pyx_v_N, __pyx_v_C, __pyx_v_MK, __pyx_v_iterations, __pyx_v_step_factor, __pyx_v_lambd, __pyx_v_neighbours, __pyx_v_blind);
 
-  /* "lib/deconvolution.pyx":663
+  /* "lib/deconvolution.pyx":727
  * 
  * 
  * def richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,             # <<<<<<<<<<<<<<
@@ -10533,21 +11188,21 @@ static PyObject *__pyx_pf_3lib_13deconvolution_2richardson_lucy_MM(CYTHON_UNUSED
   __pyx_pybuffernd_psf.rcbuffer = &__pyx_pybuffer_psf;
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_image.rcbuffer->pybuffer, (PyObject*)__pyx_v_image, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 663, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_image.rcbuffer->pybuffer, (PyObject*)__pyx_v_image, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 727, __pyx_L1_error)
   }
   __pyx_pybuffernd_image.diminfo[0].strides = __pyx_pybuffernd_image.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_image.diminfo[0].shape = __pyx_pybuffernd_image.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_image.diminfo[1].strides = __pyx_pybuffernd_image.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_image.diminfo[1].shape = __pyx_pybuffernd_image.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_image.diminfo[2].strides = __pyx_pybuffernd_image.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_image.diminfo[2].shape = __pyx_pybuffernd_image.rcbuffer->pybuffer.shape[2];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_u.rcbuffer->pybuffer, (PyObject*)__pyx_v_u, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 663, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_u.rcbuffer->pybuffer, (PyObject*)__pyx_v_u, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 727, __pyx_L1_error)
   }
   __pyx_pybuffernd_u.diminfo[0].strides = __pyx_pybuffernd_u.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_u.diminfo[0].shape = __pyx_pybuffernd_u.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_u.diminfo[1].strides = __pyx_pybuffernd_u.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_u.diminfo[1].shape = __pyx_pybuffernd_u.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_u.diminfo[2].strides = __pyx_pybuffernd_u.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_u.diminfo[2].shape = __pyx_pybuffernd_u.rcbuffer->pybuffer.shape[2];
   {
     __Pyx_BufFmt_StackElem __pyx_stack[1];
-    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_psf.rcbuffer->pybuffer, (PyObject*)__pyx_v_psf, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 663, __pyx_L1_error)
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_psf.rcbuffer->pybuffer, (PyObject*)__pyx_v_psf, &__Pyx_TypeInfo_nn___pyx_t_3lib_13deconvolution_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 3, 0, __pyx_stack) == -1)) __PYX_ERR(0, 727, __pyx_L1_error)
   }
   __pyx_pybuffernd_psf.diminfo[0].strides = __pyx_pybuffernd_psf.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_psf.diminfo[0].shape = __pyx_pybuffernd_psf.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_psf.diminfo[1].strides = __pyx_pybuffernd_psf.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_psf.diminfo[1].shape = __pyx_pybuffernd_psf.rcbuffer->pybuffer.shape[1]; __pyx_pybuffernd_psf.diminfo[2].strides = __pyx_pybuffernd_psf.rcbuffer->pybuffer.strides[2]; __pyx_pybuffernd_psf.diminfo[2].shape = __pyx_pybuffernd_psf.rcbuffer->pybuffer.shape[2];
 
-  /* "lib/deconvolution.pyx":666
+  /* "lib/deconvolution.pyx":730
  *                        float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int neighbours, int blind=True):
  *     # Expose the Cython function to Python
  *     _richardson_lucy_MM(image, u, psf, tau, M, N, C, MK, iterations, step_factor, lambd, neighbours, blind=blind)             # <<<<<<<<<<<<<<
@@ -10557,7 +11212,7 @@ static PyObject *__pyx_pf_3lib_13deconvolution_2richardson_lucy_MM(CYTHON_UNUSED
   __pyx_t_1.blind = __pyx_v_blind;
   __pyx_f_3lib_13deconvolution__richardson_lucy_MM(((PyArrayObject *)__pyx_v_image), ((PyArrayObject *)__pyx_v_u), ((PyArrayObject *)__pyx_v_psf), __pyx_v_tau, __pyx_v_M, __pyx_v_N, __pyx_v_C, __pyx_v_MK, __pyx_v_iterations, __pyx_v_step_factor, __pyx_v_lambd, __pyx_v_neighbours, &__pyx_t_1); 
 
-  /* "lib/deconvolution.pyx":663
+  /* "lib/deconvolution.pyx":727
  * 
  * 
  * def richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,             # <<<<<<<<<<<<<<
@@ -26974,14 +27629,14 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__2);
   __Pyx_GIVEREF(__pyx_tuple__2);
 
-  /* "lib/deconvolution.pyx":545
+  /* "lib/deconvolution.pyx":613
  *     while it < iterations and not stop_flag:
  *         # Prepare the deconvolution
  *         ut[:] = u.copy()             # <<<<<<<<<<<<<<
  *         itt = 0
  * 
  */
-  __pyx_slice__3 = PySlice_New(Py_None, Py_None, Py_None); if (unlikely(!__pyx_slice__3)) __PYX_ERR(0, 545, __pyx_L1_error)
+  __pyx_slice__3 = PySlice_New(Py_None, Py_None, Py_None); if (unlikely(!__pyx_slice__3)) __PYX_ERR(0, 613, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_slice__3);
   __Pyx_GIVEREF(__pyx_slice__3);
 
@@ -27285,17 +27940,17 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__31);
   __Pyx_GIVEREF(__pyx_tuple__31);
 
-  /* "lib/deconvolution.pyx":663
+  /* "lib/deconvolution.pyx":727
  * 
  * 
  * def richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,             # <<<<<<<<<<<<<<
  *                        float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int neighbours, int blind=True):
  *     # Expose the Cython function to Python
  */
-  __pyx_tuple__33 = PyTuple_Pack(13, __pyx_n_s_image, __pyx_n_s_u, __pyx_n_s_psf, __pyx_n_s_tau, __pyx_n_s_M, __pyx_n_s_N, __pyx_n_s_C, __pyx_n_s_MK, __pyx_n_s_iterations, __pyx_n_s_step_factor, __pyx_n_s_lambd, __pyx_n_s_neighbours, __pyx_n_s_blind); if (unlikely(!__pyx_tuple__33)) __PYX_ERR(0, 663, __pyx_L1_error)
+  __pyx_tuple__33 = PyTuple_Pack(13, __pyx_n_s_image, __pyx_n_s_u, __pyx_n_s_psf, __pyx_n_s_tau, __pyx_n_s_M, __pyx_n_s_N, __pyx_n_s_C, __pyx_n_s_MK, __pyx_n_s_iterations, __pyx_n_s_step_factor, __pyx_n_s_lambd, __pyx_n_s_neighbours, __pyx_n_s_blind); if (unlikely(!__pyx_tuple__33)) __PYX_ERR(0, 727, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__33);
   __Pyx_GIVEREF(__pyx_tuple__33);
-  __pyx_codeobj__34 = (PyObject*)__Pyx_PyCode_New(13, 0, 13, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__33, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_lib_deconvolution_pyx, __pyx_n_s_richardson_lucy_MM, 663, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__34)) __PYX_ERR(0, 663, __pyx_L1_error)
+  __pyx_codeobj__34 = (PyObject*)__Pyx_PyCode_New(13, 0, 13, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__33, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_lib_deconvolution_pyx, __pyx_n_s_richardson_lucy_MM, 727, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__34)) __PYX_ERR(0, 727, __pyx_L1_error)
 
   /* "View.MemoryView":284
  *         return self.name
@@ -27482,10 +28137,10 @@ PyMODINIT_FUNC PyInit_deconvolution(void)
   /*--- Variable export code ---*/
   /*--- Function export code ---*/
   /*--- Type init code ---*/
-  if (PyType_Ready(&__pyx_type_3lib_13deconvolution_convolve) < 0) __PYX_ERR(0, 206, __pyx_L1_error)
+  if (PyType_Ready(&__pyx_type_3lib_13deconvolution_convolve) < 0) __PYX_ERR(0, 201, __pyx_L1_error)
   __pyx_type_3lib_13deconvolution_convolve.tp_print = 0;
-  if (PyObject_SetAttrString(__pyx_m, "convolve", (PyObject *)&__pyx_type_3lib_13deconvolution_convolve) < 0) __PYX_ERR(0, 206, __pyx_L1_error)
-  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_3lib_13deconvolution_convolve) < 0) __PYX_ERR(0, 206, __pyx_L1_error)
+  if (PyObject_SetAttrString(__pyx_m, "convolve", (PyObject *)&__pyx_type_3lib_13deconvolution_convolve) < 0) __PYX_ERR(0, 201, __pyx_L1_error)
+  if (__Pyx_setup_reduce((PyObject*)&__pyx_type_3lib_13deconvolution_convolve) < 0) __PYX_ERR(0, 201, __pyx_L1_error)
   __pyx_ptype_3lib_13deconvolution_convolve = &__pyx_type_3lib_13deconvolution_convolve;
   __pyx_vtabptr_array = &__pyx_vtable_array;
   __pyx_vtable_array.get_memview = (PyObject *(*)(struct __pyx_array_obj *))__pyx_array_get_memview;
@@ -27647,16 +28302,16 @@ PyMODINIT_FUNC PyInit_deconvolution(void)
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_DTYPE, __pyx_t_2) < 0) __PYX_ERR(0, 26, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
-  /* "lib/deconvolution.pyx":663
+  /* "lib/deconvolution.pyx":727
  * 
  * 
  * def richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,             # <<<<<<<<<<<<<<
  *                        float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int neighbours, int blind=True):
  *     # Expose the Cython function to Python
  */
-  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_3lib_13deconvolution_3richardson_lucy_MM, NULL, __pyx_n_s_lib_deconvolution); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 663, __pyx_L1_error)
+  __pyx_t_2 = PyCFunction_NewEx(&__pyx_mdef_3lib_13deconvolution_3richardson_lucy_MM, NULL, __pyx_n_s_lib_deconvolution); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 727, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_richardson_lucy_MM, __pyx_t_2) < 0) __PYX_ERR(0, 663, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_richardson_lucy_MM, __pyx_t_2) < 0) __PYX_ERR(0, 727, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "lib/deconvolution.pyx":1

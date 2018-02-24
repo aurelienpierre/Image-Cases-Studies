@@ -152,7 +152,7 @@ cdef inline float best_param(float[:, :, :] image, float lambd, int M, int N):
     cdef float omega = 2 * lambd * norm_diff / (M*N*3)
     
     # Compute epsilon
-    cdef float epsilon = powf((grad_mean) / (expf(omega) - 1), 0.5) * 1.1
+    cdef float epsilon = powf((grad_mean) / (expf(omega) - 1), 0.5)
     
     print("%1.12f, %f" % (epsilon, lambd))
 
@@ -165,12 +165,7 @@ cdef inline float best_param(float[:, :, :] image, float lambd, int M, int N):
     print("%1.12f, %f" % (epsilon, lambd))
     """
     
-    if epsilon < 1e-6:
-        return 1e-6
-    elif epsilon > 1e-1:
-        return 1e-1
-    else:
-        return epsilon
+    return epsilon
 
 
 cdef inline void _normalize_kernel(float[:, :, :] kern, int MK):
@@ -323,10 +318,13 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
     max_u[0] = 0
     max_u[1] = 0
     max_u[2] = 0
+    
+    
+    ## In this section we treat only the inside of the picture. See the next section for edges and boundaries exceptions
         
         
     if neighbours == 8:
-        # Evaluate the total variation on 8 neighbours
+        # Evaluate the total variation on 8 neighbours : direct directions and diagonals, with a bilateral approximation
         
         dxdy = 1 / powf(2, 0.5) # Distance over the diagonal
 
@@ -358,7 +356,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                             
                         
     elif neighbours == 4:
-        # Evaluate the total variation on 4 neighbours
+        # Evaluate the total variation on 4 neighbours : direct directions, with a bilateral approximation
         
         with parallel(num_threads=CPU):
             for i in prange(1, M-1):
@@ -382,7 +380,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                         
                         
     elif neighbours == 2:
-        # Evaluate the total variation on 2 neighbours
+        # Evaluate the total variation on 2 neighbours : simple backward difference
         
         with parallel(num_threads=CPU):
             for i in prange(1, M):
@@ -396,7 +394,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                         utdx = utxy - ut[i-1, j, k]
                         utdy = utxy - ut[i, j-1, k]
         
-                        temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 4 + lambd *  im_convo[i, j, k]
+                        temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[i, j, k]
                         
                         out[i, j, k] = temp
                         temp = fabsf(temp)
@@ -405,45 +403,115 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                             max_u[k] = temp
                         
                         
+    ## In the following section, we treat independently the borders and the edges with custom differences in the relevant directions
+    
     # First row
     with parallel(num_threads=CPU):
-            for j in prange(N):
+            for j in prange(1, N-1):
                 for k in range(3):
-                    udx = u[0, j, k] - u[1, j, k]
-                    utdx = ut[0, j, k] - ut[1, j, k]
+                    uxy = u[0, j, k]
+                    udx = uxy - u[1, j, k]
+                    udy = uxy - (u[0, j-1, k] + u[0, j+1, k])/2
                     
-                    out[0, j, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[0, j, k]
+                    utxy = ut[0, j, k]
+                    utdx = utxy - ut[1, j, k]
+                    utdy = utxy - (ut[0, j-1, k] + ut[0, j+1, k])/2
+                    
+                    out[0, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[0, j, k]
                     
     # Last row
     with parallel(num_threads=CPU):
-            for j in prange(N):
+            for j in prange(1, N-1):
                 for k in range(3):
-                    udx = u[M-1, j, k] - u[M-2, j, k]
-                    utdx = ut[M-1, j, k] - ut[M-2, j, k]
+                    uxy = u[M-1, j, k]
+                    udx = uxy - u[M-2, j, k]
+                    udy = uxy - (u[M-1, j-1, k] + u[M-1, j+1, k])/2
                     
-                    out[M-1, j, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[M-1, j, k]
+                    utxy = ut[M-1, j, k]
+                    utdx = utxy - ut[M-2, j, k]
+                    utdy = utxy - (ut[M-1, j-1, k] + ut[M-1, j+1, k])/2
+                    
+                    out[M-1, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[M-1, j, k]
                     
     # First column
     with parallel(num_threads=CPU):
-            for i in prange(M):
+            for i in prange(1, M-1):
                 for k in range(3):
-                    udx = u[i, 0, k] - u[i, 1, k]
-                    utdx = ut[i, 0, k] - ut[i, 1, k]
+                    uxy = u[i, 0, k]
+                    udx = uxy - u[i, 1, k]
+                    udy = uxy - (u[i-1, 0, k] + u[i+1, 0, k])/2
                     
-                    out[i, 0, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[i, 0, k]
+                    utxy = ut[i, 0, k]
+                    utdx = utxy - ut[i, 1, k]
+                    utdy = utxy - (ut[i-1, 0, k] + ut[i+1, 0, k])/2
                     
+                    out[i, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[i, 0, k]             
                     
     # Last column
     with parallel(num_threads=CPU):
-            for i in prange(M):
+            for i in prange(1, M-1):
                 for k in range(3):
-                    udx = u[i, N-1, k] - u[i, N-2, k]
-                    utdx = ut[i, N-1, k] - ut[i, N-2, k]
+                    uxy = u[i, N-1, k]
+                    udx = uxy - u[i, N-2, k]
+                    udy = uxy - (u[i-1, N-1, k] + u[i+1, N-1, k])/2
                     
-                    out[i, N-1, k] = (udx) / (fabsf(udx) + epsilon) / (fabsf(utdx) + epsilon + tau) + lambd *  im_convo[i, N-1, k]
+                    utxy = ut[i, N-1, k]
+                    utdx = utxy - ut[i, N-2, k]
+                    utdy = utxy - (ut[i-1, N-1, k] + ut[i+1, N-1, k])/2
+                    
+                    out[i, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[i, N-1, k]
                     
                     
+    # North-West corder
+    for k in range(3):
+        uxy = u[0, 0, k]
+        udx = uxy - u[0, 1, k]
+        udy = uxy - u[1, 0, k]
+        
+        utxy = ut[0, 0, k]
+        utdx = utxy - ut[0, 1, k]
+        utdy = utxy - ut[1, 0, k]
+        
+        out[0, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[0, 0, k]
+        
+        
+    # North-East corner
+    for k in range(3):
+        uxy = u[0, N-1, k]
+        udx = uxy - u[0, N-2, k]
+        udy = uxy - u[1, N-1, k]
+        
+        utxy = ut[0, N-1, k]
+        utdx = utxy - ut[0, N-2, k]
+        utdy = utxy - ut[1, N-1, k]
+        
+        out[0, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[0, N-1, k]
+                    
+                    
+    # South-East
+    for k in range(3):
+        uxy = u[M-1, N-1, k]
+        udx = uxy - u[M-1, N-2, k]
+        udy = uxy - u[M-2, N-1, k]
     
+        utxy = ut[M-1, N-1, k]
+        utdx = utxy - ut[M-1, N-2, k]
+        utdy = utxy - ut[M-2, N-1, k]
+        
+        out[M-1, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[M-1, N-1, k]
+        
+        
+    # South-West
+    for k in range(3):
+        uxy = u[M-1, 0, k]
+        udx = uxy - u[M-2, 0, k]
+        udy = uxy - u[M-1, 1, k]
+    
+        utxy = ut[M-1, 0, k]
+        utdx = utxy - ut[M-2, 0, k]
+        utdy = utxy - ut[M-1, 1, k]
+        
+        out[M-1, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[M-1, 0, k]
 
 
 cdef inline void rotate_180(float[:, :, :] array, int M, int N, float[:, :, :] out) nogil:
@@ -544,10 +612,6 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
         # Prepare the deconvolution
         ut[:] = u.copy()
         itt = 0
-        
-        if lambd > 45000:
-            lambd = 45000
-        
 
         stop_previous = stop
         stop_previous_2 = stop_2
