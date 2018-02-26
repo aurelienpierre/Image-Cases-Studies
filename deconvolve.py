@@ -67,7 +67,7 @@ from skimage.restoration import denoise_tv_chambolle
 
 @utils.timeit
 def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4, step=1e-3, bits=8,
-                  iterations=200, sharpness=0, mask=None, display=True, neighbours=8):
+                  iterations=100, sharpness=0, mask=None, display=True, neighbours=8):
     """
     API to call the debluring process
 
@@ -119,9 +119,6 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4
     # Rescale the RGB values between 0 and 1
     pic = pic / samples
 
-    # Denoise
-    # pic = denoise_tv_chambolle(pic, weight=0.001, n_iter_max=100, multichannel=True)
-
     # Make the picture dimensions odd to avoid ringing on the border of even pictures. We just replicate the last row/column
     odd_vert = False
     odd_hor = False
@@ -145,6 +142,12 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4
     M = pic.shape[0]
     N = pic.shape[1]
     C = pic.shape[2]
+    
+    # Rescale the lambda parameter
+    confidence = 1000 * confidence
+    
+    # Set the error
+    epsilon = dc.best_param(pic, confidence, M, N)
 
     print("\n===== BLIND ESTIMATION OF BLUR =====")
 
@@ -162,7 +165,6 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4
         u_masked = pic.copy()
         i_masked = pic
         
-    confidence = 1000 * confidence
 
     # Build the intermediate sizes and factors
     images, kernels, lambdas = build_pyramid(MK, confidence)
@@ -202,7 +204,7 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4
         u_masked = pad_image(u_masked, (pad, pad))
 
         # Make a blind Richardson-Lucy deconvolution on the RGB signal
-        dc.richardson_lucy_MM(im, u_masked, psf, bias, im.shape[0], im.shape[1], 3, k, int(1.0/step), step, l, neighbours, blind=True)
+        dc.richardson_lucy_MM(im, u_masked, psf, 0, im.shape[0], im.shape[1], 3, k, int(1.0/step), step, l, epsilon, neighbours, blind=True)
 
         
         # Unpad FFT because this image is resized/reused the next step
@@ -268,7 +270,7 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4
         u = pad_image(u, (pad, pad))
 
         # Make a non-blind Richardson-Lucy deconvolution on the RGB signal
-        dc.richardson_lucy_MM(im, u, psf_loc, bias, im.shape[0], im.shape[1], 3, k, int(iterations / i), step, l, neighbours, blind=False)
+        dc.richardson_lucy_MM(im, u, psf_loc, bias, im.shape[0], im.shape[1], 3, k, int(iterations / i), step, l, epsilon, neighbours, blind=False)
 
         # Unpad FFT because this image is resized/reused the next step
         u = u[pad:-pad, pad:-pad, ...]
@@ -308,10 +310,9 @@ if __name__ == '__main__':
     picture = "blured.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [478, 478 + 255, 715, 715 + 255]
-        bias_1 = 5e-4
         #deblur_module(pic, picture + "-v24-2", dest_path, 5, mask=mask, display=True, confidence=80, neighbours=2, bias=bias_1)
         #deblur_module(pic, picture + "-v24-4", dest_path, 5, mask=mask, display=True, confidence=80, neighbours=4, bias=bias_1)
-        #deblur_module(pic, picture + "-v24-8", dest_path, 5, mask=mask, display=True, confidence=100, neighbours=8, bias=bias_1)
+        #deblur_module(pic, picture + "-v25-8", dest_path, 5, mask=mask, display=True, confidence=100, neighbours=8)
         pass
 
     picture = "IMG_9584-900.jpg"
@@ -330,13 +331,13 @@ if __name__ == '__main__':
     picture = "P1030302.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1492, 1492 + 555, 476, 476 + 555]
-        #deblur_module(pic, picture + "-v21", dest_path, 23, mask=mask, display=True, iterations=100, sharpness=0, confidence=1, neighbours=8, bias=1e-4)
+        deblur_module(pic, picture + "-v24", dest_path, 19, mask=mask, display=True, iterations=100, sharpness=0, confidence=50, neighbours=8, bias=0)
         pass
 
     picture = "153412.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        mask = [1484, 1484 + 255, 3228, 3228 + 255]
-        deblur_module(pic, picture + "-v24", dest_path, 5, mask=mask, display=True, confidence=100, neighbours=8)
+        mask = [1484, 1484 + 501, 3428, 3428 + 501]
+        #deblur_module(pic, picture + "-v24", dest_path, 5, mask=mask, display=False, confidence=5, neighbours=8, bias=1e-6)
         pass
 
     # TIFF input example

@@ -109,9 +109,13 @@ cdef inline float amax_abs_2D(float[:, :] array, int M, int N) nogil:
                     out = temp
 
     return out
+    
+    
+def best_param(float[:, :, :] image, float lambd, int M, int N):
+    return _best_param(image, lambd, M, N)
+    
 
-
-cdef inline float best_param(float[:, :, :] image, float lambd, int M, int N):
+cdef inline float _best_param(float[:, :, :] image, float lambd, int M, int N):
     """
     Find the minimum acceptable epsilon to avoid a degenerate constant solution [2]
     Epsilon is the logarithmic norm prior  
@@ -346,7 +350,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                         utdxdy = utxy - ut[i-1, j-1, k] - ut[i+1, j+1, k]
                         utdydx = utxy - ut[i-1, j+1, k] - ut[i+1, j-1, k]
                                             
-                        temp  = (udx + udy + udxdy + udydx) / (fabsf(udx) + fabsf(udy)+ fabsf(udxdy) + fabsf(udydx) + epsilon) / (fabsf(utdx) + fabsf(utdy)+ fabsf(utdxdy) + fabsf(utdydx) + epsilon + tau) / 4 + lambd *  im_convo[i, j, k]
+                        temp  = (udx + udy + udxdy + udydx) / (fabsf(udx) + fabsf(udy)+ fabsf(udxdy) + fabsf(udydx) + epsilon) / (fabsf(utdx) + fabsf(utdy)+ fabsf(utdxdy) + fabsf(utdydx) + epsilon + tau) / 4 / lambd +  im_convo[i, j, k]
                         
                         out[i, j, k] = temp
                         temp = fabsf(temp)
@@ -370,7 +374,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                         utdx = utxy - ut[i-1, j, k] - ut[i+1, j, k]
                         utdy = utxy - ut[i, j-1, k] - ut[i, j-1, k]
     
-                        temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 4 + lambd *  im_convo[i, j, k]
+                        temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 4 / lambd +  im_convo[i, j, k]
                         
                         out[i, j, k] = temp
                         temp = fabsf(temp)
@@ -394,7 +398,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                         utdx = utxy - ut[i-1, j, k]
                         utdy = utxy - ut[i, j-1, k]
         
-                        temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[i, j, k]
+                        temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd +  im_convo[i, j, k]
                         
                         out[i, j, k] = temp
                         temp = fabsf(temp)
@@ -417,7 +421,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                     utdx = utxy - ut[1, j, k]
                     utdy = utxy - (ut[0, j-1, k] + ut[0, j+1, k])/2
                     
-                    out[0, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[0, j, k]
+                    out[0, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd +  im_convo[0, j, k]
                     
     # Last row
     with parallel(num_threads=CPU):
@@ -431,7 +435,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                     utdx = utxy - ut[M-2, j, k]
                     utdy = utxy - (ut[M-1, j-1, k] + ut[M-1, j+1, k])/2
                     
-                    out[M-1, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[M-1, j, k]
+                    out[M-1, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd +  im_convo[M-1, j, k]
                     
     # First column
     with parallel(num_threads=CPU):
@@ -445,7 +449,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                     utdx = utxy - ut[i, 1, k]
                     utdy = utxy - (ut[i-1, 0, k] + ut[i+1, 0, k])/2
                     
-                    out[i, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[i, 0, k]             
+                    out[i, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd +  im_convo[i, 0, k]             
                     
     # Last column
     with parallel(num_threads=CPU):
@@ -459,7 +463,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                     utdx = utxy - ut[i, N-2, k]
                     utdy = utxy - (ut[i-1, N-1, k] + ut[i+1, N-1, k])/2
                     
-                    out[i, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[i, N-1, k]
+                    out[i, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd + im_convo[i, N-1, k]
                     
                     
     # North-West corder
@@ -472,7 +476,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
         utdx = utxy - ut[0, 1, k]
         utdy = utxy - ut[1, 0, k]
         
-        out[0, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[0, 0, k]
+        out[0, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd +  im_convo[0, 0, k]
         
         
     # North-East corner
@@ -485,7 +489,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
         utdx = utxy - ut[0, N-2, k]
         utdy = utxy - ut[1, N-1, k]
         
-        out[0, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[0, N-1, k]
+        out[0, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd + im_convo[0, N-1, k]
                     
                     
     # South-East
@@ -498,7 +502,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
         utdx = utxy - ut[M-1, N-2, k]
         utdy = utxy - ut[M-2, N-1, k]
         
-        out[M-1, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[M-1, N-1, k]
+        out[M-1, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd + im_convo[M-1, N-1, k]
         
         
     # South-West
@@ -511,7 +515,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
         utdx = utxy - ut[M-2, 0, k]
         utdy = utxy - ut[M-1, 1, k]
         
-        out[M-1, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd *  im_convo[M-1, 0, k]
+        out[M-1, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd + im_convo[M-1, 0, k]
 
 
 cdef inline void rotate_180(float[:, :, :] array, int M, int N, float[:, :, :] out) nogil:
@@ -528,7 +532,7 @@ cdef inline void rotate_180(float[:, :, :] array, int M, int N, float[:, :, :] o
     
 
 cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,
-                              float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int neighbours, int blind=True):
+                              float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, float epsilon, int neighbours, int blind=True):
     """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization by the Minimization-Maximization
     algorithm. This is known to give the sharp image in more than 50 % of the cases.
 
@@ -558,7 +562,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
     """
 
 
-    cdef float epsilon, dtpsf
+    cdef float dtpsf
 
     cdef int u_M = u.shape[0]
     cdef int u_N = u.shape[1]
@@ -604,9 +608,6 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
 
     it = 0
     
-    # Compute the minimal eps parameter that won't degenerate the sharp solution into a constant one
-    epsilon = best_param(image, lambd, M, N)
-
     # This problem is supposed to be convex so, as soon as the error increases, we shut the solver down because we won't do better
     while it < iterations and not stop_flag:
         # Prepare the deconvolution
@@ -725,7 +726,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
 
 
 def richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,
-                       float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int neighbours, int blind=True):
+                       float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, float epsilon, int neighbours, int blind=True):
     # Expose the Cython function to Python
-    _richardson_lucy_MM(image, u, psf, tau, M, N, C, MK, iterations, step_factor, lambd, neighbours, blind=blind)
+    _richardson_lucy_MM(image, u, psf, tau, M, N, C, MK, iterations, step_factor, lambd, epsilon, neighbours, blind=blind)
 
