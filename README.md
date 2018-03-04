@@ -78,11 +78,10 @@ of their maker. In practice, we can only estimate it.
 One of the means to do so is the [Richardson-Lucy deconvolution](https://en.wikipedia.org/wiki/Richardson%E2%80%93Lucy_deconvolution).
 
 Deconvolution differs from usual sharpness filters : while high-pass filters and unsharp masks increase the local contrast
-(thus the *percieved* sharpness), deconvolution actually recovers the stiffness of the edges. Said otherwise, sharpness filters
-play on luminance values, deconvolution plays on spatial distribution of the pixels.
+(thus the *percieved* sharpness), deconvolution actually recovers the stiffness of the edges and can recover motion blur.
 
 The main drawback of this method is the creation of artifacts in the deblured picture, such as ringing and periodic 
-replication of the edges. The Richardson-Lucy algorithm used here is  modified to implement [Total Variation regularization
+replication of the edges. The modified Richardson-Lucy algorithm used here is modified to implement [Total Variation regularization
 ](http://www.cs.sfu.ca/~pingtan/Papers/pami10_deblur.pdf). It can run in a blind or non-blind fashion, meaning that the 
 PSF can be passed as an user-input or estimated from scratch using bayesian statistics and refined during the process.
 
@@ -114,8 +113,8 @@ This work improves the used references in several ways :
 The regularization has been modified from the original work to include a [collaborative L^{infinite, 1, 1} RGB total variation norm](http://www.ipol.im/pub/art/2016/141/)
 as the regularization term. It acts as handcuffs between channels and helps dramatically in chromatic noise removal.
 
-Also, the the gradients are computed in 2D over the 9 neighbouring pixels (over 3 channels) with a separable filter giving
-a second-order accurate approximation : [2 separated 1D filters](https://cdn.intechopen.com/pdfs-wm/39346.pdf). This is similiar to the Sobel or Prewitt operators.
+Also, the gradients are computed in 2D over the 9 neighbouring pixels (over 3 channels) with a 2D filter giving
+a second-order accurate approximation of the gradient.
 
 This improves greatly the convergence when noise is present and when the PSF guess is oversized. In these cases, 
 the algorithms often never converges and only creates ringging.
@@ -126,8 +125,6 @@ to refine the PSF. This helps in cases where the PSF varies spatially, to constr
 This implementation has a stopping criterion which stops the gradient descent when convergence is reached or when the gradient
 begins to increase. This criterion prevents the degeneration of the solution as well as useless computations.
 
-The picture deblurring is [algorithmically-accelerated](http://awibisono.github.io/2016/06/20/accelerated-gradient-descent.html) which can speed-up the convergence or increase the error, depending the case.
-
 The deconvolution has 2 separate steps : a first one, blind, to determine the PSF, and a second one, non-blind, to deblur the picture.
 This is useful because : 
 
@@ -135,18 +132,21 @@ This is useful because :
 * the PSF can then be saved to be used elsewhere, and checked on a plot before running the full and slow deconvolution,
 * the convergence criterion is always reached sooner on the PSF than the one on the picture. 
 
+The convolutions are done in the frequency domain using FFTW. The FFTW wisdoms are saved and reused, meaning that the system gets
+faster as it performs new work.
+
 ##### Results
 The tests have been done on a laptop with an Intel® Core™ i7-2670QM CPU @ 2.20GHz running 8 processes.
 
 ###### Blurred original :
 ![alt text](img/blured.jpg)
 
-###### After (blind algorithm, MM method - 117 s - 264 iterations - Blind.):
+###### After (blind algorithm, MM method - 189 s - 325 iterations - Blind.):
 This is the implementation of the Majorization-Minimisation algorithm proposed by [Perrone & Favaro in 2015](http://www.cvg.unibe.ch/dperrone/logtv/index.html).
 The computations are much slower that's why the PSF is only estimated on a patch of the picture.
 This method has found the sharp picture at a margin of error of 5 % in more than 50 % of the tests. The PAM method never reaches
 the sharp picture, but comes close enough.
-![alt text](img/richardson-lucy-deconvolution/blured-blind-v20.jpg)
+![alt text](img/richardson-lucy-deconvolution/blured-v26.jpg)
 
 This method deblurs by recovering the sharpness of the edges. However, it does not recover the local contrast. Further
 edition of the above picture with local contrast added through wavelets high-pass filter

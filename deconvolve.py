@@ -69,7 +69,7 @@ from skimage.restoration import denoise_tv_chambolle
 
 @utils.timeit
 def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4, step=1e-3, bits=8,
-                  iterations=100, sharpness=0, mask=None, display=True, neighbours=8, correlation=False):
+                  iterations=200, sharpness=0, mask=None, display=True, neighbours=8, correlation=False):
     """
     API to call the debluring process
 
@@ -105,6 +105,7 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4
 
     pic = np.ascontiguousarray(pic, dtype=np.float32)
     
+    # Load the FFTW wisdom if the file exists
     if isfile('fftw_wisdom.pickle'):
         with open('fftw_wisdom.pickle', 'rb') as f:
             pyfftw.import_wisdom(pickle.load(f))
@@ -213,7 +214,7 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4
         u_masked = pad_image(u_masked, (pad, pad))
 
         # Make a blind Richardson-Lucy deconvolution on the RGB signal
-        dc.richardson_lucy_MM(im, u_masked, psf, bias, im.shape[0], im.shape[1], 3, k, int(iterations / i), step, l, epsilon, neighbours, blind=True, correlation=correlation)
+        dc.richardson_lucy_MM(im, u_masked, psf, epsilon, im.shape[0], im.shape[1], 3, k, int(iterations / i), step, l, epsilon, neighbours, blind=True, correlation=correlation)
 
         
         # Unpad FFT because this image is resized/reused the next step
@@ -241,7 +242,8 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4
     print("\n===== REGULAR DECONVOLUTION =====")
 
     u = pic.copy()
-
+    
+    
     # Build the intermediate sizes and factors
     k_prec = MK
     for i, k, l in zip(reversed(images), reversed(kernels), reversed(lambdas)):
@@ -290,6 +292,38 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4
 
         if hor_odd:
             u = u[:, 1:, ...]
+    """ 
+            
+    # Pad to ensure oddity
+    if pic.shape[0] % 2 == 0:
+        hor_odd = True
+        im = pad_image(im, ((1, 0), (0, 0))).astype(np.float32)
+        u = pad_image(u, ((1, 0), (0, 0))).astype(np.float32)
+        print("Padded vertically")
+
+    if pic.shape[1] % 2 == 0:
+        vert_odd = True
+        im = pad_image(im, ((0, 0), (1, 0))).astype(np.float32)
+        u = pad_image(u, ((0, 0), (1, 0))).astype(np.float32)
+        print("Padded horizontally")
+        
+    # Pad for FFT
+    pad = np.floor(MK / 2).astype(int)
+    u = pad_image(u, (pad, pad))
+        
+    # Make a non-blind Richardson-Lucy deconvolution on the RGB signal
+    dc.richardson_lucy_MM(pic, u, psf, bias, M, N, 3, k, iterations, step, l, epsilon, neighbours, blind=False)
+
+    # Unpad FFT because this image is resized/reused the next step
+    u = u[pad:-pad, pad:-pad, ...]
+
+    # Unpad oddity for same reasons
+    if vert_odd:
+        u = u[1:, :, ...]
+
+    if hor_odd:
+        u = u[:, 1:, ...]
+    """
 
     # Unsharp mask to boost a bit the sharpness
     u = (1 + sharpness) * u - sharpness * pic
@@ -306,8 +340,10 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4
     # Convert to 16 bits RGB
     u = u * (2 ** 16 - 1)
 
+    # Save the pic
     utils.save(u, filename, dest_path)
     
+    # Save the FFTW wisdom for later use
     with open('fftw_wisdom.pickle', 'wb') as f:
         pickle.dump(pyfftw.export_wisdom(), f)
 
@@ -316,22 +352,19 @@ if __name__ == '__main__':
     source_path = "img"
     dest_path = "img/richardson-lucy-deconvolution"
 
-    # Uncomment the following line if you run into a memory error
-    # CPU = 1
-
     picture = "blured.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [478, 478 + 255, 715, 715 + 255]
-        deblur_module(pic, picture + "-v26-2", dest_path, 5, mask=mask, display=True, confidence=80, neighbours=2, bias=5e-4)
-        deblur_module(pic, picture + "-v26-4", dest_path, 5, mask=mask, display=True, confidence=100, neighbours=4, bias=5e-4)
-        deblur_module(pic, picture + "-v26-8", dest_path, 5, mask=mask, display=True, confidence=100, neighbours=8, bias=5e-4)
+        #deblur_module(pic, picture + "-v26-2", dest_path, 5, mask=mask, display=False, confidence=100, neighbours=2, bias=5e-4)
+        #deblur_module(pic, picture + "-v26-4", dest_path, 5, mask=mask, display=False, confidence=100, neighbours=4, bias=5e-4)
+        deblur_module(pic, picture + "-v26-8", dest_path, 5, mask=mask, display=False, confidence=100, neighbours=8, bias=1e-3)
         pass
 
     picture = "IMG_9584-900.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [101, 101 + 255, 67, 67 + 255]
-        #deblur_module(pic, picture + "-v26-4", dest_path, 3, display=True, mask=mask, sharpness=0.5, confidence=100, neighbours=8, bias=1e-4)
-        #deblur_module(pic, picture + "-v24-8", dest_path, 3, display=False, mask=mask, sharpness=0.5, confidence=10, neighbours=8, bias=5e-4)
+        #deblur_module(pic, picture + "-v26-4", dest_path, 3, display=False, mask=mask, sharpness=0.5, confidence=100, neighbours=4, bias=1e-4)
+        #deblur_module(pic, picture + "-v24-8", dest_path, 3, display=False, mask=mask, sharpness=0.5, confidence=100, neighbours=8, bias=5e-4)
         pass
 
     picture = "DSC1168.jpg"
