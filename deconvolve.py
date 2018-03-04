@@ -8,11 +8,13 @@ This script shows an implementation of a blind deconvolution
 '''
 
 import warnings
-from os.path import join
+from os.path import join, isfile
 import numpy as np
 from PIL import Image
 from scipy import ndimage
 import matplotlib.pyplot as plt
+import pyfftw
+import pickle
 
 from lib import tifffile
 
@@ -67,7 +69,7 @@ from skimage.restoration import denoise_tv_chambolle
 
 @utils.timeit
 def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4, step=1e-3, bits=8,
-                  iterations=100, sharpness=0, mask=None, display=True, neighbours=8):
+                  iterations=100, sharpness=0, mask=None, display=True, neighbours=8, correlation=False):
     """
     API to call the debluring process
 
@@ -78,9 +80,9 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4
     :param confidence: float, default 1, max 100, set the confidence you have in your sample. For example, on noisy pictures, 
     use 1 to 10. For a clean low-ISO picture, you can go all the way to 100. A low factor will reduce the convergence, a high 
     factor will allow more noise amplification.
-    :param bias: float, the blending parameter between sharp and blurred pictures. Ensure the convergence of the sharp image.
+    :param bias: float, the blending parameter between sharp and blurred pictures. Ensure    the convergence of the sharp image.
     Usually between 0.0001 and 0.1
-    :param step: float, the gradient-descent factor. Normal is 2e-3. Increase it to converge faster, but be careful because
+    :param step: float, the gradient-descent factor. Normal is 1e-3. Increase it to converge faster, but be careful because
     it could diverge more as well.
     :param bits: integer, default is 8 meaning the input image is encoded with 8 bits/channel. Use 16 if you input 16 bits
     tiff files.
@@ -102,6 +104,13 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4
     # TODO : extract foreground only https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_grabcut/py_grabcut.html#grabcut
 
     pic = np.ascontiguousarray(pic, dtype=np.float32)
+    
+    if isfile('fftw_wisdom.pickle'):
+        with open('fftw_wisdom.pickle', 'rb') as f:
+            pyfftw.import_wisdom(pickle.load(f))
+            print("FFT profiles loaded")
+    else:
+        print("No FFT profiles detected. They will be created at the end of the session")
 
     # Verifications
     if blur_width < 3:
@@ -204,7 +213,7 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4
         u_masked = pad_image(u_masked, (pad, pad))
 
         # Make a blind Richardson-Lucy deconvolution on the RGB signal
-        dc.richardson_lucy_MM(im, u_masked, psf, 0, im.shape[0], im.shape[1], 3, k, int(1.0/step), step, l, epsilon, neighbours, blind=True)
+        dc.richardson_lucy_MM(im, u_masked, psf, bias, im.shape[0], im.shape[1], 3, k, int(iterations / i), step, l, epsilon, neighbours, blind=True, correlation=correlation)
 
         
         # Unpad FFT because this image is resized/reused the next step
@@ -298,6 +307,9 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1e-4
     u = u * (2 ** 16 - 1)
 
     utils.save(u, filename, dest_path)
+    
+    with open('fftw_wisdom.pickle', 'wb') as f:
+        pickle.dump(pyfftw.export_wisdom(), f)
 
 
 if __name__ == '__main__':
@@ -310,15 +322,15 @@ if __name__ == '__main__':
     picture = "blured.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [478, 478 + 255, 715, 715 + 255]
-        #deblur_module(pic, picture + "-v24-2", dest_path, 5, mask=mask, display=True, confidence=80, neighbours=2, bias=bias_1)
-        #deblur_module(pic, picture + "-v24-4", dest_path, 5, mask=mask, display=True, confidence=80, neighbours=4, bias=bias_1)
-        #deblur_module(pic, picture + "-v25-8", dest_path, 5, mask=mask, display=True, confidence=100, neighbours=8)
+        deblur_module(pic, picture + "-v26-2", dest_path, 5, mask=mask, display=True, confidence=80, neighbours=2, bias=5e-4)
+        deblur_module(pic, picture + "-v26-4", dest_path, 5, mask=mask, display=True, confidence=100, neighbours=4, bias=5e-4)
+        deblur_module(pic, picture + "-v26-8", dest_path, 5, mask=mask, display=True, confidence=100, neighbours=8, bias=5e-4)
         pass
 
     picture = "IMG_9584-900.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [101, 101 + 255, 67, 67 + 255]
-        #deblur_module(pic, picture + "-v24-4", dest_path, 5, display=True, mask=mask, sharpness=0.5, confidence=10, neighbours=8, bias=5e-4)
+        #deblur_module(pic, picture + "-v26-4", dest_path, 3, display=True, mask=mask, sharpness=0.5, confidence=100, neighbours=8, bias=1e-4)
         #deblur_module(pic, picture + "-v24-8", dest_path, 3, display=False, mask=mask, sharpness=0.5, confidence=10, neighbours=8, bias=5e-4)
         pass
 
@@ -331,13 +343,13 @@ if __name__ == '__main__':
     picture = "P1030302.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1492, 1492 + 555, 476, 476 + 555]
-        deblur_module(pic, picture + "-v24", dest_path, 19, mask=mask, display=True, iterations=100, sharpness=0, confidence=50, neighbours=8, bias=0)
+        #deblur_module(pic, picture + "-v26", dest_path, 37, mask=mask, display=True, iterations=100, sharpness=0, confidence=50, neighbours=4, bias=0)
         pass
 
     picture = "153412.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1484, 1484 + 501, 3428, 3428 + 501]
-        #deblur_module(pic, picture + "-v24", dest_path, 5, mask=mask, display=False, confidence=5, neighbours=8, bias=1e-6)
+        #deblur_module(pic, picture + "-v24", dest_path, 5, mask=mask, display=False, confidence=5, neighbo	urs=8, bias=1e-6)
         pass
 
     # TIFF input example

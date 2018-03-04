@@ -10,6 +10,7 @@ from cython.view cimport array as cvarray
 import matplotlib.pyplot as plt
 import pyfftw
 import multiprocessing
+from scipy.signal import fftconvolve
 
 cdef int CPU = int(multiprocessing.cpu_count())
 
@@ -153,10 +154,10 @@ cdef inline float _best_param(float[:, :, :] image, float lambd, int M, int N):
     norm_diff = powf(norm_diff, 0.5)
 
     # Compute omega
-    cdef float omega = 2 * lambd * norm_diff / (M*N*3)
+    cdef float omega = 2 * lambd * norm_diff / ((M-2)*(N-2)*3)
     
     # Compute epsilon
-    cdef float epsilon = powf((grad_mean) / (expf(omega) - 1), 0.5)
+    cdef float epsilon = powf((grad_mean) / (expf(omega) - 1), 0.5) * 1000.
     
     print("%1.12f, %f" % (epsilon, lambd))
 
@@ -204,9 +205,9 @@ cpdef void normalize_kernel(np.ndarray[DTYPE_t, ndim=3] kern, int MK):
 
 cdef class convolve:
     cdef object fft_A_obj, fft_B_obj, ifft_obj,  output_array, A, B, C
-    cdef int X, Y, M, N, offset_X, offset_Y, M_input, N_input, MK_input, NK_input, Mfft, Nfft
+    cdef int X, Y, M, N, offset_X, offset_Y, M_input, N_input, MK_input, NK_input, Mfft, Nfft, domain
 
-    def __cinit__(self, int M, int N, int MK, int NK, str domain):
+    def __cinit__(self, np.ndarray[DTYPE_t, ndim=2] A, np.ndarray[DTYPE_t, ndim=2] B, str domain):
         """
         Implements a convolution product using pyFFTW
 
@@ -217,68 +218,57 @@ cdef class convolve:
         :param domain:
         :return:
         """
-
+           
         # Takes an M×N image and an MK×MK kernel or second image
-        self.M_input = M
-        self.N_input = N
-        self.MK_input = MK
-        self.NK_input = NK
+        self.M_input = A.shape[0]
+        self.N_input = A.shape[1]
+        self.MK_input = B.shape[0]
+        self.NK_input = B.shape[1]
+        
+        # Compute the dimensions of the convolution product
+        self.M = self.M_input + self.MK_input -1
+        self.N = self.N_input + self.NK_input -1
 
-        # Compute the finals dimensions of the output
+        # Initialize the FFTW containers
+        self.fft_A_obj = pyfftw.builders.rfft2(A, s=(self.M, self.N), axes=(0,1), threads=CPU, auto_align_input=True, auto_contiguous=True, planner_effort="FFTW_MEASURE")
+        self.fft_B_obj = pyfftw.builders.rfft2(B, s=(self.M, self.N), axes=(0,1), threads=CPU,  auto_align_input=True, auto_contiguous=True, planner_effort="FFTW_MEASURE")
+        self.ifft_obj = pyfftw.builders.irfft2(self.fft_A_obj.output_array, s=(self.M, self.N), axes=(0,1), threads=CPU, auto_align_input=True, auto_contiguous=True, planner_effort="FFTW_MEASURE")
+        
+        # Initialize the sizes and offsets of the output
         if domain == "valid":
             self.Y = self.M_input - self.MK_input + 1
             self.X = self.N_input - self.NK_input + 1
         elif domain == "full":
-            self.Y = self.M_input + self.MK_input - 1
-            self.X = self.N_input + self.NK_input - 1
-
-        # Compute the dimensions of the FFT
-        self.M = self.M_input + self.MK_input -1
-        self.N = self.N_input + self.NK_input -1
-
+            self.Y = self.M
+            self.X = self.N
+        elif domain == "same":
+            self.Y = self.M_input
+            self.X = self.N_input 
+        else:
+            raise ValueError("The FFT mode is invalid") 
+            
         self.offset_Y = int(np.floor((self.M - self.Y)/2))
         self.offset_X = int(np.floor((self.N - self.X)/2))
-
-        # Initialize the FFTW containers
-        self.A = pyfftw.zeros_aligned((self.M, self.N), dtype=DTYPE, n=pyfftw.simd_alignment)
-        self.B = pyfftw.zeros_aligned((self.M, self.N), dtype=DTYPE, n=pyfftw.simd_alignment)
-
-
-        self.fft_A_obj = pyfftw.builders.rfft2(self.A, s=(self.M, self.N), threads=CPU, auto_align_input=True,
-                                               auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
-        self.fft_B_obj = pyfftw.builders.rfft2(self.B, s=(self.M, self.N ), threads=CPU,  auto_align_input=True,
-                                               auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
-
-        self.C = pyfftw.zeros_aligned(self.fft_A_obj.output_shape, dtype=np.complex64, n=pyfftw.simd_alignment)
-        self.ifft_obj = pyfftw.builders.irfft2(self.fft_A_obj.output_array, s=(self.M, self.N), threads=CPU, auto_align_input=True,
-                                               auto_contiguous=True, planner_effort="FFTW_ESTIMATE")
-
-        self.Mfft = self.fft_A_obj.output_shape[0]
-        self.Nfft = self.fft_A_obj.output_shape[1]
-
+        
 
     def __call__(self, float[:, :] A, float[:, :] B):
-
-        # Fill the containers with input
-        self.A[0:self.M_input, 0:self.N_input] = A
-        self.B[0:self.MK_input, 0:self.NK_input] = B
-
         # Run the FFTs
-        cdef float complex [:, :] Afft = self.fft_A_obj(self.A)
-        cdef float complex [:, :] Bfft = self.fft_B_obj(self.B)
-        cdef float complex [:, :] cfft = self.C
+        cdef float complex [:, :] Afft = self.fft_A_obj(A)
+        cdef float complex [:, :] Bfft = self.fft_B_obj(B)
+        cdef float complex [:, :] cfft = pyfftw.zeros_aligned((self.M, self.N/2+1), dtype=np.complex64, n=pyfftw.simd_alignment)
 
         # Multiply
         cdef int i, j
 
         with nogil, parallel(num_threads=CPU):
-            for i in prange(self.Mfft):
-                for j in range(self.Nfft):
+            for i in prange(self.M):
+                for j in range(int(self.N/2 + 1)):
                     cfft[i, j] = Afft[i, j] * Bfft[i, j]
 
-        # Run the iFFT, slice and exit
-        cdef np.ndarray[DTYPE_t, ndim=2] out = self.ifft_obj(self.C)
-
+        # Run the iFFT
+        cdef np.ndarray[DTYPE_t, ndim=2] out = self.ifft_obj(cfft)
+        
+        # Slice and exit
         return out[self.offset_Y:self.offset_Y + self.Y, self.offset_X:self.offset_X + self.X]
 
 
@@ -292,7 +282,7 @@ cdef inline float grad2D(float[:, :, :] u, int M, int N) nogil:
     
     out = 0
         
-    dxdy = 1 / powf(2, 0.5) # Distance over the diagonal
+    dxdy = powf(2, 0.5) # Distance over the diagonal
 
     with parallel(num_threads=CPU):
         for i in prange(1, M-1):
@@ -300,14 +290,14 @@ cdef inline float grad2D(float[:, :, :] u, int M, int N) nogil:
                 for k in range(3):
                     uxy = u[i, j, k] * 2
                     udx = uxy - u[i-1, j, k] - u[i+1, j, k] # Warning : this is 2 times the differential
-                    udy = uxy - u[i, j-1, k] - u[i, j-1, k]
+                    udy = uxy - u[i, j-1, k] - u[i, j+1, k]
                     
                     udxdy = (uxy - u[i-1, j-1, k] - u[i+1, j+1, k]) / dxdy
                     udydx = (uxy - u[i-1, j+1, k] - u[i+1, j-1, k]) / dxdy
                                         
-                    out += powf(udx, 2) + powf(udy, 2)+ powf(udxdy, 2) + powf(udydx, 2)
+                    out += powf(udx/2., 2) + powf(udy/2., 2)+ powf(udxdy/2., 2) + powf(udydx/2., 2)
                 
-    return powf(out, 0.5)
+    return powf(out / 2., 0.5)
 
 
 cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, float tau, float[:, :, :] im_convo, float lambd, float[:, :, :] out, float[3] max_u, int M, int N, int neighbours) nogil:
@@ -319,38 +309,32 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
         
     epsilon = 2 * epsilon
     tau = 2 * tau
+    dxdy = powf(2, 0.5) # Distance over the diagonal
     max_u[0] = 0
     max_u[1] = 0
     max_u[2] = 0
     
     
     ## In this section we treat only the inside of the picture. See the next section for edges and boundaries exceptions
-        
-        
     if neighbours == 8:
         # Evaluate the total variation on 8 neighbours : direct directions and diagonals, with a bilateral approximation
-        
-        dxdy = 1 / powf(2, 0.5) # Distance over the diagonal
-
         with parallel(num_threads=CPU):
             for i in prange(1, M-1):
                 for j in range(1, N-1):
                     for k in range(3):
-                        uxy = u[i, j, k] * 2
-                        udx = uxy - u[i-1, j, k] - u[i+1, j, k] # Warning : this is 2 times the differential
-                        udy = uxy - u[i, j-1, k] - u[i, j-1, k]
+                        udx = u[i, j, k] - (u[i-1, j, k] + u[i+1, j, k])/ 2.
+                        udy = u[i, j, k] - (u[i, j-1, k] + u[i, j+1, k])/ 2.
                         
-                        udxdy = (uxy - u[i-1, j-1, k] - u[i+1, j+1, k]) / dxdy
-                        udydx = (uxy - u[i-1, j+1, k] - u[i+1, j-1, k]) / dxdy
+                        udxdy = (u[i, j, k] - (u[i-1, j-1, k] + u[i+1, j+1, k]) / 2.) / dxdy
+                        udydx = (u[i, j, k] - (u[i-1, j+1, k] + u[i+1, j-1, k]) / 2.) / dxdy
                         
-                        utxy = ut[i, j, k] * 2
-                        utdx = (utxy - ut[i-1, j, k] - ut[i+1, j, k]) / dxdy
-                        utdy = (utxy - ut[i, j-1, k] - ut[i, j-1, k]) / dxdy
+                        utdx = ut[i, j, k] - (ut[i-1, j, k] + ut[i+1, j, k]) / 2.
+                        utdy = ut[i, j, k] - (ut[i, j-1, k] + ut[i, j+1, k]) / 2.
                         
-                        utdxdy = utxy - ut[i-1, j-1, k] - ut[i+1, j+1, k]
-                        utdydx = utxy - ut[i-1, j+1, k] - ut[i+1, j-1, k]
+                        utdxdy = (ut[i, j, k] - (ut[i-1, j-1, k] + ut[i+1, j+1, k]) / 2.) / dxdy
+                        utdydx = (ut[i, j, k] - (ut[i-1, j+1, k] + ut[i+1, j-1, k]) / 2.) / dxdy
                                             
-                        temp  = (udx + udy + udxdy + udydx) / (fabsf(udx) + fabsf(udy)+ fabsf(udxdy) + fabsf(udydx) + epsilon) / (fabsf(utdx) + fabsf(utdy)+ fabsf(utdxdy) + fabsf(utdydx) + epsilon + tau) / 4 / lambd +  im_convo[i, j, k]
+                        temp  = (udx + udy + udxdy + udydx) / (fabsf(udx) + fabsf(udy)+ fabsf(udxdy) + fabsf(udydx) + epsilon) / (fabsf(utdx) + fabsf(utdy)+ fabsf(utdxdy) + fabsf(utdydx) + epsilon + tau) / 4 +  lambd * im_convo[i, j, k]
                         
                         out[i, j, k] = temp
                         temp = fabsf(temp)
@@ -361,20 +345,17 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
                         
     elif neighbours == 4:
         # Evaluate the total variation on 4 neighbours : direct directions, with a bilateral approximation
-        
         with parallel(num_threads=CPU):
             for i in prange(1, M-1):
                 for j in range(1, N-1):
                     for k in range(3):
-                        uxy = u[i, j, k] * 2
-                        udx = uxy - u[i-1, j, k] - u[i+1, j, k] # Warning : this is 2 times the differential
-                        udy = uxy - u[i, j-1, k] - u[i, j-1, k]
+                        udx = u[i, j, k] - (u[i-1, j, k] + u[i+1, j, k])/2.
+                        udy = u[i, j, k] - (u[i, j-1, k] + u[i, j+1, k])/2.
                         
-                        utxy = ut[i, j, k] * 2
-                        utdx = utxy - ut[i-1, j, k] - ut[i+1, j, k]
-                        utdy = utxy - ut[i, j-1, k] - ut[i, j-1, k]
+                        utdx = ut[i, j, k] - (ut[i-1, j, k] + ut[i+1, j, k])/2.
+                        utdy = ut[i, j, k] - (ut[i, j-1, k] + ut[i, j+1, k])/2.
     
-                        temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 4 / lambd +  im_convo[i, j, k]
+                        temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 +  lambd * im_convo[i, j, k]
                         
                         out[i, j, k] = temp
                         temp = fabsf(temp)
@@ -387,18 +368,16 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
         # Evaluate the total variation on 2 neighbours : simple backward difference
         
         with parallel(num_threads=CPU):
-            for i in prange(1, M):
-                for j in range(1, N):
+            for i in prange(1, M-1):
+                for j in range(1, N-1):
                     for k in range(3):
-                        uxy = u[i, j, k]
-                        udx = uxy - u[i-1, j, k]
-                        udy = uxy - u[i, j-1, k]
+                        udx = u[i, j, k] - u[i-1, j, k]
+                        udy = u[i, j, k] - u[i, j-1, k]
                         
-                        utxy = ut[i, j, k]
-                        utdx = utxy - ut[i-1, j, k]
-                        utdy = utxy - ut[i, j-1, k]
+                        utdx = ut[i, j, k] - ut[i-1, j, k]
+                        utdy = ut[i, j, k] - ut[i, j-1, k]
         
-                        temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd +  im_convo[i, j, k]
+                        temp = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 +  lambd * im_convo[i, j, k]
                         
                         out[i, j, k] = temp
                         temp = fabsf(temp)
@@ -413,57 +392,49 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
     with parallel(num_threads=CPU):
             for j in prange(1, N-1):
                 for k in range(3):
-                    uxy = u[0, j, k]
-                    udx = uxy - u[1, j, k]
-                    udy = uxy - (u[0, j-1, k] + u[0, j+1, k])/2
+                    udx = u[0, j, k] - u[1, j, k]
+                    udy = u[0, j, k] - (u[0, j-1, k] + u[0, j+1, k])/2
                     
-                    utxy = ut[0, j, k]
-                    utdx = utxy - ut[1, j, k]
-                    utdy = utxy - (ut[0, j-1, k] + ut[0, j+1, k])/2
+                    utdx = ut[0, j, k]- ut[1, j, k]
+                    utdy = ut[0, j, k] - (ut[0, j-1, k] + ut[0, j+1, k])/2
                     
-                    out[0, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd +  im_convo[0, j, k]
+                    out[0, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2  +  lambd * im_convo[0, j, k]
                     
     # Last row
     with parallel(num_threads=CPU):
             for j in prange(1, N-1):
                 for k in range(3):
-                    uxy = u[M-1, j, k]
-                    udx = uxy - u[M-2, j, k]
-                    udy = uxy - (u[M-1, j-1, k] + u[M-1, j+1, k])/2
+                    udx = u[M-1, j, k] - u[M-2, j, k]
+                    udy = u[M-1, j, k]- (u[M-1, j-1, k] + u[M-1, j+1, k])/2
                     
-                    utxy = ut[M-1, j, k]
-                    utdx = utxy - ut[M-2, j, k]
-                    utdy = utxy - (ut[M-1, j-1, k] + ut[M-1, j+1, k])/2
+                    utdx = ut[M-1, j, k] - ut[M-2, j, k]
+                    utdy = ut[M-1, j, k]- (ut[M-1, j-1, k] + ut[M-1, j+1, k])/2
                     
-                    out[M-1, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd +  im_convo[M-1, j, k]
+                    out[M-1, j, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd * im_convo[M-1, j, k]
                     
     # First column
     with parallel(num_threads=CPU):
             for i in prange(1, M-1):
                 for k in range(3):
-                    uxy = u[i, 0, k]
-                    udx = uxy - u[i, 1, k]
-                    udy = uxy - (u[i-1, 0, k] + u[i+1, 0, k])/2
+                    udx = u[i, 0, k] - u[i, 1, k]
+                    udy = u[i, 0, k] - (u[i-1, 0, k] + u[i+1, 0, k])/2
                     
-                    utxy = ut[i, 0, k]
-                    utdx = utxy - ut[i, 1, k]
-                    utdy = utxy - (ut[i-1, 0, k] + ut[i+1, 0, k])/2
+                    utdx = ut[i, 0, k] - ut[i, 1, k]
+                    utdy = ut[i, 0, k] - (ut[i-1, 0, k] + ut[i+1, 0, k])/2
                     
-                    out[i, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd +  im_convo[i, 0, k]             
+                    out[i, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd * im_convo[i, 0, k]             
                     
     # Last column
     with parallel(num_threads=CPU):
             for i in prange(1, M-1):
                 for k in range(3):
-                    uxy = u[i, N-1, k]
-                    udx = uxy - u[i, N-2, k]
-                    udy = uxy - (u[i-1, N-1, k] + u[i+1, N-1, k])/2
+                    udx = u[i, N-1, k] - u[i, N-2, k]
+                    udy = u[i, N-1, k] - (u[i-1, N-1, k] + u[i+1, N-1, k])/2
                     
-                    utxy = ut[i, N-1, k]
-                    utdx = utxy - ut[i, N-2, k]
-                    utdy = utxy - (ut[i-1, N-1, k] + ut[i+1, N-1, k])/2
+                    utdx = ut[i, N-1, k] - ut[i, N-2, k]
+                    utdy = ut[i, N-1, k] - (ut[i-1, N-1, k] + ut[i+1, N-1, k])/2
                     
-                    out[i, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd + im_convo[i, N-1, k]
+                    out[i, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd * im_convo[i, N-1, k]
                     
                     
     # North-West corder
@@ -476,7 +447,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
         utdx = utxy - ut[0, 1, k]
         utdy = utxy - ut[1, 0, k]
         
-        out[0, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd +  im_convo[0, 0, k]
+        out[0, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd * im_convo[0, 0, k]
         
         
     # North-East corner
@@ -489,7 +460,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
         utdx = utxy - ut[0, N-2, k]
         utdy = utxy - ut[1, N-1, k]
         
-        out[0, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd + im_convo[0, N-1, k]
+        out[0, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd * im_convo[0, N-1, k]
                     
                     
     # South-East
@@ -502,7 +473,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
         utdx = utxy - ut[M-1, N-2, k]
         utdy = utxy - ut[M-2, N-1, k]
         
-        out[M-1, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd + im_convo[M-1, N-1, k]
+        out[M-1, N-1, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd * im_convo[M-1, N-1, k]
         
         
     # South-West
@@ -515,7 +486,7 @@ cdef inline void gradTVEM(float[:, :, :] u, float[:, :, :] ut, float epsilon, fl
         utdx = utxy - ut[M-2, 0, k]
         utdy = utxy - ut[M-1, 1, k]
         
-        out[M-1, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 / lambd + im_convo[M-1, 0, k]
+        out[M-1, 0, k] = (udx + udy) / (fabsf(udx) + fabsf(udy) + epsilon) / (fabsf(utdx) + fabsf(utdy) + epsilon + tau) / 2 + lambd * im_convo[M-1, 0, k]
 
 
 cdef inline void rotate_180(float[:, :, :] array, int M, int N, float[:, :, :] out) nogil:
@@ -532,7 +503,7 @@ cdef inline void rotate_180(float[:, :, :] array, int M, int N, float[:, :, :] o
     
 
 cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,
-                              float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, float epsilon, int neighbours, int blind=True):
+                              float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, float epsilon, int neighbours, int blind=True, int correlation=False):
     """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization by the Minimization-Maximization
     algorithm. This is known to give the sharp image in more than 50 % of the cases.
 
@@ -566,6 +537,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
 
     cdef int u_M = u.shape[0]
     cdef int u_N = u.shape[1]
+    cdef int it, itt, i, j, k
 
     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] gradk = np.empty_like(psf, dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3, mode="c"] ut = np.empty_like(u, dtype=DTYPE)
@@ -596,15 +568,20 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
     rotate_180(psf, MK, MK, psf_rotated)
     cdef float[:, :, :] u_rotated = cvarray(shape=(u_M, u_N, 3), itemsize=sizeof(float), format="f")
 
+
     print("The program is profiling your system to optimize its performance. This can take some time.")
-    cdef convolve FFT_valid = convolve(u_M, u_N, MK, MK, "valid")
-    print("Optimization 1/3 done !")
-    cdef convolve FFT_full = convolve(M, N, MK, MK, "full")
-    print("Optimization 2/3 done !")
-    cdef convolve FFT_kern_valid = convolve(u_M, u_N, M, N, "valid")
+    cdef convolve FFT_valid = convolve(u[..., 0], psf[..., 0], "valid")
+    cdef convolve FFT_full = convolve(error[..., 0], psf[..., 0], "full")
+    cdef convolve FFT_kern_valid = convolve(u[..., 0], image[..., 0], "valid")
     print("The profiling is done ! Moving on to the next step…")
 
-    cdef int it, itt, i, j, k
+
+    
+    
+    #cdef np.ndarray[DTYPE_t, ndim=2] gradient = np.array([[-0.15376483, -0.22698814, -0.15376483],[ 0.02301186,  1.02301186,  0.02301186],[-0.15376483, -0.22698814, -0.15376483]], dtype=DTYPE)
+                                                      
+    #cdef np.ndarray[DTYPE_t, ndim=2] gradient = np.array([[-0.15376483,  0.02301186, -0.15376483],[-0.22698814,  1.02301186, -0.22698814],[-0.15376483,  0.02301186, -0.15376483]], dtype=DTYPE)
+    
 
     it = 0
     
@@ -622,8 +599,10 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
             gradu = np.zeros((u_M, u_N, 3), dtype=DTYPE)
 
             # Compute the new image
+            #u_fft(u) * psf_fft(psf)
             for chan in range(3):
                 error[..., chan] = FFT_valid(u[..., chan], psf[..., chan])
+                #error[..., chan] = fftconvolve(u[..., chan], psf[..., chan], mode="valid")
 
             with nogil, parallel(num_threads=CPU):
                 for i in prange(M):
@@ -633,6 +612,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
 
             for chan in range(3):
                 im_convo[..., chan] = FFT_full(error[..., chan], psf_rotated[..., chan])
+                #im_convo[..., chan] = fftconvolve(error[..., chan], psf_rotated[..., chan], mode="full")
                             
             # Compute the ratio of the norm of Total Variation between the current major and minor deblured images
             gradTVEM(u, ut, epsilon, tau, im_convo, lambd, gradu, max_grad_u, u_M, u_N, neighbours)
@@ -650,7 +630,8 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                 # PSF update
                 for chan in range(C):
                     error[..., chan] = FFT_valid(u[..., chan], psf[..., chan])
-
+                    #error[..., chan] = fftconvolve(u[..., chan], psf[..., chan], mode="valid")
+                    
                 with nogil, parallel(num_threads=CPU):
                     for i in prange(M):
                         for k in range(3):
@@ -661,6 +642,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
 
                 for chan in range(C):
                     gradk[..., chan] = FFT_kern_valid(u_rotated[..., chan], error[..., chan])
+                    #gradk[..., chan] = fftconvolve(u_rotated[..., chan], error[..., chan], mode="valid")
 
                 #amax(psf, MK, MK, max_img)
                 #amax_abs(gradk, MK, MK, max_grad_psf)
@@ -672,6 +654,9 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                         for k in range(3):
                             for j in range(MK):
                                 psf[i, j, k] -= dtpsf * gradk[i, j, k]
+                                
+                if correlation:
+                    psf = np.dstack((np.mean(psf, axis=2), np.mean(psf, axis=2), np.mean(psf, axis=2)))
 
                 _normalize_kernel(psf, MK)
 
@@ -687,11 +672,11 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
         # As images statistics show the cost function decreases only after 100 iterations and converge around 1000, we enforce 20 iterations no matter what 
         stop = norm_L2_3D(gradu, u_M, u_N)/(u_M*u_N)
         
-        if stop_previous < stop and convergence_flag:
+        if stop_previous/stop < epsilon/step_factor and stop_previous < stop and convergence_flag:
             # Second round where convergence is met : stop the loop after this round
             stop_flag = True
         
-        if stop_previous < stop:
+        if stop_previous/stop < epsilon/step_factor and stop_previous < stop:
             # First round where convergence is met : raise a flag, do nothing
             convergence_flag = True
             
@@ -699,11 +684,11 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
         if blind:
             stop_2 = norm_L2_3D(gradk, MK, MK)/(MK**2)
             
-            if stop_previous_2 < stop_2 and convergence_flag:
+            if stop_previous_2/stop_2 < epsilon/step_factor and stop_previous_2 < stop_2 and convergence_flag:
                 # Second round where convergence is met : stop the loop after this round
                 stop_flag = True
             
-            if stop_previous_2 < stop_2:
+            if stop_previous_2/stop_2 < epsilon/step_factor and stop_previous_2 < stop_2:
                 # First round where convergence is met : raise a flag, do nothing
                 convergence_flag = True
                 
@@ -711,12 +696,12 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
         print("%i iterations completed" % it)
 
     if blind:
-        print("Convergence at %.3f (PSF) - %i iterations." %(stop_2, it))
+        print("Convergence at %.6f (PSF) - %i iterations." %(stop_2, it))
 
         if stop_2 > 1:
             print("This blur estimation is likely to be wrong. Increase the confidence, the bias or reduce the blur size.")
     else:
-        print("Convergence at %.3f (image) - %i iterations." %(stop, it))
+        print("Convergence at %.6f (image) - %i iterations." %(stop, it))
 
     if it == iterations:
         print("You did not reach a solution inside the number of iterations you set. Allow more iterations or increase the coarseness.")
@@ -726,7 +711,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
 
 
 def richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,
-                       float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, float epsilon, int neighbours, int blind=True):
+                       float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, float epsilon, int neighbours, int blind=True, int correlation=False):
     # Expose the Cython function to Python
-    _richardson_lucy_MM(image, u, psf, tau, M, N, C, MK, iterations, step_factor, lambd, epsilon, neighbours, blind=blind)
+    _richardson_lucy_MM(image, u, psf, tau, M, N, C, MK, iterations, step_factor, lambd, epsilon, neighbours, blind=blind, correlation=correlation)
 
