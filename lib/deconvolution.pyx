@@ -46,6 +46,9 @@ def best_param(float[:, :, :] image, float lambd, int M, int N):
     epsilon = np.sqrt(mean_gradient_norm / (np.exp(omega) - 1))
     
     print("%1.6f, %.1f" % (epsilon, lambd))
+
+    # Beware of the stats used to compute epsilon
+    # It consistently gives epsilon = 0 which raises an error and is unexpected.
     
     return max([epsilon, 1e-6])
 
@@ -151,14 +154,47 @@ cdef inline void TV(float[:, :, :] u, float[:, :, :] out, int M, int N, float ep
         for i in prange(1, M-1):
             for j in range(1, N-1):
                 for k in range(3):
-                    udx_back = u[i, j, k] - u[i-1, j, k] 
-                    udy_back = u[i, j, k] - u[i, j-1, k] 
+                    #udx_back = u[i, j, k] - u[i-1, j, k] 
+                    #udy_back = u[i, j, k] - u[i, j-1, k] 
 
-                    udx_forw = -u[i, j, k] + u[i+1, j, k]
-                    udy_forw = -u[i, j, k] + u[i, j+1, k]
+                    #udx_forw = -u[i, j, k] + u[i+1, j, k]
+                    #udy_forw = -u[i, j, k] + u[i, j+1, k]
                     
-                    out[i, j, k] = norm_L2(udx_back, udy_back, epsilon) + norm_L2(udx_forw, udy_forw, epsilon) 
-                    out[i, j, k] /= 2.
+                    udx_back = u[i-1, j, k] + u[i+1, j, k] + 2 * u[i, j, k]
+                    udy_back = u[i, j-1, k] + u[i, j+1, k] + 2 * u[i, j, k]
+                    
+                    out[i, j, k] = norm_L2(udx_back, udy_back, epsilon)# + norm_L2(udx_forw, udy_forw, epsilon) 
+                    #out[i, j, k] /= 2.
+                        
+    ## Warning : borders are ignored !!!
+
+
+cdef inline void diff(float[:, :, :] u, float[:, :, :] out, int M, int N, float epsilon) nogil:
+    
+    cdef:
+        Py_ssize_t i, j, k
+        float dxdy
+        float udx_forw, udx_back, udy_forw, udy_back, udxdy_back, udxdy_forw, udydx_back, udydx_forw
+        float maximum
+        
+    ## In this section we treat only the inside of the picture. See the next section for edges and boundaries exceptions
+                 
+    # Evaluate the total variation on 4 neighbours : direct directions, with a bilateral approximation
+    with parallel(num_threads=CPU):
+        for i in prange(1, M-1):
+            for j in range(1, N-1):
+                for k in range(3):
+                    #udx_back = u[i, j, k] - u[i-1, j, k] 
+                    #udy_back = u[i, j, k] - u[i, j-1, k] 
+
+                    #udx_forw = -u[i, j, k] + u[i+1, j, k]
+                    #udy_forw = -u[i, j, k] + u[i, j+1, k]
+                    
+                    udx_back = u[i-1, j, k] + u[i+1, j, k] + 2 * u[i, j, k]
+                    udy_back = u[i, j-1, k] + u[i, j+1, k] + 2 * u[i, j, k]
+                    
+                    out[i, j, k] = (-udx_back - udy_back) / norm_L2(udx_back, udy_back, epsilon)# + (-udx_forw - udy_forw) / norm_L2(udx_forw, udy_forw, epsilon) 
+                    #out[i, j, k] /= 2.
                         
     ## Warning : borders are ignored !!!
 
@@ -282,9 +318,9 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                     for k in range(3):
                         for j in range(N):
                             if TV_ut[i, j, k] != 0:
-                                gradu[i, j, k] = (TV_u[i, j, k]) / (TV_ut[i, j, k]) / lambd + im_convo[i, j, k] 
+                                gradu[i, j, k] = (TV_u[i, j, k]) / (TV_ut[i, j, k]) / lambd + powf(ut[i, j, k] - u[i, j, k], 2) / lambd / 2. + im_convo[i, j, k] 
                             else:
-                                gradu[i, j, k] = (TV_u[i, j, k]) / (1e-3) / lambd + im_convo[i, j, k]
+                                gradu[i, j, k] = (TV_u[i, j, k]) / (1e-3) / lambd + powf(ut[i, j, k] - u[i, j, k], 2) / lambd / 2. + im_convo[i, j, k] 
        
             dt = step_factor * (u.max() + 1/(u_M * u_N)) / (np.amax(np.abs(gradu)) + float(1e-31))
 
@@ -311,7 +347,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                 for chan in range(C):
                     gradk[..., chan] = convolve(u_rotated[..., chan], error[..., chan], mode="valid")
 
-                dtpsf = step_factor /5. * (np.amax(psf) + 1/(u_M * u_N)) / (np.amax(np.abs(gradk)) + float(1e-31))
+                dtpsf = step_factor/2. * (np.amax(psf) + 1/(u_M * u_N)) / (np.amax(np.abs(gradk)) + float(1e-31))
 
 
                 with nogil, parallel(num_threads=CPU):

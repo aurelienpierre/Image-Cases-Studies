@@ -110,9 +110,7 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1, s
 
     if blur_width % 2 == 0:
         raise ValueError("The blur width should be odd. You can use %i." % (blur_width + 1))
-        
-    if confidence > 100:
-        raise ValueError("The confidence factor is limited to 100. Try increasing the bias instead")
+
 
     # Set the bit-depth
     samples = 2**bits - 1
@@ -308,24 +306,25 @@ if __name__ == '__main__':
     picture = "blured.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [478, 478 + 255, 715, 715 + 255]
-        deblur_module(pic, picture + "-v27", dest_path, 5, mask=mask, display=True, confidence=10, bias=1)
+        #deblur_module(pic, picture + "-v27", dest_path, 5, mask=mask, display=True, confidence=30, bias=2)
         pass
 
     picture = "IMG_9584-900.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        deblur_module(pic, picture + "-v27", dest_path, 3, display=False, sharpness=0., confidence=50, bias=1)
+        mask = [90, 90 + 255, 125, 125 + 255]
+        deblur_module(pic, picture + "-v27", dest_path, 3, display=True, sharpness=0., confidence=50, bias=1)
         pass
 
     picture = "DSC1168.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        mask = [1111, 1111 + 513, 3383, 3383 + 513]
-        #deblur_module(pic, picture + "-v27", dest_path, 15, mask=mask, display=True, iterations=100, confidence=5, bias=1e-5)
+        mask = [1111, 1111 + 255, 3383, 3383 + 255]
+        #deblur_module(pic, picture + "-v27", dest_path, 15, mask=mask, display=True, iterations=200, confidence=10, bias=1)
         pass
 
     picture = "P1030302.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1492, 1492 + 255, 476, 476 + 255]
-        deblur_module(pic, picture + "-v26", dest_path, 27, mask=mask, display=False, confidence=30, bias=1)
+        #deblur_module(pic, picture + "-v26", dest_path, 35, mask=mask, display=True, confidence=30, bias=1)
         pass
 
     picture = "153412.jpg"
