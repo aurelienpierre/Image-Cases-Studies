@@ -146,7 +146,7 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1, s
     confidence = 1000 * confidence
     
     # Set the error
-    epsilon = dc.best_param(pic, confidence, M, N) * bias
+    epsilon = dc.best_param(pic, confidence, M, N)
 
     print("\n===== BLIND ESTIMATION OF BLUR =====")
 
@@ -203,7 +203,7 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1, s
         u_masked = pad_image(u_masked, (pad, pad))
 
         # Make a blind Richardson-Lucy deconvolution on the RGB signal
-        dc.richardson_lucy_MM(im, u_masked, psf, epsilon, im.shape[0], im.shape[1], 3, k, iterations, step/2./i, l, epsilon, neighbours, blind=True, correlation=correlation)
+        dc.richardson_lucy_MM(im, u_masked, psf, bias, im.shape[0], im.shape[1], 3, k, 10./step, step/10., l, epsilon, neighbours, blind=True, correlation=correlation)
 
         # Unpad FFT because this image is resized/reused the next step
         u_masked = u_masked[pad:-pad, pad:-pad, ...]
@@ -269,9 +269,9 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1, s
         u = pad_image(u, (pad, pad))
 
         # Make a non-blind Richardson-Lucy deconvolution on the RGB signal
-        dc.richardson_lucy_MM(im, u, psf_loc, bias, im.shape[0], im.shape[1], 3, k, iterations, step, l, epsilon, neighbours, blind=False)
+        dc.richardson_lucy_MM(im, u, psf_loc, bias, im.shape[0], im.shape[1], 3, k, 1/step, step, l, epsilon, neighbours, blind=False)
 
-        # Unpad FFT because this image is resized/reused the next step
+        # Unpad FFT because this image is resized/reused the next step  
         u = u[pad:-pad, pad:-pad, ...]
 
         # Unpad oddity for same reasons
@@ -305,26 +305,26 @@ if __name__ == '__main__':
 
     picture = "blured.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        mask = [478, 478 + 255, 715, 715 + 255]
-        #deblur_module(pic, picture + "-v27", dest_path, 5, mask=mask, display=True, confidence=30, bias=2)
+        mask = [108, 108 + 255, 779, 779 + 255]
+        deblur_module(pic, picture + "-v28", dest_path, 5, mask=mask, display=False, sharpness=0, iterations=1000, confidence=50, bias=6e-1, step=5e-4)
         pass
-
+    
     picture = "IMG_9584-900.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [90, 90 + 255, 125, 125 + 255]
-        deblur_module(pic, picture + "-v27", dest_path, 3, display=True, sharpness=0., confidence=50, bias=1)
+        #deblur_module(pic, picture + "-v28", dest_path, 3, display=False, sharpness=0, iterations=1000, confidence=30, bias=0e-2)
         pass
 
     picture = "DSC1168.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1111, 1111 + 255, 3383, 3383 + 255]
-        #deblur_module(pic, picture + "-v27", dest_path, 15, mask=mask, display=True, iterations=200, confidence=10, bias=1)
+        #deblur_module(pic, picture + "-v28", dest_path, 15, mask=mask, display=True, iterations=200, confidence=10, bias=5e-3)
         pass
 
     picture = "P1030302.jpg"
     with Image.open(join(source_path, picture)) as pic:
         mask = [1492, 1492 + 255, 476, 476 + 255]
-        #deblur_module(pic, picture + "-v26", dest_path, 35, mask=mask, display=True, confidence=30, bias=1)
+        #deblur_module(pic, picture + "-v28", dest_path, 27, mask=mask, display=True, confidence=10, bias=2, iterations=1000, step=5e-4)
         pass
 
     picture = "153412.jpg"
