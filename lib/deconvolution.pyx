@@ -43,7 +43,7 @@ cdef void gaussian_serie(float[:] serie, float average, float std, int length):
         serie[i] = gaussian_weight(serie[i], average, std)   
 
 
-def best_param(float[:, :, :] image, float lambd, int M, int N):
+cpdef best_param(float[:, :, :] image, float lambd, int M, int N):
     """
     Find the minimum acceptable epsilon to avoid a degenerate constant solution [2]
     Epsilon is the logarithmic norm prior  
@@ -285,7 +285,6 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
 
     
     # Construct the array of gaussian weights for the autocovariance metric
-    cdef np.ndarray[DTYPE_t, ndim=2] residual = np.empty((M, N), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=2] weights = np.zeros((M, N), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=1] width = np.linspace(-1., 1., num=M, dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=1] height = np.linspace(-1., 1., num=N, dtype=DTYPE)
@@ -314,6 +313,10 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
     # Temporary buffers for intermediate computations - we declare them here to avoid Python calls in sub-routines
     cdef float[:, :, :] psf_rotated = cvarray(shape=(MK, MK, 3), itemsize=sizeof(float), format="f")
     cdef float[:, :, :] u_rotated = cvarray(shape=(u_M, u_N, 3), itemsize=sizeof(float), format="f")
+    
+    
+    # Estimate the noise and the parameters
+    cdef float B2, norm_error
     
     rotate_180(psf, MK, MK, psf_rotated)
 
@@ -421,40 +424,46 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
             # Update loop variables
             itt += 1
             it += 1
-            
+           
          
         ### Convergence analysis
         ## Maybe set a PSNR throttle too : http://www.corc.ieor.columbia.edu/reports/techreports/tr-2004-03.pdf
-        
         
         ## From Almeida & Figueiredo : New stopping criteria for iterative blimd image deblurring based on residual whiteness measures
         ## http://www.lx.it.pt/~mtf/Almeida_Figueiredo_SSP2011.pdf 
         if it > 5:
             M_r_prev = M_r
             
-        # Compute the residual, average and flatten the channels
-        with nogil, parallel(num_threads=CPU):
-            for i in prange(M):
-                for j in range(N):
-                
-                    residual[i, j] = 0
-                    
-                    for k in range(3):
-                        # Remember u is image padded with MK//2 along each border
-                        residual[i, j] += image[i, j, k] - u[i + MK//2 , j + MK//2, k]
-                        
-                    residual[i, j] /= 3
+        
             
-        # Flatten the residual channels
-        residual = np.mean(error, axis=2)
+        
+        # From Langer : Automated Parameter Selection for Total Variation Minimization in Image Restoration
+        ## https://link.springer.com/content/pdf/10.1007%2Fs10851-016-0676-2.pdf##
+        # Lambda update
+        """
+        B2 = np.std(u)**2 / 2.
+        norm_error = np.linalg.norm(residual**2)
+        
+        if norm_error > 0:
+            lambd =  norm_error / B2 * lambd
+        else:
+            lambd *= 2
+            
+        print(lambd)
+            
+        #epsilon = best_param(u, lambd, u_M, u_N)
+        """
         # Center the mean at zero
-        residual -= np.mean(residual)
+        error -= np.mean(error)
         # Normalize between -1 and 1
-        residual = residual / np.amax(np.abs(residual))
+        error = error / np.amax(np.abs(error))
         # Autocorrelate the picture : autocovariance
-        residual = convolve(residual, np.rot90(residual, 2), mode="same") 
+        error = convolve(error, np.rot90(error, 2), mode="same") 
         # Compute the white noise metric
-        M_r = - np.sum(weights * residual**2)
+        for i in range(3):
+            error[..., i] = error[..., i]**2 * weights
+            
+        M_r = - np.sum(error)
         
         if it == 5:
             min_M_r = M_r
