@@ -13,12 +13,10 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 import matplotlib.pyplot as plt
+from skimage.transform import resize
 
 
 from lib import tifffile
-
-warnings.simplefilter("ignore", (DeprecationWarning, UserWarning))
-
 from lib import utils
 from lib import deconvolution as dc
 
@@ -51,7 +49,7 @@ def build_pyramid(psf_size, lambd):
 
 
     while kernels[-1] > 3:
-        kernels.append(int(np.floor(kernels[-1] / np.sqrt(2))))
+        kernels.append(int(np.ceil(kernels[-1] / np.sqrt(2))))
         images.append(images[-1] / np.sqrt(2))
         lambdas.append(lambdas[-1] / 2.1)
 
@@ -67,8 +65,8 @@ def build_pyramid(psf_size, lambd):
 from skimage.restoration import denoise_tv_chambolle
 
 @utils.timeit
-def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1, step=1e-3, bits=8,
-                  iterations=200, sharpness=0, mask=None, display=True, neighbours=8, correlation=False):
+def deblur_module(pic, filename, dest_path, blur_width, confidence=10, tolerance=1, quality="normal", bits=8,
+                  mask=None, display=True, blur="static", preview=False, p=2):
     """
     API to call the debluring process
 
@@ -79,24 +77,14 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1, s
     :param confidence: float, default 1, max 100, set the confidence you have in your sample. For example, on noisy pictures, 
     use 1 to 10. For a clean low-ISO picture, you can go all the way to 100. A low factor will reduce the convergence, a high 
     factor will allow more noise amplification.
-    :param bias: float, the blending parameter between sharp and blurred pictures. Ensure    the convergence of the sharp image.
-    Usually between 0.0001 and 0.1
-    :param step: float, the gradient-descent factor. Normal is 1e-3. Increase it to converge faster, but be careful because
-    it could diverge more as well.
+    :param tolerance: float, between 0 and 100. The amount of error you can accept in the solution in %.
     :param bits: integer, default is 8 meaning the input image is encoded with 8 bits/channel. Use 16 if you input 16 bits
     tiff files.
-    :param iterations: float, default is 1, meaning that the base number of iterations to perform are the width of the blur.
-    While this works in most cases, complicated blurs need extra care. Set it > 1 in conjunction with a smaller step
-    when more iterations are needed.
-    :param mask: list of 4 integers, the region on which the blur will be estimated to speed-up the process.
-    :param neighbours: set the number of pixels used to compute the total variation regularization. 2 is fast but will over-smooth
-    and thus reduce the convergence. 4 is good but might blur the edges, 8 is better but slower and might be too permissive in some cases. 
-    With 8, you might want to decrease the confidence factor.
-    :param sharpness: this applies a final unsharp mask using the input picture as the blurry version and the deconvoluted picture as the sharp one. Put 0
-    to disable this feature, and 1 to apply it full throttle.
-
+    :param mask: list of 2 integers, the center of th region on which the blur will be estimated to speed-up the process.
     :param display: Pop-up a control window at the end of the blur estimation to check the solution before runing it on
     the whole picture
+    :param p: float, the power of the Total Variation used to regularize the deblurring. Set > 2 to increase the convergence rate but this might favor the blurry picture as well.
+    It will be refined during the process anyway.
     :return:
     """
     # TODO : refocus http://web.media.mit.edu/~bandy/refocus/PG07refocus.pdf
@@ -104,19 +92,90 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1, s
 
     pic = np.ascontiguousarray(pic, dtype=np.float32)
     
-    # Verifications
-    if blur_width < 3:
-        raise ValueError("The blur width should be at least 3 pixels.")
-
-    if blur_width % 2 == 0:
-        raise ValueError("The blur width should be odd. You can use %i." % (blur_width + 1))
-
-
+    # Extrapad for safety
+    pic = pad_image(pic, (1, 1)).astype(np.float32)
+    
     # Set the bit-depth
     samples = 2**bits - 1
 
     # Rescale the RGB values between 0 and 1
     pic = pic / samples
+    
+    
+    # Map the quality to gradient descent step
+    if quality == "normal":
+        step = 1e-3
+    elif quality == "high":
+        step = 5e-4
+    elif quality == "veryhigh":
+        step = 1e-4
+    elif quality == "low":
+        step == 5e-3
+        
+        
+    # Blur verifications
+    if blur_width < 3:
+        raise ValueError("The blur width should be at least 3 pixels.")
+    elif blur_width % 2 == 0:
+        raise ValueError("The blur width should be odd. You can use %i." % (blur_width + 1))
+        
+    #TODO : automatically evaluate blur size : https://www.researchgate.net/publication/257069815_Blind_Deconvolution_of_Blurred_Images_with_Fuzzy_Size_Detection_of_Point_Spread_Function
+        
+        
+    # Get the dimensions once for all
+    MK = blur_width # PSF size
+    M = pic.shape[0] # Image height
+    N = pic.shape[1] # Image width  
+    C = 3 # RGB channels
+        
+        
+    # Define a minimum mask size for the blind deconvolution
+    if mask is None:
+        # By default, set the mask in the center of the picture
+        mask = [M//2, N//2]
+        
+    mask_size = int(16*(blur_width**1.5))
+    
+    # Create the coordinates of the masking box
+    top = mask[0] - mask_size//2
+    bottom = mask[0] + mask_size//2
+    left = mask[1] - mask_size//2
+    right = mask[1] + mask_size//2
+    
+    print("Mask size :", (bottom - top + 1), "×", (right - left + 1))
+    
+    if top > 0 and bottom < M and left > 0 and right < N:
+       pass
+    else:   
+       raise ValueError("The mask is outside the picture boundaries. Move its center inside or reduce the blur size.") 
+        
+        
+    # Adjust the blur type. 
+    # For motion blur, we enforce the RGB of the PSF to have the same coefficients
+    # This is to help the solver converge.
+    if blur == "static":
+        correlation = False
+    elif blur == "motion":
+        correlation = True
+        
+        
+    # Rescale the tolerance
+    if tolerance > 100:
+        raise ValueError("The tolerance parameter is too high. Max is 100.")
+    elif tolerance < 0:
+        raise ValueError("The tolerance parameter is too low. Min is 0.")
+    else:
+        tolerance /= 100.
+        
+        
+    # Rescale the lambda parameter
+    if confidence > 100:
+        raise ValueError("The confidence parameter is too high. Max is 100.")
+    elif confidence < 1:
+        raise ValueError("The confidence parameter is too low. Min is 1.")
+    else:
+        confidence *= 1000.
+
 
     # Make the picture dimensions odd to avoid ringing on the border of even pictures. We just replicate the last row/column
     odd_vert = False
@@ -132,172 +191,156 @@ def deblur_module(pic, filename, dest_path, blur_width, confidence=10, bias=1, s
         odd_hor = True
         print("Padded horizontally")
 
-    # Construct a blank PSF
+    # Construct a uniform PSF : ones everywhere
     psf = utils.uniform_kernel(blur_width)
     psf = np.dstack((psf, psf, psf))
-
-    # Get the dimensions once for all
-    MK = blur_width
-    M = pic.shape[0]
-    N = pic.shape[1]
-    C = pic.shape[2]
     
-    # Rescale the lambda parameter
-    confidence = 1000 * confidence
+    # Build the pyramid
+    images, kernels, lambdas = build_pyramid(blur_width, confidence)
     
-    # Set the error
-    epsilon = dc.best_param(pic, confidence, M, N)
-
-    print("\n===== BLIND ESTIMATION OF BLUR =====")
-
-    # Construct the mask for the blur estimation
-    if mask:
-        # Check the mask size
-        if ((mask[1] - mask[0]) % 2 == 0 or (mask[3] - mask[2]) % 2 == 0):
-            raise ValueError("The mask dimensions should be odd. You could use at least %i×%i pixels." % (
-                blur_width + 2, blur_width + 2))
-
-        u_masked = pic[mask[0]:mask[1], mask[2]:mask[3], ...].copy()
-        i_masked = pic[mask[0]:mask[1], mask[2]:mask[3], ...]
-
-    else:
-        u_masked = pic.copy()
-        i_masked = pic
+    # Launch the pyramid deconvolution
+    for case in ["blind", "non-blind"]:
+        print("\n===== %s DECONVOLUTION =====" % case)
         
+        deblured_image = pic.copy()
+          
+        for i, k, l in zip(reversed(images), reversed(kernels), reversed(lambdas)):
+            print("======== Pyramid step %1.3f ========" % i)
+            
+            # Compute the new sizes of the mask
+            temp_top = int(i * top)
+            temp_bottom = int(i * bottom)
+            temp_left = int(i * left)
+            temp_right = int(i * right)
+            
+            # Make sure the mask dimensions will be odd and square
+            if int(temp_bottom - temp_top) % 2 == 0:
+                if int(temp_bottom - temp_top) < int(temp_right - temp_left):
+                    temp_bottom += 1
+                elif int(temp_bottom - temp_top) > int(temp_right - temp_left):
+                    temp_top += 1
+                else:
+                    temp_top -= 1
+                    
+            if int(temp_right - temp_left) % 2 == 0:
+                if int(temp_bottom - temp_top) < int(temp_right - temp_left):
+                    temp_left += 1
+                elif int(temp_bottom - temp_top) > int(temp_bottom - temp_top):
+                    temp_right += 1
+                else: 
+                    temp_right -= -1
+                
+            # Compute the new size of the picture
+            temp_width = int(np.floor(i * N))
+            temp_height = int(np.floor(i * M))
+            
+            # Ensure oddity on the picture
+            if temp_width % 2 == 0:
+                temp_width += 1
+            if temp_height % 2 == 0:
+                temp_height += 1
+            
+            shape = (temp_height, temp_width, 3)
+            
+            # Resize blured, deblured images and PSF from previous step
+            temp_blurry_image = resize(pic, shape, order=3, mode="edge", preserve_range=True).astype(np.float32)
+            deblured_image = resize(deblured_image, shape, order=3, mode="edge", preserve_range=True).astype(np.float32)
+           
+            psf_copy = resize(psf, (k, k, 3), order=3, mode="edge", preserve_range=True).astype(np.float32)
+            dc.normalize_kernel(psf_copy, k)
+            
+            # Extra safety padding - Remember the gradient is not evaluated on borders
+            temp_blurry_image = pad_image(temp_blurry_image, (1, 1)).astype(np.float32)
+            deblured_image = pad_image(deblured_image, (1, 1)).astype(np.float32)
+            
+            # Pad for FFT
+            pad = int(np.floor(k / 2))
+            
+            # Debug
+            print("Image size", temp_blurry_image.shape)
+            print("u size", deblured_image.shape)
+            print("Mask size", (temp_bottom - temp_top), (temp_right - temp_left))
+            print("PSF size", psf_copy.shape)
 
-    # Build the intermediate sizes and factors
-    images, kernels, lambdas = build_pyramid(MK, confidence)
-    k_prec = MK
-    for i, k, l in zip(reversed(images), reversed(kernels), reversed(lambdas)):
-        print("======== Pyramid step %1.3f ========" % i)
+            # Make a blind Richardson-Lucy deconvolution on the RGB signal
+            if case == "blind":
+                dc.richardson_lucy_MM(  temp_blurry_image[temp_top - 1:temp_bottom + 1, temp_left - 1:temp_right +1, ...], 
+                                        deblured_image[temp_top - pad - 1:temp_bottom + pad + 1, temp_left - pad - 1:temp_right + pad + 1, ...], 
+                                        psf_copy, 
+                                        pad+1, temp_bottom - temp_top - pad - 1, pad+1, temp_bottom - temp_top - pad-1, 
+                                        tolerance, 
+                                        temp_bottom - temp_top + 2, 
+                                        temp_bottom - temp_top + 2, 
+                                        3, 
+                                        k, 1./step, step, l, blind=True, p=p, correlation=correlation)
+                # Update the PSF
+                psf = psf_copy
+                                        
+            elif case != "blind" and preview:
+                print("PREVIEW MODE")
+                dc.richardson_lucy_MM(  temp_blurry_image[temp_top - 1:temp_bottom + 1, temp_left - 1:temp_right + 1, ...], 
+                                        deblured_image[temp_top - pad - 1:temp_bottom + pad + 1, temp_left - pad - 1:temp_right + pad + 1, ...], 
+                                        psf_copy, 
+                                        pad+1, temp_bottom - temp_top - pad - 1, pad+1, temp_bottom - temp_top - pad-1,
+                                        tolerance, 
+                                        temp_bottom - temp_top + 2, 
+                                        temp_bottom - temp_top + 2, 
+                                        3, 
+                                        k, 1./step, step, l, blind=False, p=p, correlation=correlation)
+            else:
+                # Pad for FFT
+                deblured_image = pad_image(deblured_image, (pad, pad)).astype(np.float32)
+                
+                dc.richardson_lucy_MM(  temp_blurry_image, 
+                                        deblured_image, 
+                                        psf_copy, 
+                                        pad+1, temp_bottom - temp_top - pad - 1, pad+1, temp_bottom - temp_top - pad-1,  
+                                        tolerance, 
+                                        temp_height + 2, 
+                                        temp_width + 2, 
+                                        3, 
+                                        k, 1./step, step, l, blind=False, p=p)
 
-        # Resize blured, deblured images and PSF from previous step
-        if i != 1:
-            im = ndimage.zoom(i_masked, (i, i, 1)).astype(np.float32)
-        else:
-            im = i_masked
+                # Unpad FFT because this image is resized/reused the next step
+                deblured_image  = deblured_image[pad:-pad, pad:-pad, ...]
+                
+            # Remove the extra safety padding
+            temp_blurry_image = temp_blurry_image[1:-1, 1:-1, ...]
+            deblured_image = deblured_image[1:-1, 1:-1, ...]
+            
+            k_prec = k
+            
+        # Display the control preview
+        if display and case=="blind":
+            psf_check = (psf - np.amin(psf))
+            psf_check = psf_check / np.amax(psf_check)
+            plt.imshow(psf_check, interpolation="lanczos", filternorm=1, aspect="equal", vmin=0, vmax=1)
+            plt.show()
+            #plt.imshow(deblured_image[top:bottom, left:right, ...], interpolation="lanczos", filternorm=1, aspect="equal", vmin=0, vmax=1)
+            #plt.show()
 
-        psf = ndimage.zoom(psf, (k / k_prec, k / k_prec, 1)).astype(np.float32)
-        dc.normalize_kernel(psf, k)
-
-        u_masked = ndimage.zoom(u_masked, (im.shape[0] / u_masked.shape[0], im.shape[1] / u_masked.shape[1], 1))
-
-        vert_odd = False
-        hor_odd = False
-
-        # Pad to ensure oddity
-        if pic.shape[0] % 2 == 0:
-            hor_odd = True
-            im = pad_image(im, ((1, 0), (0, 0))).astype(np.float32)
-            u_masked = pad_image(u_masked, ((1, 0), (0, 0))).astype(np.float32)
-            print("Padded vertically")
-
-        if pic.shape[1] % 2 == 0:
-            vert_odd = True
-            im = pad_image(im, ((0, 0), (1, 0))).astype(np.float32)
-            u_masked = pad_image(u_masked, ((0, 0), (1, 0))).astype(np.float32)
-            print("Padded horizontally")
-
-        # Pad for FFT
-        pad = np.floor(k / 2).astype(int)
-        u_masked = pad_image(u_masked, (pad, pad))
-
-        # Make a blind Richardson-Lucy deconvolution on the RGB signal
-        dc.richardson_lucy_MM(im, u_masked, psf, bias, im.shape[0], im.shape[1], 3, k, 10./step, step/10., l, epsilon, neighbours, blind=True, correlation=correlation)
-
-        # Unpad FFT because this image is resized/reused the next step
-        u_masked = u_masked[pad:-pad, pad:-pad, ...]
-
-        # Unpad oddity for same reasons
-        if vert_odd:
-            u_masked = u_masked[1:, :, ...]
-
-        if hor_odd:
-            u_masked = u_masked[:, 1:, ...]
-
-        k_prec = k
-
-    # Display the control preview
-    if display:
-        psf_check = (psf - np.amin(psf))
-        psf_check = psf_check / np.amax(psf_check)
-        plt.imshow(psf_check, interpolation="lanczos", filternorm=1, aspect="equal", vmin=0, vmax=1)
-        plt.show()
-        plt.imshow(u_masked, interpolation="lanczos", filternorm=1, aspect="equal", vmin=0,
-                   vmax=1)
-        plt.show()
-
-    print("\n===== REGULAR DECONVOLUTION =====")
-
-    u = pic.copy()
-    
-    
-    # Build the intermediate sizes and factors
-    k_prec = MK
-    for i, k, l in zip(reversed(images), reversed(kernels), reversed(lambdas)):
-        print("======== Pyramid step %1.3f ========" % i)
-
-        # Resize blured, deblured images and PSF from previous step
-        if i != 1:
-            im = ndimage.zoom(pic, (i, i, 1)).astype(np.float32)
-            psf_loc = ndimage.zoom(psf, (k / k_prec, k / k_prec, 1)).astype(np.float32)
-            dc.normalize_kernel(psf_loc, k)
-        else:
-            im = pic
-            psf_loc = psf
-
-        u = ndimage.zoom(u, (im.shape[0] / u.shape[0], im.shape[1] / u.shape[1], 1))
-
-        vert_odd = False
-        hor_odd = False
-
-        # Pad to ensure oddity
-        if pic.shape[0] % 2 == 0:
-            hor_odd = True
-            im = pad_image(im, ((1, 0), (0, 0))).astype(np.float32)
-            u = pad_image(u, ((1, 0), (0, 0))).astype(np.float32)
-            print("Padded vertically")
-
-        if pic.shape[1] % 2 == 0:
-            vert_odd = True
-            im = pad_image(im, ((0, 0), (1, 0))).astype(np.float32)
-            u = pad_image(u, ((0, 0), (1, 0))).astype(np.float32)
-            print("Padded horizontally")
-
-        # Pad for FFT
-        pad = np.floor(k / 2).astype(int)
-        u = pad_image(u, (pad, pad))
-
-        # Make a non-blind Richardson-Lucy deconvolution on the RGB signal
-        dc.richardson_lucy_MM(im, u, psf_loc, bias, im.shape[0], im.shape[1], 3, k, 1/step, step, l, epsilon, neighbours, blind=False)
-
-        # Unpad FFT because this image is resized/reused the next step  
-        u = u[pad:-pad, pad:-pad, ...]
-
-        # Unpad oddity for same reasons
-        if vert_odd:
-            u = u[1:, :, ...]
-
-        if hor_odd:
-            u = u[:, 1:, ...]
-
-    # Unsharp mask to boost a bit the sharpness
-    u = (1 + sharpness) * u - sharpness * pic
-
-    # if the picture has been padded to make it odd, unpad it to get the original size
-    if odd_hor:
-        u = u[:, 1:, ...]
-    if odd_vert:
-        u = u[1:, :, ...]
 
     # Clip extreme values
-    np.clip(u, 0, 1, out=u)
+    np.clip(deblured_image, 0, 1, out=deblured_image)
 
     # Convert to 16 bits RGB
-    u = u * (2 ** 16 - 1)
+    deblured_image = deblured_image * (2 ** 16 - 1)
 
     # Save the pic
-    utils.save(u, filename, dest_path)
+    if preview:
+        filename = filename + "-preview"
+        deblured_image = deblured_image[top:bottom, left:right, ...]
+    else:
+        # if the picture has been padded to make it odd, unpad it to get the original size
+        if odd_hor:
+            deblured_image = deblured_image[:, 1:, ...]
+        if odd_vert:
+            deblured_image = deblured_image[1:, :, ...]
+        
+        # Remove the extra pad
+        deblured_image = deblured_image[1:-1, 1:-1, ...]
+        
+    utils.save(deblured_image, filename, dest_path)
 
 if __name__ == '__main__':
     source_path = "img"
@@ -305,39 +348,38 @@ if __name__ == '__main__':
 
     picture = "blured.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        mask = [108, 108 + 255, 779, 779 + 255]
-        deblur_module(pic, picture + "-v28", dest_path, 5, mask=mask, display=False, sharpness=0, iterations=1000, confidence=50, bias=6e-1, step=5e-4)
+        mask = [207, 894]
+        #deblur_module(pic, picture + "-v28", dest_path, 5, mask=mask, display=True, confidence=50, tolerance=10, quality ="normal", preview=False, p=4)
         pass
     
     picture = "IMG_9584-900.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        mask = [90, 90 + 255, 125, 125 + 255]
-        #deblur_module(pic, picture + "-v28", dest_path, 3, display=False, sharpness=0, iterations=1000, confidence=30, bias=0e-2)
+        #deblur_module(pic, picture + "-v28", dest_path, 3, display=False, confidence=10, tolerance=0, preview=False, p=4)
         pass
 
     picture = "DSC1168.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        mask = [1111, 1111 + 255, 3383, 3383 + 255]
-        #deblur_module(pic, picture + "-v28", dest_path, 15, mask=mask, display=True, iterations=200, confidence=10, bias=5e-3)
+        mask = [1408, 3616]
+        #deblur_module(pic, picture + "-v28", dest_path, 15, mask=mask, display=False, confidence=1, tolerance=0, preview=True)
         pass
 
     picture = "P1030302.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        mask = [1492, 1492 + 255, 476, 476 + 255]
-        #deblur_module(pic, picture + "-v28", dest_path, 27, mask=mask, display=True, confidence=10, bias=2, iterations=1000, step=5e-4)
+        mask = [1645, 482]
+        deblur_module(pic, picture + "-v28", dest_path, 5, mask=mask, display=False, confidence=50, tolerance=5, preview=False, p=4, blur="motion", quality="normal")
         pass
 
     picture = "153412.jpg"
     with Image.open(join(source_path, picture)) as pic:
-        mask = [1484, 1484 + 501, 3428, 3428 + 501]
-        #deblur_module(pic, picture + "-v24", dest_path, 5, mask=mask, display=False, confidence=5, neighbo	urs=8, bias=1e-6)
+        mask = [1484, 3428]
+        #deblur_module(pic, picture + "-v24", dest_path, 5, mask=mask, display=False, confidence=5, tolerance=1e-6)
         pass
 
     # TIFF input example
     source_path = "/home/aurelien/Exports/2017-11-19-Shoot Fanny Wong/export"
     picture = "Shoot Fanny Wong-0146-_DSC0426--PHOTOSHOP.tif"
     #pic = tifffile.imread(join(source_path, picture))
-    mask = [1914, 1914 + 171, 718, 1484 + 171]
-    #deblur_module(pic, picture + "-blind-v18", dest_path, 5, 1000, 3.0, 1e-3, mask=mask, bits=16)
+    mask = [1914, 1484]
+    #deblur_module(pic, picture + "-blind-v18", dest_path, 5, mask=mask, bits=16)
 
 

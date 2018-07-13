@@ -43,25 +43,36 @@ cdef void gaussian_serie(float[:] serie, float average, float std, int length):
         serie[i] = gaussian_weight(serie[i], average, std)   
 
 
-cpdef best_param(float[:, :, :] image, float lambd, int M, int N):
+cpdef inline float best_param(float[:, :, :] image, float lambd, int M, int N, float p):
     """
     Find the minimum acceptable epsilon to avoid a degenerate constant solution [2]
     Epsilon is the logarithmic norm prior  
+    
+    Normal lambda values are between [1e3 ; 1e5] and should lead to epsilon values respectively in [1e-2; 1e-6]
 
     Reference :
     .. [1] https://pdfs.semanticscholar.org/1d84/0981a4623bcd26985300e6aa922266dab7d5.pdf
     .. [2] http://www.cvg.unibe.ch/publications/perroneIJCV2015.pdf
     """
-    gradient_norm = np.zeros((M, N, 3), dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=3] gradient_norm = np.zeros((M, N, 3), dtype=DTYPE)
     TV(image, gradient_norm, M, N, 0., 1)
 
-    # Remember the gradient is not evaluated along the borders
-    mean_gradient_norm = np.sum(np.mean(gradient_norm, axis=2)) / ((M-2)*(N-2))
-    flat_image = np.mean(image, axis=2)
-    omega = 2 * lambd * np.linalg.norm(flat_image - np.mean(flat_image)) / (M*N)
-    epsilon = np.sqrt(mean_gradient_norm / (np.exp(omega) - 1))
+    # Remember the gradient is not evaluated along the borders so its size is not M×N×3
+    # Also we should do np.sum(gradient_norm**2) / ((M-2)*(N-2)*3)
+    # But this gives inconsistent results
+    cdef float mean_gradient_norm = np.sum(gradient_norm)**2 / ((M-2)*(N-2)*3)
+    cdef float omega = 2 * lambd * np.linalg.norm(np.mean(image) - image)**2 / (p*M*N*3)
     
-    print("%1.9f, %.1f" % (epsilon, lambd))
+    # Lower bound for epsilon
+    cdef epsilon = np.sqrt(mean_gradient_norm / (np.exp(omega) - 1)) + 1e-6
+    
+    if epsilon > 1e-1:
+        epsilon = 1e-1
+        
+    if np.isnan(epsilon):
+        epsilon = 1e-6
+    
+    #print("%1.6f, %.0f, %.4f" % (epsilon, lambd, p))
 
     # Beware of the stats used to compute epsilon
     # It consistently gives epsilon = 0 which raises an error and is unexpected.
@@ -175,6 +186,8 @@ cdef inline void TV(float[:, :, :] u, float[:, :, :] out, int M, int N, float ep
                         udy_back = u[i, j-1, k] + u[i, j+1, k] + 2 * u[i, j, k]
                         out[i, j, k] = norm_L2(udx_back, udy_back, epsilon)
                         
+        
+                        
     elif order == 1:                  
         # Evaluate the total variation on 4 neighbours : direct directions, with a bilateral approximation
         with parallel(num_threads=CPU):
@@ -236,8 +249,8 @@ cdef inline void rotate_180(float[:, :, :] array, int M, int N, float[:, :, :] o
                     out[i, N-1 -j, k] = array[M - i - 1, j, k]
                
 
-cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,
-                              float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, float epsilon, int neighbours, int blind=True, int correlation=False):
+cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf, int top, int bottom, int left, int right, 
+                              float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int blind=True, int correlation=False, float p=2):
     """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization by the Minimization-Maximization
     algorithm. This is known to give the sharp image in more than 50 % of the cases.
 
@@ -267,30 +280,32 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
     .. [7] https://www.sciencedirect.com/science/article/pii/S0307904X13001832
     """
     
+    # TV order
     cdef int order = 2
     
     cdef int u_M = u.shape[0]
     cdef int u_N = u.shape[1]
     cdef Py_ssize_t it, itt, i, j, k
+    cdef int inner_iter = 5
 
     cdef np.ndarray[DTYPE_t, ndim=3] gradk = np.empty((MK, MK, 3), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] psft = np.empty((MK, MK, 3), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] ut = np.zeros((u_M, u_N, 3), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] gradu = np.zeros((u_M, u_N, 3), dtype=DTYPE)
-    cdef np.ndarray[DTYPE_t, ndim=3] im_convo = np.zeros((u_M, u_N, 3), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] error = np.zeros((M, N, 3), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] TV_u = np.zeros((u_M, u_N, 3), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] TV_ut = np.zeros((u_M, u_N, 3), dtype=DTYPE)
     
-
+    # Construct the array of gaussian weights for the autocovariance metri
+    cdef np.ndarray[DTYPE_t, ndim=2] weights
+    cdef np.ndarray[DTYPE_t, ndim=1] width, height
     
-    # Construct the array of gaussian weights for the autocovariance metric
-    cdef np.ndarray[DTYPE_t, ndim=2] weights = np.zeros((M, N), dtype=DTYPE)
-    cdef np.ndarray[DTYPE_t, ndim=1] width = np.linspace(-1., 1., num=M, dtype=DTYPE)
-    cdef np.ndarray[DTYPE_t, ndim=1] height = np.linspace(-1., 1., num=N, dtype=DTYPE)
+    weights = np.zeros((bottom - top, right - left), dtype=DTYPE)
+    width = np.linspace(-1., 1., num=bottom - top, dtype=DTYPE)
+    height = np.linspace(-1., 1., num=right - left, dtype=DTYPE)
     
-    gaussian_serie(width, 0., 1., M)
-    gaussian_serie(height, 0., 1., N)
+    gaussian_serie(width, 0., 1., bottom - top)
+    gaussian_serie(height, 0., 1., right - left)
     
     weights = np.sqrt(np.outer(width, height))
     weights /= np.sum(weights)
@@ -309,6 +324,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
       
     # Once convergence is detected or error goes out of bounds, the stop_flag is raised
     cdef int stop_flag = False
+    cdef int p_flag = True
 
     # Temporary buffers for intermediate computations - we declare them here to avoid Python calls in sub-routines
     cdef float[:, :, :] psf_rotated = cvarray(shape=(MK, MK, 3), itemsize=sizeof(float), format="f")
@@ -316,7 +332,12 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
     
     
     # Estimate the noise and the parameters
-    cdef float B2, norm_error
+    cdef float B, H, B_previous, H_previous
+    cdef float epsilon = best_param(u, lambd, u_M, u_N, p)
+    
+    if not blind:
+        epsilon /= 2.
+    
     
     rotate_180(psf, MK, MK, psf_rotated)
 
@@ -331,8 +352,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
 
         stop_previous = stop
 
-
-        while itt < 5 and not stop_flag:
+        while itt < inner_iter and not stop_flag:
         
             # Sythesize the blur
             for chan in range(3):
@@ -347,14 +367,19 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                         for k in range(3):
                             error[i, j, k] -= image[i, j, k]
 
+            # Deblur
             for chan in range(3):
-                im_convo[..., chan] = convolve(error[..., chan], psf_rotated[..., chan], mode="full")
+                gradu[..., chan] = convolve(error[..., chan], psf_rotated[..., chan], mode="full")
                 
                             
             # Compute the ratio of the epsilon-norm of Total Variation between the current major and minor deblured images
             TV(u, TV_u, u_M, u_N, epsilon, order)
             TV(ut, TV_ut, u_M, u_N, epsilon, order)
             
+            
+            # Regularization step
+            # WARNING! The noise is assumed to be gaussian (L2 norm) 
+            # For impulse or salt-and-pepper noise, L1 norm should be used 
             if order == 1:
                 ## From Perrone & Favaro
                 with nogil, parallel(num_threads=CPU):
@@ -362,9 +387,9 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                         for k in range(3):
                             for j in range(N):
                                 if TV_ut[i, j, k] != 0:
-                                    gradu[i, j, k] = (TV_u[i, j, k]) / (TV_ut[i, j, k]) / lambd + im_convo[i, j, k] 
+                                    gradu[i, j, k] += powf(TV_u[i, j, k], p) / powf(TV_ut[i, j, k], p) / lambd 
                                 else:
-                                    gradu[i, j, k] = (TV_u[i, j, k]) / (1e-3) / lambd + im_convo[i, j, k] 
+                                    gradu[i, j, k] += powf(TV_u[i, j, k], p) / (1e-3) / lambd
             
             elif order ==2:
                 ## Adapted from Perrone & Favaro with Lv, Song, Wang & Le : Image restoration with a high-order total variation minimization method
@@ -375,25 +400,29 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                         for k in range(3):
                             for j in range(N):
                                 if TV_ut[i, j, k] != 0:
-                                    gradu[i, j, k] = (TV_u[i, j, k]) / (TV_ut[i, j, k]) / lambd + powf(ut[i, j, k] - u[i, j, k], 2) / lambd / 4. + im_convo[i, j, k] 
+                                    gradu[i, j, k] += powf(TV_u[i, j, k], p) / powf(TV_ut[i, j, k], p) / lambd + powf(ut[i, j, k] - u[i, j, k], 2) / lambd / 4.
                                 else:
-                                    gradu[i, j, k] = (TV_u[i, j, k]) / (1e-3) / lambd + powf(ut[i, j, k] - u[i, j, k], 2) / lambd / 2. + im_convo[i, j, k] 
+                                    gradu[i, j, k] += powf(TV_u[i, j, k], p) / (1e-3) / lambd + powf(ut[i, j, k] - u[i, j, k], 2) / lambd / 4.
             
             # Scale the gradu factor
-            dt = step_factor * (u.max() + 1/(u_M * u_N)) / (np.amax(np.abs(gradu)) + float(1e-31))
+            dt = step_factor * (u.max() + 1/(u_M * u_N)) / (np.amax(np.abs(gradu)) + float(1e-15))
+            
+            #TODO use a depth-of-field mask to soften the deblurring in out-of-focus zones when non-blind deconvolution
 
-
+            # Update the deblurred picture
             with nogil, parallel(num_threads=CPU):
                 for i in prange(u_M):
                     for k in range(3):
                         for j in range(u_N):
                             u[i, j, k] = u[i, j, k] - dt * gradu[i, j, k]
-
+                            
+            # PSF update
             if blind and not stop_flag: 
-                # PSF update
+                # Synthesize the blur
                 for chan in range(C):
                     error[..., chan] = convolve(u[..., chan], psf[..., chan], mode="valid")
                     
+                # Compute the residual
                 with nogil, parallel(num_threads=CPU):
                     for i in prange(M):
                         for k in range(3):
@@ -402,96 +431,118 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
 
                 rotate_180(u, u_M, u_N, u_rotated)
 
+                # Correlate the rotated deblurred image and the residual
                 for chan in range(C):
                     gradk[..., chan] = convolve(u_rotated[..., chan], error[..., chan], mode="valid")
 
-                dtpsf = step_factor/MK * (np.amax(psf) + 1/(u_M * u_N)) / (np.amax(np.abs(gradk)) + float(1e-31))
+                # Scale the gradk factor
+                dtpsf = step_factor/MK * (np.amax(psf) + 1/(u_M * u_N)) / (np.amax(np.abs(gradk)) + float(1e-15))
 
-
+                # Update the PSF
                 with nogil, parallel(num_threads=CPU):
                     for i in prange(MK):
                         for k in range(3):
                             for j in range(MK):
                                 psf[i, j, k] -= dtpsf * gradk[i, j, k]
                                 
+                # When unexpected decorrelation happens between channels (patterns and geometric shapes), it might help to bound them
                 if correlation:
                     psf = np.dstack((np.mean(psf, axis=2), np.mean(psf, axis=2), np.mean(psf, axis=2)))
 
                 _normalize_kernel(psf, MK)
 
                 rotate_180(psf, MK, MK, psf_rotated)
-
-            # Update loop variables
+            
+            # Iterate indices
             itt += 1
             it += 1
-           
-         
-        ### Convergence analysis
-        ## Maybe set a PSNR throttle too : http://www.corc.ieor.columbia.edu/reports/techreports/tr-2004-03.pdf
-        
-        ## From Almeida & Figueiredo : New stopping criteria for iterative blimd image deblurring based on residual whiteness measures
-        ## http://www.lx.it.pt/~mtf/Almeida_Figueiredo_SSP2011.pdf 
-        if it > 5:
-            M_r_prev = M_r
             
-        
-            
-        
-        # From Langer : Automated Parameter Selection for Total Variation Minimization in Image Restoration
+        ## From Langer : Automated Parameter Selection for Total Variation Minimization in Image Restoration
         ## https://link.springer.com/content/pdf/10.1007%2Fs10851-016-0676-2.pdf##
-        # Lambda update
-        """
-        B2 = np.std(u)**2 / 2.
-        norm_error = np.linalg.norm(residual**2)
+        if it > inner_iter:
+            B_previous = B
+            H_previous = H
+            
+        # We are supposed to multiply by M×N×3 but for some reason, the result is way too high
+        B = np.std(u)**2 / 2. * min([M, N])
+        # WARNING! Again, the noise is supposed to be gaussian, so we use the std as an estimator
+        # For impulse noise, B changes
         
-        if norm_error > 0:
-            lambd =  norm_error / B2 * lambd
+        H = np.linalg.norm(error)**2
+           
+        if it > inner_iter:  
+            # p update 
+            if H_previous <= B_previous:
+                if H > B:
+                    p /= 2.
+            else:
+                if H < B:
+                    p /= 2.
+            
+        # Lambda update every time
+        if H > 0 and B > 0:
+            lambd = (H/B)**p * lambd
         else:
             lambd *= 2
             
-        print(lambd)
+        # From Perrone & Favaro stats, lambda is supposed to be in these bounds
+        if lambd < 1e3:
+            lambd = 1e3
+        if lambd > 1e5:
+            lambd = 1e5
             
-        #epsilon = best_param(u, lambd, u_M, u_N)
-        """
+        epsilon = best_param(u, lambd, u_M, u_N, p)
+            
+        if not blind:
+            epsilon /= 2.
+            
+        ### Convergence analysis
+        ## From Almeida & Figueiredo : New stopping criteria for iterative blind image deblurring based on residual whiteness measures
+        ## http://www.lx.it.pt/~mtf/Almeida_Figueiredo_SSP2011.pdf 
+        if it > inner_iter:
+            M_r_prev = M_r
+            
         # Center the mean at zero
-        error -= np.mean(error)
+        error[top:bottom, left:right, ...] = (error[top:bottom, left:right, ...] - np.mean(error[top:bottom, left:right, ...]))/ np.std(error[top:bottom, left:right, ...])
         # Normalize between -1 and 1
-        error = error / np.amax(np.abs(error))
+        error[top:bottom, left:right, ...] = error[top:bottom, left:right, ...] / np.amax(np.abs(error[top:bottom, left:right, ...]))
         # Autocorrelate the picture : autocovariance
-        error = convolve(error, np.rot90(error, 2), mode="same") 
-        # Compute the white noise metric
-        for i in range(3):
-            error[..., i] = error[..., i]**2 * weights
+        for k in range(3):
+            error[top:bottom, left:right, k] = convolve(error[top:bottom, left:right, k], np.rot90(error[top:bottom, left:right, k], 2), mode="same") 
+            # Compute the white noise metric
+            error[top:bottom, left:right, k] = error[top:bottom, left:right, k]**2 * weights
             
-        M_r = - np.sum(error)
+        # We are supposed to take the sum here, but then the threshold would not be size-invariant
+        # The mean is supposed to give the same number no matter the size of the patch
+        M_r = np.mean(error[top:bottom, left:right, ...])
         
-        if it == 5:
+        if it == inner_iter:
             min_M_r = M_r
         
         if it > 10:
             if blind:
                 # Get more conservative on the error tolerance if the PSF is being estimated
-                if M_r < M_r_prev:
+                if M_r > M_r_prev:
                     stop_flag = True
                     print("white autocorellation condition met")
                 
             else:
                 # Get more sloppy on the error if we do a non-blind deconvolution
-                if M_r < (1 + tau) * M_r_prev or M_r < (1 + tau) * min_M_r:
+                if M_r > (1 + tau) * M_r_prev or M_r > (1 + tau) * min_M_r:
                     stop_flag = True
                     print("white autocorellation condition met")
     
     
         ## Adapted from Perrone & Favaro stats
         # log of the energy aka cost function
-        stop = np.log(np.linalg.norm(TV_u))
+        stop = np.log(np.linalg.norm(TV_u)) * p
 
         # Based on the hyper-laplacian distribution of the TV, from Perrone & Favaro
-        if stop >= lambd * np.linalg.norm(np.mean(u) - u)**2 + 0.5 * u_M * u_N * np.log(epsilon**2):
+        if stop >= lambd * np.linalg.norm(np.mean(u) - u)**2 + p * u_M * u_N * 3 * np.log(epsilon):
             stop_flag = True
             print("statistic condition met")
-            
-        if it % 20 == 0:
+           
+        if it % 50 == 0:
             print("%i iterations completed" % it)
             
     if stop_flag:
@@ -500,17 +551,22 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
         
         u[:] = ut.copy()
         psf[:] = psft.copy()
+        stop = stop_previous
+        M_r = M_r_prev
 
-        print("Convergence at function cost %.6f and autocovariance %.6f - %i iterations." %(stop_previous/(M*N)*1000, M_r_prev/(M*N)*1000, it-5))
+        print("Convergence after %i iterations." % (it-5))
     else:  
-        print("Convergence at function cost %.6f and autocovariance %.6f - %i iterations." %(stop/(M*N)*1000, M_r/(M*N)*1000, it))
+        print("Convergence after %i iterations." % it)
 
     if it == iterations:
-        print("You did not reach a solution inside the number of iterations you set. Allow more iterations or increase the coarseness.")
+        print("You did not reach a solution inside the number of iterations you set. Increase the confidence or the bias.")
+        #TODO raise a convergence flag to stop the pyramid processing and pop an error message
+        
+    print("Stats : log of energy = %.6f | autocovariance = %.6f | power = %.2f | lamdba = %.0f" %(stop/(M*N*3)*1000, M_r*1000/((bottom - top)*(right - left)*3), p, lambd))
    
 
-def richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf,
-                       float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, float epsilon, int neighbours, int blind=True, int correlation=False):
+def richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf, int top, int bottom, int left, int right,
+                       float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int blind=True, float p=2, int correlation=False):
     # Expose the Cython function to Python
-    _richardson_lucy_MM(image, u, psf, tau, M, N, C, MK, iterations, step_factor, lambd, epsilon, neighbours, blind=blind, correlation=correlation)
+    _richardson_lucy_MM(image, u, psf, top, bottom, left, right, tau, M, N, C, MK, iterations, step_factor, lambd, blind=blind, correlation=correlation, p=p)
 
