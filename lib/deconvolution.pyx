@@ -19,6 +19,7 @@ cdef extern from "math.h" nogil:
     float fabsf(float)
     float powf(float, float)
     float expf(float)
+    float logf(float)
     int isnan(float)
     float atan2f(float, float)
     float cosf(float)
@@ -31,53 +32,16 @@ DTYPE = np.float32
 ctypedef np.float32_t DTYPE_t
 
 
-cdef inline float gaussian_weight(float source, float target, float sigma):
+cdef inline float gaussian_weight(float source, float target, float sigma) nogil:
     return expf(-powf(source - target, 2) / (2 * powf(sigma, 2) ) ) / (sigma * powf(2 * PI, 0.5))
-    
+
 
 cdef void gaussian_serie(float[:] serie, float average, float std, int length):
     cdef:
         Py_ssize_t i
-        
+
     for i in range(length):
-        serie[i] = gaussian_weight(serie[i], average, std)   
-
-
-cpdef inline float best_param(float[:, :, :] image, float lambd, int M, int N, float p):
-    """
-    Find the minimum acceptable epsilon to avoid a degenerate constant solution [2]
-    Epsilon is the logarithmic norm prior  
-    
-    Normal lambda values are between [1e3 ; 1e5] and should lead to epsilon values respectively in [1e-2; 1e-6]
-
-    Reference :
-    .. [1] https://pdfs.semanticscholar.org/1d84/0981a4623bcd26985300e6aa922266dab7d5.pdf
-    .. [2] http://www.cvg.unibe.ch/publications/perroneIJCV2015.pdf
-    """
-    cdef np.ndarray[DTYPE_t, ndim=3] gradient_norm = np.zeros((M, N, 3), dtype=DTYPE)
-    TV(image, gradient_norm, M, N, 0., 1)
-
-    # Remember the gradient is not evaluated along the borders so its size is not M×N×3
-    # Also we should do np.sum(gradient_norm**2) / ((M-2)*(N-2)*3)
-    # But this gives inconsistent results
-    cdef float mean_gradient_norm = np.sum(gradient_norm)**2 / ((M-2)*(N-2)*3)
-    cdef float omega = 2 * lambd * np.linalg.norm(np.mean(image) - image)**2 / (p*M*N*3)
-    
-    # Lower bound for epsilon
-    cdef epsilon = np.sqrt(mean_gradient_norm / (np.exp(omega) - 1)) + 1e-6
-    
-    if epsilon > 1e-1:
-        epsilon = 1e-1
-        
-    if np.isnan(epsilon):
-        epsilon = 1e-6
-    
-    #print("%1.6f, %.0f, %.4f" % (epsilon, lambd, p))
-
-    # Beware of the stats used to compute epsilon
-    # It consistently gives epsilon = 0 which raises an error and is unexpected.
-    
-    return epsilon
+        serie[i] = gaussian_weight(serie[i], average, std)
 
 
 cdef inline void _normalize_kernel(float[:, :, :] kern, int MK) nogil:
@@ -134,17 +98,17 @@ cdef void convolvebis(float[:, :, :] image, float[:, :, :] kernel, float[:, :, :
                         for jj in range(K):
                             out[i, j, k]  += image[i + ii - top, j + jj - left, k] * kernel[ii, jj, k]
 
-        
+
 cdef np.ndarray[DTYPE_t, ndim=3] fft_slice(np.ndarray[DTYPE_t, ndim=2] array, int Ma, int Na, int Mb, int Nb, int domain):
     """Slice the output of a FFT convolution"""
-    
+
     # FFT convolution input sizes
     cdef Mfft = Ma + Mb - 1
     cdef Nfft = Na + Nb - 1
-    
+
     # FFT convolution output sizes
     cdef int X, Y
-    
+
     if domain == 0: # valid
         Y = Ma - Mb + 1
         X = Na - Nb + 1
@@ -154,7 +118,7 @@ cdef np.ndarray[DTYPE_t, ndim=3] fft_slice(np.ndarray[DTYPE_t, ndim=2] array, in
     elif domain == 2: # same
         Y = Ma
         X = Na
-        
+
     # Offsets
     cdef int offset_Y = int(np.floor((Mfft - Y)/2))
     cdef int offset_X = int(np.floor((Nfft - X)/2))
@@ -166,73 +130,112 @@ cdef inline float norm_L2(float x, float y, float epsilon) nogil:
     return powf(powf(x, 2) + powf(y, 2) + powf(epsilon, 2), 0.5)
 
 
-cdef inline void TV(float[:, :, :] u, float[:, :, :] out, int M, int N, float epsilon, int order) nogil:
-    
+cdef inline float norm_L1(float x, float y, float epsilon) nogil:
+    return fabsf(x) + fabsf(y) + epsilon
+
+
+cdef inline void TV(float[:, :, :] u, float[:, :, :] out, int M, int N, float epsilon, int order, int norm, float[:, :, :] div) nogil:
+
     cdef:
         Py_ssize_t i, j, k
-        float dxdy
+        float dxdy, adjust
         float udx_forw, udx_back, udy_forw, udy_back, udxdy_back, udxdy_forw, udydx_back, udydx_forw
-        float maximum
-        
+        float udx, udy, udxdy, udydx
+
+    # Distance over the diagonal
+    dxdy = powf(2, 0.5)
+
+    # Normalization coef
+    if norm == 1.:
+        adjust = 4. * (1 + 1/dxdy)
+    elif norm == 2.:
+        adjust = 2. * (1 + dxdy)
+
     ## In this section we treat only the inside of the picture. See the next section for edges and boundaries exceptions
-    
+
     if order == 2:
-        # Evaluate the total variation on 4 neighbours : direct directions, with a bilateral approximation
-        with parallel(num_threads=CPU):
-            for i in prange(1, M-1):
-                for j in range(1, N-1):
-                    for k in range(3):
-                        udx_back = u[i-1, j, k] + u[i+1, j, k] + 2 * u[i, j, k]
-                        udy_back = u[i, j-1, k] + u[i, j+1, k] + 2 * u[i, j, k]
-                        out[i, j, k] = norm_L2(udx_back, udy_back, epsilon)
-                        
-        
-                        
-    elif order == 1:                  
-        # Evaluate the total variation on 4 neighbours : direct directions, with a bilateral approximation
-        with parallel(num_threads=CPU):
-            for i in prange(1, M-1):
-                for j in range(1, N-1):
-                    for k in range(3):
-                        udx_back = u[i, j, k] - u[i-1, j, k] 
-                        udy_back = u[i, j, k] - u[i, j-1, k] 
+        if norm == 1:
+            with parallel(num_threads=CPU):
+                for i in prange(1, M-1):
+                    for j in range(1, N-1):
+                        for k in range(3):
+                            udx = -2 * u[i, j, k] + u[i-1, j, k] + u[i+1, j, k]
+                            udy = -2 * u[i, j, k] + u[i, j-1, k] + u[i, j+1, k]
 
-                        udx_forw = -u[i, j, k] + u[i+1, j, k]
-                        udy_forw = -u[i, j, k] + u[i, j+1, k]
-                        
-                        out[i, j, k] = norm_L2(udx_back, udy_back, epsilon) + norm_L2(udx_forw, udy_forw, epsilon) 
-                        out[i, j, k] /= 2.
-                        
-    ## Warning : borders are ignored !!!
+                            udxdy = (-2 * u[i, j, k] + u[i-1, j-1, k] + u[i+1, j+1, k])/(dxdy)
+                            udydx = (-2 * u[i, j, k] + u[i-1, j+1, k] + u[i+1, j-1, k])/(dxdy)
+
+                            div[i, j, k] = -udx - udy - udxdy - udydx
+                            div[i, j, k] /= adjust
+
+                            out[i, j, k] = norm_L1(udx, udy, epsilon) + norm_L1(udxdy, udydx, epsilon)
+                            out[i, j, k] /= adjust
+
+        else:
+            with parallel(num_threads=CPU):
+                for i in prange(1, M-1):
+                    for j in range(1, N-1):
+                        for k in range(3):
+                            udx = -2 * u[i, j, k] + u[i-1, j, k] + u[i+1, j, k]
+                            udy = -2 * u[i, j, k] + u[i, j-1, k] + u[i, j+1, k]
+
+                            udxdy = (-2 * u[i, j, k] + u[i-1, j-1, k] + u[i+1, j+1, k])/(dxdy)
+                            udydx = (-2 * u[i, j, k] + u[i-1, j+1, k] + u[i+1, j-1, k])/(dxdy)
+
+                            div[i, j, k] = -udx - udy - udxdy - udydx
+                            div[i, j, k] /= adjust
+
+                            out[i, j, k] = norm_L2(udx, udy, epsilon) + norm_L2(udxdy, udydx, epsilon)
+                            out[i, j, k] /= adjust
+
+    elif order == 1:
+        if norm == 1:
+            with parallel(num_threads=CPU):
+                for i in prange(1, M-1):
+                    for j in range(1, N-1):
+                        for k in range(3):
+                            udx_back = u[i, j, k] - u[i-1, j, k]
+                            udy_back = u[i, j, k] - u[i, j-1, k]
+
+                            udx_forw = -u[i, j, k] + u[i+1, j, k]
+                            udy_forw = -u[i, j, k] + u[i, j+1, k]
+
+                            udxdy_back = (u[i, j, k] - u[i-1, j-1, k])/(dxdy)
+                            udydx_back = (u[i, j, k] - u[i-1, j+1, k])/(dxdy)
+
+                            udydx_forw = (-u[i, j, k] + u[i+1, j-1, k])/(dxdy)
+                            udxdy_forw = (-u[i, j, k] + u[i+1, j+1, k])/(dxdy)
+
+                            div[i, j, k] = udx_back + udy_back - udx_forw - udy_forw + udxdy_back + udydx_back - udxdy_forw - udydx_forw
+                            div[i, j, k] /= adjust
+
+                            out[i, j, k] = norm_L1(udx_back, udy_back, epsilon) + norm_L1(udx_forw, udy_forw, epsilon) + norm_L1(udxdy_back, udydx_back, epsilon) + norm_L1(udxdy_forw, udydx_forw, epsilon)
+                            out[i, j, k] /= adjust
+
+        else:
+            with parallel(num_threads=CPU):
+                for i in prange(1, M-1):
+                    for j in range(1, N-1):
+                        for k in range(3):
+                            udx_back = u[i, j, k] - u[i-1, j, k]
+                            udy_back = u[i, j, k] - u[i, j-1, k]
+
+                            udx_forw = -u[i, j, k] + u[i+1, j, k]
+                            udy_forw = -u[i, j, k] + u[i, j+1, k]
+
+                            udxdy_back = (u[i, j, k] - u[i-1, j-1, k])/(dxdy)
+                            udydx_back = (u[i, j, k] - u[i-1, j+1, k])/(dxdy)
+
+                            udydx_forw = (-u[i, j, k] + u[i+1, j-1, k])/(dxdy)
+                            udxdy_forw = (-u[i, j, k] + u[i+1, j+1, k])/(dxdy)
+
+                            div[i, j, k] = udx_back + udy_back - udx_forw - udy_forw + udxdy_back + udydx_back - udxdy_forw - udydx_forw
+                            div[i, j, k] /= adjust
 
 
-cdef inline void diff(float[:, :, :] u, float[:, :, :] out, int M, int N, float epsilon) nogil:
-    
-    cdef:
-        Py_ssize_t i, j, k
-        float dxdy
-        float udx_forw, udx_back, udy_forw, udy_back, udxdy_back, udxdy_forw, udydx_back, udydx_forw
-        float maximum
-        
-    ## In this section we treat only the inside of the picture. See the next section for edges and boundaries exceptions
-                 
-    # Evaluate the total variation on 4 neighbours : direct directions, with a bilateral approximation
-    with parallel(num_threads=CPU):
-        for i in prange(1, M-1):
-            for j in range(1, N-1):
-                for k in range(3):
-                    #udx_back = u[i, j, k] - u[i-1, j, k] 
-                    #udy_back = u[i, j, k] - u[i, j-1, k] 
+                            out[i, j, k] = norm_L2(udx_back, udy_back, epsilon) + norm_L2(udx_forw, udy_forw, epsilon) + norm_L2(udxdy_back, udydx_back, epsilon) + norm_L2(udxdy_forw, udydx_forw, epsilon)
+                            out[i, j, k] /= adjust
 
-                    #udx_forw = -u[i, j, k] + u[i+1, j, k]
-                    #udy_forw = -u[i, j, k] + u[i, j+1, k]
-                    
-                    udx_back = u[i-1, j, k] + u[i+1, j, k] + 2 * u[i, j, k]
-                    udy_back = u[i, j-1, k] + u[i, j+1, k] + 2 * u[i, j, k]
-                    
-                    out[i, j, k] = (-udx_back - udy_back) / norm_L2(udx_back, udy_back, epsilon)# + (-udx_forw - udy_forw) / norm_L2(udx_forw, udy_forw, epsilon) 
-                    #out[i, j, k] /= 2.
-                        
     ## Warning : borders are ignored !!!
 
 
@@ -240,26 +243,112 @@ cdef inline void rotate_180(float[:, :, :] array, int M, int N, float[:, :, :] o
     """Rotate an array by 2×90° around its center"""
 
     cdef:
-        int i, j, k
+        Py_ssize_t i, j, k
 
     with parallel(num_threads=CPU):
         for i in prange(M):
             for k in range(3):
                 for j in range(N):
                     out[i, N-1 -j, k] = array[M - i - 1, j, k]
-               
 
-cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf, int top, int bottom, int left, int right, 
-                              float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int blind=True, int correlation=False, float p=2):
+
+cdef inline long sign(float trial) nogil:
+    cdef long out
+
+    if trial > 0:
+        out = +1
+    elif trial < 0:
+        out = -1
+    else:
+        out = 0
+
+    return out
+
+
+cdef inline float mean(float *array, int M, int N, int K) nogil:
+    cdef:
+        float out = 0
+        Py_ssize_t i
+
+    with parallel(num_threads=CPU):
+        for i in prange(M*N*K):
+            out += array[i]
+
+    return out / (M*N*K)
+
+
+cdef inline float variance(float *array, float mean, int M, int N, int K) nogil:
+    cdef:
+        float out = 0
+        Py_ssize_t i
+
+    with parallel(num_threads=CPU):
+        for i in prange(M*N*K):
+            out += powf(mean - array[i], 2)
+
+    return out / (M*N*K)
+
+
+cdef inline float amax(float *array, int M, int N, int K) nogil:
+    cdef:
+        Py_ssize_t i
+        float out = array[0]
+
+    for i in range(M*N*K):
+        if array[i] > out:
+            out = array[i]
+
+    return out
+
+
+cdef inline float amaxabs(float *array, int M, int N, int K) nogil:
+    cdef:
+        Py_ssize_t i
+        float out = fabsf(array[0])
+        float temp
+
+    for i in range(M*N*K):
+        temp = fabsf(array[i])
+
+        if temp > out:
+            out = temp
+
+    return out
+
+
+cdef inline float array_norm_L2(float *array, int M, int N, int K) nogil:
+    cdef:
+        Py_ssize_t i
+        float out = 0
+
+    for i in range(M*N*K):
+        out += powf(array[i], 2)
+
+    return powf(out, 0.5)
+
+
+cdef inline float array_norm_L1(float *array, int M, int N, int K) nogil:
+    cdef:
+        Py_ssize_t i
+        float out = 0
+
+    for i in range(M*N*K):
+        out += fabsf(array[i])
+
+    return out
+
+
+cpdef np.ndarray[DTYPE_t, ndim=3] richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf, int top, int bottom, int left, int right,
+                              float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int blind=True, int correlation=False, float p=1., int norm=1, int order=2, float priority=0, int refocus=0):
     """Richardson-Lucy Blind and non Blind Deconvolution with Total Variation Regularization by the Minimization-Maximization
     algorithm. This is known to give the sharp image in more than 50 % of the cases.
 
     Based on Matlab sourcecode of :
 
     Copyright (C) Daniele Perrone, perrone@iam.unibe.ch
-	      Remo Diethelm, remo.diethelm@outlook.com
-	      Paolo Favaro, paolo.favaro@iam.unibe.ch
-	      2014, All rights reserved.
+        Remo Diethelm, remo.diethelm@outlook.com
+        Paolo Favaro, paolo.favaro@iam.unibe.ch
+        2014, All rights reserved.
 
     :param ndarray image : Input 3 channels image.
     :param ndarray psf : The point spread function.
@@ -279,149 +368,168 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
     .. [6] http://awibisono.github.io/2016/06/20/accelerated-gradient-descent.html
     .. [7] https://www.sciencedirect.com/science/article/pii/S0307904X13001832
     """
-    
-    # TV order
-    cdef int order = 2
-    
+
     cdef int u_M = u.shape[0]
     cdef int u_N = u.shape[1]
     cdef Py_ssize_t it, itt, i, j, k
     cdef int inner_iter = 5
+    cdef int pad = (u_M - M)//2
 
     cdef np.ndarray[DTYPE_t, ndim=3] gradk = np.empty((MK, MK, 3), dtype=DTYPE)
-    cdef np.ndarray[DTYPE_t, ndim=3] psft = np.empty((MK, MK, 3), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] ut = np.zeros((u_M, u_N, 3), dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=3] utemp = np.zeros((u_M, u_N, 3), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] gradu = np.zeros((u_M, u_N, 3), dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=3] synth = np.zeros((M, N, 3), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] error = np.zeros((M, N, 3), dtype=DTYPE)
-    cdef np.ndarray[DTYPE_t, ndim=3] TV_u = np.zeros((u_M, u_N, 3), dtype=DTYPE)
-    cdef np.ndarray[DTYPE_t, ndim=3] TV_ut = np.zeros((u_M, u_N, 3), dtype=DTYPE)
-    
-    # Construct the array of gaussian weights for the autocovariance metri
-    cdef np.ndarray[DTYPE_t, ndim=2] weights
+    cdef np.ndarray[DTYPE_t, ndim=3] div = np.zeros((u_M, u_N, 3), dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=3] div_ut = np.zeros((u_M, u_N, 3), dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=3] TV_ut_L1 = np.zeros((u_M, u_N, 3), dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=3] TV_ut_L2 = np.zeros((u_M, u_N, 3), dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=3] TV_u_L2 = np.zeros((u_M, u_N, 3), dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=3] TV_u_L1 = np.zeros((u_M, u_N, 3), dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=3] DoF = np.zeros((u_M, u_N, 3), dtype=DTYPE)
+
+    # Construct the array of gaussian weights for the autocovariance metric
+    cdef np.ndarray[DTYPE_t, ndim=2] weights = np.zeros((bottom - top, right - left), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=1] width, height
-    
-    weights = np.zeros((bottom - top, right - left), dtype=DTYPE)
-    width = np.linspace(-1., 1., num=bottom - top, dtype=DTYPE)
-    height = np.linspace(-1., 1., num=right - left, dtype=DTYPE)
-    
+    cdef np.ndarray[DTYPE_t, ndim=3] test = np.zeros((bottom-top, right-left, 3), dtype=DTYPE)
+
+    width = np.linspace(-1., 1., num=(bottom - top), dtype=DTYPE)
+    height = np.linspace(-1., 1., num=(right - left), dtype=DTYPE)
+
     gaussian_serie(width, 0., 1., bottom - top)
     gaussian_serie(height, 0., 1., right - left)
-    
+
     weights = np.sqrt(np.outer(width, height))
     weights /= np.sum(weights)
-    
-    cdef float dt
+
+    cdef float dt[3]
     cdef float dtpsf
-    cdef float max_img[3]
-    cdef float max_grad_u[3]
-    cdef float max_grad_psf[3]
-    cdef float stop = 1e14
-    cdef float stop_previous = 1e15
-    cdef float stop_2 = 1e14
-    cdef float stop_previous_2 = 1e15
+    cdef float max_error[3]
     cdef float max_float
-    cdef float M_r, M_r_prev, min_M_r
-      
+    cdef float M_r, M_r_prev, min_M_r, temp, alpha, beta, v, lambdt, lambdtt
+    cdef float logDu, logDut, varu, varut, Hu, Hut, increase
+    cdef float dvar = 0.
+    cdef float dH = 0.
+    cdef float sigma = 1.
+
     # Once convergence is detected or error goes out of bounds, the stop_flag is raised
     cdef int stop_flag = False
-    cdef int p_flag = True
+    cdef int p_flag = False
+    cdef int convergence_flag = False
 
     # Temporary buffers for intermediate computations - we declare them here to avoid Python calls in sub-routines
     cdef float[:, :, :] psf_rotated = cvarray(shape=(MK, MK, 3), itemsize=sizeof(float), format="f")
     cdef float[:, :, :] u_rotated = cvarray(shape=(u_M, u_N, 3), itemsize=sizeof(float), format="f")
-    
-    
+
+
     # Estimate the noise and the parameters
-    cdef float B, H, B_previous, H_previous
-    cdef float epsilon = best_param(u, lambd, u_M, u_N, p)
-    
-    if not blind:
-        epsilon /= 2.
-    
-    
+    cdef float B, H, B_previous, H_previous, B_first
+    cdef float epsilon
+
+    # Epsilon is the parameter of the Cauchy distribution of the gradients along the image
+    # In a blind setup, given that the PSF estimation window is narrow and consistently chosen
+    # epsilon is big, meaning the gradients distribution has a heavy tail
+    # In a non-blind setup, epsilon has lower bound bounded by the ratio between
+    if blind:
+        epsilon = 1e-2
+    else:
+        epsilon = 1e-6#(bottom - top) * (right-left) / (M*N)
+
+    cdef float conv = 0.125
+
     rotate_180(psf, MK, MK, psf_rotated)
 
+    # Compute alpha & beta
+    # Priority in [-1, 1] : negative gives more power to denoising, positive to deblurring, 0 is even
+
+    if priority > 0:
+        beta = (abs(priority)+1)/2
+        alpha = 1 - beta
+    elif priority < 0:
+        alpha = (abs(priority)+1)/2
+        beta = 1 - alpha
+    elif priority == 0:
+        alpha = 0.5
+        beta = 0.5
+
     it = 0
-    
+
+
     ## From Perrone & Favaro : A logaritmic prior for blind deconvolution
     while it < iterations and not stop_flag:
-        # Prepare the deconvolution
+        # Majorization loop
         ut[:] = u.copy()
-        psft[:] = psf.copy()
+        # Compute the ratio of the epsilon-norm of Total Variation between the current major and minor deblured images
+        TV(ut, TV_u_L1, u_M, u_N, epsilon, 2, 1, div_ut)
+        TV(ut, TV_u_L2, u_M, u_N, epsilon, 2, 2, div_ut)
+
         itt = 0
 
-        stop_previous = stop
+        if it > 0:
+            B_previous = B
+            H_previous = H
 
-        while itt < inner_iter and not stop_flag:
-        
+        while itt < inner_iter:
+            ## Deblurring minimization loop
+
             # Sythesize the blur
             for chan in range(3):
-                error[..., chan] = convolve(u[..., chan], psf[..., chan], mode="valid")
+                synth[..., chan] = convolve(u[..., chan], psf[..., chan], mode="valid")
 
             #convolvebis(u, psf, error, M, N, MK)
 
-            # Compute the residual
-            with nogil, parallel(num_threads=CPU):
-                for i in prange(M):
-                    for j in range(N):
-                        for k in range(3):
-                            error[i, j, k] -= image[i, j, k]
-
-            # Deblur
-            for chan in range(3):
-                gradu[..., chan] = convolve(error[..., chan], psf_rotated[..., chan], mode="full")
-                
-                            
-            # Compute the ratio of the epsilon-norm of Total Variation between the current major and minor deblured images
-            TV(u, TV_u, u_M, u_N, epsilon, order)
-            TV(ut, TV_ut, u_M, u_N, epsilon, order)
-            
-            
-            # Regularization step
-            # WARNING! The noise is assumed to be gaussian (L2 norm) 
-            # For impulse or salt-and-pepper noise, L1 norm should be used 
-            if order == 1:
-                ## From Perrone & Favaro
-                with nogil, parallel(num_threads=CPU):
+            with nogil:
+                # Compute the residual
+                with parallel(num_threads=CPU):
                     for i in prange(M):
-                        for k in range(3):
-                            for j in range(N):
-                                if TV_ut[i, j, k] != 0:
-                                    gradu[i, j, k] += powf(TV_u[i, j, k], p) / powf(TV_ut[i, j, k], p) / lambd 
-                                else:
-                                    gradu[i, j, k] += powf(TV_u[i, j, k], p) / (1e-3) / lambd
-            
-            elif order ==2:
+                        for j in range(N):
+                            for k in range(3):
+                                error[i, j, k] =  synth[i, j, k] - image[i, j, k]
+
+            for k in range(3):
+                gradu[..., k] = convolve(error[..., k], psf_rotated[..., k], mode="full")
+
+            # Compute the ratio of the epsilon-norm of Total Variation between the current major and minor deblured images
+            TV(u, TV_u_L1, u_M, u_N, epsilon, 2, 1, div)
+            TV(u, TV_u_L2, u_M, u_N, epsilon, 2, 2, div)
+
+
+            #TODO : use the hyper-laplacian prior for non-blind deblurring
+            #http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.154.539&rep=rep1&type=pdf
+
+            # Regularization step
+            with nogil:
                 ## Adapted from Perrone & Favaro with Lv, Song, Wang & Le : Image restoration with a high-order total variation minimization method
                 ## https://ac.els-cdn.com/S0307904X13001832/1-s2.0-S0307904X13001832-main.pdf?_tid=05b19487-7e64-4d36-823e-3391f48b6e6a&acdnat=1530684412_d946ea0d68205a7991c34b3ad60b0dd7
-                # Second order TV minimization problem (Perron & Favaro is first order)
-                with nogil, parallel(num_threads=CPU):
-                    for i in prange(M):
-                        for k in range(3):
-                            for j in range(N):
-                                if TV_ut[i, j, k] != 0:
-                                    gradu[i, j, k] += powf(TV_u[i, j, k], p) / powf(TV_ut[i, j, k], p) / lambd + powf(ut[i, j, k] - u[i, j, k], 2) / lambd / 4.
+                # Second order TV minimization problem
+                with parallel(num_threads=CPU):
+                    for i in prange(u_M):
+                        for j in range(u_N):
+                             for k in range(3):
+                                if TV_ut_L1[i, j, k] != 0 and TV_u_L1[i, j, k] != 0:
+                                    gradu[i, j, k] = div[i, j, k] / TV_u_L1[i, j, k] / TV_ut_L1[i, j, k] + lambd * gradu[i, j, k] + (u[i, j, k] - ut[i, j, k])/2. + div_ut[i, j, k] / TV_ut_L2[i, j, k] / TV_u_L2[i, j, k] + div_ut[i, j, k] / TV_ut_L1[i, j, k] / TV_u_L1[i, j, k] + div[i, j, k] / TV_u_L2[i, j, k] / TV_ut_L2[i, j, k]
                                 else:
-                                    gradu[i, j, k] += powf(TV_u[i, j, k], p) / (1e-3) / lambd + powf(ut[i, j, k] - u[i, j, k], 2) / lambd / 4.
-            
+                                    gradu[i, j, k] = lambd * gradu[i, j, k] + (u[i, j, k] - ut[i, j, k]) / 2.
+
+
             # Scale the gradu factor
-            dt = step_factor * (u.max() + 1/(u_M * u_N)) / (np.amax(np.abs(gradu)) + float(1e-15))
-            
-            #TODO use a depth-of-field mask to soften the deblurring in out-of-focus zones when non-blind deconvolution
+            for k in range(3):
+                dt[k] = step_factor * (np.amax(u[..., k]) + 1/(u_M * u_N)) / (np.amax(np.abs(gradu[..., k])) + 1e-15)
 
             # Update the deblurred picture
             with nogil, parallel(num_threads=CPU):
                 for i in prange(u_M):
-                    for k in range(3):
-                        for j in range(u_N):
-                            u[i, j, k] = u[i, j, k] - dt * gradu[i, j, k]
-                            
+                    for j in range(u_N):
+                         for k in range(3):
+                            u[i, j, k] -= dt[k] * gradu[i, j, k]
+
             # PSF update
-            if blind and not stop_flag: 
+            if blind and not stop_flag:
                 # Synthesize the blur
                 for chan in range(C):
                     error[..., chan] = convolve(u[..., chan], psf[..., chan], mode="valid")
-                    
+
                 # Compute the residual
                 with nogil, parallel(num_threads=CPU):
                     for i in prange(M):
@@ -436,7 +544,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                     gradk[..., chan] = convolve(u_rotated[..., chan], error[..., chan], mode="valid")
 
                 # Scale the gradk factor
-                dtpsf = step_factor/MK * (np.amax(psf) + 1/(u_M * u_N)) / (np.amax(np.abs(gradk)) + float(1e-15))
+                dtpsf = step_factor / MK * (np.amax(psf) + 1/(u_M * u_N * 3)) / (np.amax(np.abs(gradk)) + float(1e-15))
 
                 # Update the PSF
                 with nogil, parallel(num_threads=CPU):
@@ -444,7 +552,7 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                         for k in range(3):
                             for j in range(MK):
                                 psf[i, j, k] -= dtpsf * gradk[i, j, k]
-                                
+
                 # When unexpected decorrelation happens between channels (patterns and geometric shapes), it might help to bound them
                 if correlation:
                     psf = np.dstack((np.mean(psf, axis=2), np.mean(psf, axis=2), np.mean(psf, axis=2)))
@@ -452,121 +560,114 @@ cdef void _richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYP
                 _normalize_kernel(psf, MK)
 
                 rotate_180(psf, MK, MK, psf_rotated)
-            
-            # Iterate indices
+
             itt += 1
-            it += 1
-            
-        ## From Langer : Automated Parameter Selection for Total Variation Minimization in Image Restoration
-        ## https://link.springer.com/content/pdf/10.1007%2Fs10851-016-0676-2.pdf##
-        if it > inner_iter:
-            B_previous = B
-            H_previous = H
-            
-        # We are supposed to multiply by M×N×3 but for some reason, the result is way too high
-        B = np.std(u)**2 / 2. * min([M, N])
-        # WARNING! Again, the noise is supposed to be gaussian, so we use the std as an estimator
-        # For impulse noise, B changes
-        
-        H = np.linalg.norm(error)**2
-           
-        if it > inner_iter:  
-            # p update 
-            if H_previous <= B_previous:
-                if H > B:
-                    p /= 2.
-            else:
-                if H < B:
-                    p /= 2.
-            
-        # Lambda update every time
-        if H > 0 and B > 0:
-            lambd = (H/B)**p * lambd
-        else:
-            lambd *= 2
-            
-        # From Perrone & Favaro stats, lambda is supposed to be in these bounds
-        if lambd < 1e3:
-            lambd = 1e3
-        if lambd > 1e5:
-            lambd = 1e5
-            
-        epsilon = best_param(u, lambd, u_M, u_N, p)
-            
-        if not blind:
-            epsilon /= 2.
-            
+
+        """
+        # Compute the TV L2 for lambda estimation
+        if it > 0:
+            varut = varu
+            Hut = Hu
+
+        varu = np.std(u[top+pad:bottom-pad, left+pad:right-pad, ...])**2
+        Hu = np.linalg.norm(error[top:bottom, left:right, ...])**2 / ((bottom-top) * (right-left) * 3)
+
+        # Roll back the history
+        if it > 1:
+            lambdtt = lambdt
+        if it > 0:
+            lambdt = lambd
+
+        # Update lambda
+        if Hu > 0.:
+            if it > 0:
+                if (varu + varut) > 0. and (Hu + Hut) > 0.:
+
+                    dvar = (varu - varut)/(varu + varut)
+                    dH = (Hu - Hut)/(Hu + Hut)
+
+        if it > 0:
+            print("%.5E, %.4E, %.6E, %.6E, %.3E," % (lambd, epsilon, varu , Hu, p))
+        """
         ### Convergence analysis
         ## From Almeida & Figueiredo : New stopping criteria for iterative blind image deblurring based on residual whiteness measures
-        ## http://www.lx.it.pt/~mtf/Almeida_Figueiredo_SSP2011.pdf 
-        if it > inner_iter:
+        ## http://www.lx.it.pt/~mtf/Almeida_Figueiredo_SSP2011.pdf
+        if it > 0:
             M_r_prev = M_r
-            
+
         # Center the mean at zero
-        error[top:bottom, left:right, ...] = (error[top:bottom, left:right, ...] - np.mean(error[top:bottom, left:right, ...]))/ np.std(error[top:bottom, left:right, ...])
+        test = (error[top:bottom, left:right, ...] - np.mean(error[top:bottom, left:right, ...]))/ np.std(error[top:bottom, left:right, ...])
         # Normalize between -1 and 1
-        error[top:bottom, left:right, ...] = error[top:bottom, left:right, ...] / np.amax(np.abs(error[top:bottom, left:right, ...]))
+        test /= np.amax(np.abs(test))
         # Autocorrelate the picture : autocovariance
         for k in range(3):
-            error[top:bottom, left:right, k] = convolve(error[top:bottom, left:right, k], np.rot90(error[top:bottom, left:right, k], 2), mode="same") 
+            test[..., k] = convolve(test[..., k], np.rot90(test[..., k], 2), mode="same")
             # Compute the white noise metric
-            error[top:bottom, left:right, k] = error[top:bottom, left:right, k]**2 * weights
-            
+            test[..., k] = test[..., k]**2 * weights
+
         # We are supposed to take the sum here, but then the threshold would not be size-invariant
         # The mean is supposed to give the same number no matter the size of the patch
-        M_r = np.mean(error[top:bottom, left:right, ...])
-        
+        M_r = np.mean(test)
+
         if it == inner_iter:
             min_M_r = M_r
-        
-        if it > 10:
+
+        if it > 1:
             if blind:
                 # Get more conservative on the error tolerance if the PSF is being estimated
                 if M_r > M_r_prev:
                     stop_flag = True
                     print("white autocorellation condition met")
-                
+
             else:
                 # Get more sloppy on the error if we do a non-blind deconvolution
-                if M_r > (1 + tau) * M_r_prev or M_r > (1 + tau) * min_M_r:
+                if (M_r - M_r_prev) / (M_r + M_r_prev)  > tau:# or M_r > (1 + tau) * min_M_r:
                     stop_flag = True
                     print("white autocorellation condition met")
-    
-    
-        ## Adapted from Perrone & Favaro stats
-        # log of the energy aka cost function
-        stop = np.log(np.linalg.norm(TV_u)) * p
 
-        # Based on the hyper-laplacian distribution of the TV, from Perrone & Favaro
-        if stop >= lambd * np.linalg.norm(np.mean(u) - u)**2 + p * u_M * u_N * 3 * np.log(epsilon):
-            stop_flag = True
-            print("statistic condition met")
-           
+        it += 1
+
         if it % 50 == 0:
-            print("%i iterations completed" % it)
-            
+            print("%i iterations completed" % (it))
+
+        ### DoF masking
+        if np.any(np.isnan(u)):
+          print("has NaN before DoF correction")
+
+        # Sythesize the blur
+        for chan in range(3):
+            synth[..., chan] = convolve(u[..., chan], psf[..., chan], mode="valid")
+
+        with nogil:
+            # Compute the residual
+            with parallel(num_threads=CPU):
+                for i in prange(M):
+                    for j in range(N):
+                        for k in range(3):
+                            error[i, j, k] =  synth[i, j, k] - image[i, j, k]
+
+        for k in range(3):
+            gradu[..., k] = convolve(error[..., k], psf_rotated[..., k], mode="full")
+
+        DoF = np.exp(error**2 / (2 * sigma**2. ) ) / (sigma * (2 * PI)**0.5)
+        DoF /= np.amax(DoF)
+
+        # Blur the zones where no satisfaying deblurring has been performed
+        #temp = fabsf(gaussian_weight(DoF[i, j, k], 0., 0.5))
+        u[pad:-pad, pad:-pad, ...] = (1. - DoF) * u[pad:-pad, pad:-pad, ...] + DoF * image
+
+        if np.any(np.isnan(u)):
+          print("has NaN after DoF correction")
+
     if stop_flag:
         # When one stopping condition has been met, the solutions u and psf have already past degeneration by one step
         # So we retrieve and output the solution from the step before
-        
-        u[:] = ut.copy()
-        psf[:] = psft.copy()
-        stop = stop_previous
-        M_r = M_r_prev
 
-        print("Convergence after %i iterations." % (it-5))
-    else:  
-        print("Convergence after %i iterations." % it)
+        print("Convergence after %i iterations." % (it))
+    else:
+        print("Did not converge after %i iterations. Don't use the result." % it)
 
-    if it == iterations:
-        print("You did not reach a solution inside the number of iterations you set. Increase the confidence or the bias.")
-        #TODO raise a convergence flag to stop the pyramid processing and pop an error message
-        
-    print("Stats : log of energy = %.6f | autocovariance = %.6f | power = %.2f | lamdba = %.0f" %(stop/(M*N*3)*1000, M_r*1000/((bottom - top)*(right - left)*3), p, lambd))
-   
+    print("Stats : autocovariance = %.6f | lamdba = %.0f | residual = %.6f | variance/noise = %.6f" % (1000 * M_r/((bottom - top)*(right - left)*3), lambd, Hu, varu))
 
-def richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3] image, np.ndarray[DTYPE_t, ndim=3] u, np.ndarray[DTYPE_t, ndim=3] psf, int top, int bottom, int left, int right,
-                       float tau, int M, int N, int C, int MK, int iterations, float step_factor, float lambd, int blind=True, float p=2, int correlation=False):
-    # Expose the Cython function to Python
-    _richardson_lucy_MM(image, u, psf, top, bottom, left, right, tau, M, N, C, MK, iterations, step_factor, lambd, blind=blind, correlation=correlation, p=p)
-
+    # Return u where image is defined to not output some border effects
+    return u[pad:pad + M, pad:pad + N, ...]

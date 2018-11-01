@@ -24,7 +24,7 @@ def makeExtension(extName):
         # your include_dirs must contains the '.' for setup to search all the
         # subfolder of the codeRootFolder
         include_dirs=['.', 'numpy.get_include()'],
-        extra_compile_args=["-O3", "-fopenmp", "-ffast-math", "-finline-functions", "-Wno-cpp", "-Wunused-but-set-variable"],
+        extra_compile_args=["-Ofast", "-fopenmp", "-march=native", "-finline-functions", "-mavx"],
         extra_link_args=['-fopenmp', "-finline-functions"]
     )
 
@@ -32,14 +32,23 @@ def makeExtension(extName):
 extNames = scandir('lib')
 
 extensions = [makeExtension(name) for name in extNames]
-
+"""
 extensions.append(Extension('lib._tifffile',
                             [os.path.join("lib", 'tifffile.c')],
                             include_dirs=['.', 'numpy.get_include()'],
-                            extra_compile_args=["-O3", "-fopenmp", "-ffast-math", "-finline-functions", "-Wno-cpp", "-Wunused-but-set-variable"],
+                            extra_compile_args=["-Ofast", "-fopenmp", "-march=native", "-finline-functions", "-Wno-cpp", "-Wunused-but-set-variable"],
                             extra_link_args=['-fopenmp', "-finline-functions"]
-                            ))
+                            ),
+)
 
+extensions.append(Extension('lib.deconv',
+                            [os.path.join("lib", 'deconv.c')],
+                            include_dirs=['.', 'numpy.get_include()'],
+                            extra_compile_args=["-Ofast", "-fopenmp", "-march=native", "-finline-functions", "-Wno-cpp", "-Wunused-but-set-variable"],
+                            extra_link_args=['-fopenmp', "-finline-functions"]
+                            ),
+)
+"""
 setup(
     name="ICS",
     ext_modules=extensions,
