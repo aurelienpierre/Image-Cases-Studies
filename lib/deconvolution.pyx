@@ -387,7 +387,7 @@ cpdef np.ndarray[DTYPE_t, ndim=3] richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3]
     cdef np.ndarray[DTYPE_t, ndim=3] TV_ut_L2 = np.zeros((u_M, u_N, 3), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] TV_u_L2 = np.zeros((u_M, u_N, 3), dtype=DTYPE)
     cdef np.ndarray[DTYPE_t, ndim=3] TV_u_L1 = np.zeros((u_M, u_N, 3), dtype=DTYPE)
-    cdef np.ndarray[DTYPE_t, ndim=3] DoF = np.zeros((u_M, u_N, 3), dtype=DTYPE)
+    cdef np.ndarray[DTYPE_t, ndim=3] DoF = np.zeros((M, N, 3), dtype=DTYPE)
 
     # Construct the array of gaussian weights for the autocovariance metric
     cdef np.ndarray[DTYPE_t, ndim=2] weights = np.zeros((bottom - top, right - left), dtype=DTYPE)
@@ -461,8 +461,8 @@ cpdef np.ndarray[DTYPE_t, ndim=3] richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3]
         # Majorization loop
         ut[:] = u.copy()
         # Compute the ratio of the epsilon-norm of Total Variation between the current major and minor deblured images
-        TV(ut, TV_u_L1, u_M, u_N, epsilon, 2, 1, div_ut)
-        TV(ut, TV_u_L2, u_M, u_N, epsilon, 2, 2, div_ut)
+        #TV(ut, TV_u_L1, u_M, u_N, epsilon, 2, 1, div_ut)
+        #TV(ut, TV_u_L2, u_M, u_N, epsilon, 2, 2, div_ut)
 
         itt = 0
 
@@ -490,10 +490,16 @@ cpdef np.ndarray[DTYPE_t, ndim=3] richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3]
             for k in range(3):
                 gradu[..., k] = convolve(error[..., k], psf_rotated[..., k], mode="full")
 
+
             # Compute the ratio of the epsilon-norm of Total Variation between the current major and minor deblured images
             TV(u, TV_u_L1, u_M, u_N, epsilon, 2, 1, div)
             TV(u, TV_u_L2, u_M, u_N, epsilon, 2, 2, div)
 
+            # Compute the depth of field mask by measuring the error between the estimated blur and the denoised blurry image
+            DoF = ((gradu[pad:-pad, pad:-pad, ...] - image) / (gradu[pad:-pad, pad:-pad, ...] + image))**2
+            #DoF /= np.amax(DoF)
+            if not blind:
+              DoF /= lambd
 
             #TODO : use the hyper-laplacian prior for non-blind deblurring
             #http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.154.539&rep=rep1&type=pdf
@@ -508,7 +514,7 @@ cpdef np.ndarray[DTYPE_t, ndim=3] richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3]
                         for j in range(u_N):
                              for k in range(3):
                                 if TV_ut_L1[i, j, k] != 0 and TV_u_L1[i, j, k] != 0:
-                                    gradu[i, j, k] = div[i, j, k] / TV_u_L1[i, j, k] / TV_ut_L1[i, j, k] + lambd * gradu[i, j, k] + (u[i, j, k] - ut[i, j, k])/2. + div_ut[i, j, k] / TV_ut_L2[i, j, k] / TV_u_L2[i, j, k] + div_ut[i, j, k] / TV_ut_L1[i, j, k] / TV_u_L1[i, j, k] + div[i, j, k] / TV_u_L2[i, j, k] / TV_ut_L2[i, j, k]
+                                    gradu[i, j, k] = div[i, j, k] / TV_u_L1[i, j, k] / TV_ut_L1[i, j, k] / 2. + div[i, j, k] / TV_u_L2[i, j, k] / TV_ut_L2[i, j, k] / 2. + lambd * gradu[i, j, k] + (u[i, j, k] - ut[i, j, k])/4. #+ div_ut[i, j, k] / TV_ut_L2[i, j, k] / TV_u_L2[i, j, k] + div_ut[i, j, k] / TV_ut_L1[i, j, k] / TV_u_L1[i, j, k]
                                 else:
                                     gradu[i, j, k] = lambd * gradu[i, j, k] + (u[i, j, k] - ut[i, j, k]) / 2.
 
@@ -523,6 +529,27 @@ cpdef np.ndarray[DTYPE_t, ndim=3] richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3]
                     for j in range(u_N):
                          for k in range(3):
                             u[i, j, k] -= dt[k] * gradu[i, j, k]
+
+            # Denoise the original blurry image to improve the comparison with the synthesized blur
+            with nogil:
+                ## Adapted from Perrone & Favaro with Lv, Song, Wang & Le : Image restoration with a high-order total variation minimization method
+                ## https://ac.els-cdn.com/S0307904X13001832/1-s2.0-S0307904X13001832-main.pdf?_tid=05b19487-7e64-4d36-823e-3391f48b6e6a&acdnat=1530684412_d946ea0d68205a7991c34b3ad60b0dd7
+                # Second order TV minimization problem
+                with parallel(num_threads=CPU):
+                    for i in prange(u_M):
+                        for j in range(u_N):
+                             for k in range(3):
+                                if TV_ut_L1[i, j, k] != 0 and TV_u_L1[i, j, k] != 0:
+                                    gradu[i, j, k] = div[i, j, k] / TV_u_L1[i, j, k] / TV_ut_L1[i, j, k] / 2. + div[i, j, k] / TV_u_L2[i, j, k] / TV_ut_L2[i, j, k] / 2.
+                                else:
+                                    gradu[i, j, k] = 0.
+
+            for k in range(3):
+                dt[k] = step_factor * (np.amax(image[..., k]) + 1/(M * N)) / (np.amax(np.abs(gradu[..., k])) + 1e-15)
+                image[..., k] -= dt[k] * gradu[pad:-pad, pad:-pad, k] / lambd
+
+            # Retain some of the blurry image in the zones where no satisfaying deblurring has been performed
+            u[pad:-pad, pad:-pad, ...] = (1. - DoF) * u[pad:-pad, pad:-pad, ...] + DoF * image
 
             # PSF update
             if blind and not stop_flag:
@@ -563,7 +590,8 @@ cpdef np.ndarray[DTYPE_t, ndim=3] richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3]
 
             itt += 1
 
-        """
+        print("DoF : min = %f | max = %f" % (np.amin(DoF), np.amax(DoF)))
+
         # Compute the TV L2 for lambda estimation
         if it > 0:
             varut = varu
@@ -571,7 +599,7 @@ cpdef np.ndarray[DTYPE_t, ndim=3] richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3]
 
         varu = np.std(u[top+pad:bottom-pad, left+pad:right-pad, ...])**2
         Hu = np.linalg.norm(error[top:bottom, left:right, ...])**2 / ((bottom-top) * (right-left) * 3)
-
+        """
         # Roll back the history
         if it > 1:
             lambdtt = lambdt
@@ -630,35 +658,6 @@ cpdef np.ndarray[DTYPE_t, ndim=3] richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3]
         if it % 50 == 0:
             print("%i iterations completed" % (it))
 
-        ### DoF masking
-        if np.any(np.isnan(u)):
-          print("has NaN before DoF correction")
-
-        # Sythesize the blur
-        for chan in range(3):
-            synth[..., chan] = convolve(u[..., chan], psf[..., chan], mode="valid")
-
-        with nogil:
-            # Compute the residual
-            with parallel(num_threads=CPU):
-                for i in prange(M):
-                    for j in range(N):
-                        for k in range(3):
-                            error[i, j, k] =  synth[i, j, k] - image[i, j, k]
-
-        for k in range(3):
-            gradu[..., k] = convolve(error[..., k], psf_rotated[..., k], mode="full")
-
-        DoF = np.exp(error**2 / (2 * sigma**2. ) ) / (sigma * (2 * PI)**0.5)
-        DoF /= np.amax(DoF)
-
-        # Blur the zones where no satisfaying deblurring has been performed
-        #temp = fabsf(gaussian_weight(DoF[i, j, k], 0., 0.5))
-        u[pad:-pad, pad:-pad, ...] = (1. - DoF) * u[pad:-pad, pad:-pad, ...] + DoF * image
-
-        if np.any(np.isnan(u)):
-          print("has NaN after DoF correction")
-
     if stop_flag:
         # When one stopping condition has been met, the solutions u and psf have already past degeneration by one step
         # So we retrieve and output the solution from the step before
@@ -668,6 +667,9 @@ cpdef np.ndarray[DTYPE_t, ndim=3] richardson_lucy_MM(np.ndarray[DTYPE_t, ndim=3]
         print("Did not converge after %i iterations. Don't use the result." % it)
 
     print("Stats : autocovariance = %.6f | lamdba = %.0f | residual = %.6f | variance/noise = %.6f" % (1000 * M_r/((bottom - top)*(right - left)*3), lambd, Hu, varu))
+
+    if np.any(np.isnan(u)):
+      print("has NaN after DoF correction")
 
     # Return u where image is defined to not output some border effects
     return u[pad:pad + M, pad:pad + N, ...]

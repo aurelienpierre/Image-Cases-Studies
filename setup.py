@@ -24,8 +24,8 @@ def makeExtension(extName):
         # your include_dirs must contains the '.' for setup to search all the
         # subfolder of the codeRootFolder
         include_dirs=['.', 'numpy.get_include()'],
-        extra_compile_args=["-Ofast", "-fopenmp", "-march=native", "-finline-functions", "-mavx"],
-        extra_link_args=['-fopenmp', "-finline-functions"]
+        extra_compile_args=["-O3", "-fopenmp", "-march=native", "-finline-functions", "-ffast-math", "-msse4"],
+        extra_link_args=['-fopenmp', "-finline-functions", "-ffast-math", "-msse4"]
     )
 
 
