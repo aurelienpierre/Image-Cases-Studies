@@ -1,0 +1,185 @@
+{
+  "version": "v1.0.0",
+  "entity": {
+    "type": "individual",
+    "role": "owner",
+    "name": "Aurélien Pierre",
+    "email": "funding@aurelienpierre.com",
+    "description": "Independent engineer, photographer and musician. I wrote the scene-referred imaging modules shipped in darktable between 2018 and 2022 (filmic RGB, tone equalizer, colour balance RGB, diffuse or sharpen) and created Ansel by forking darktable in 2022. This account funds what I carry personally: eleven websites (about 48,000 pages read a month) including 25 open research articles publishing the mathematics in full, a free photography school of 118 pages, a 140,000-word book on design and engineering given away in French and English, my scores and recordings, and the repositories on my own GitHub account listed below. The bill is web hosting at 160 €/year, which also runs chantal.aurelienpierre.com — the only dynamic service in the network. Everything is free to read and use, with no account, no advertising and no tracker, and stays that way. No future work is promised: this funds keeping what exists online and available. Ansel itself, its documentation and the research code around it belong to the Ansel Co-Op and are funded separately at https://ansel.photos/funding.json.",
+    "webpageUrl": {
+      "url": "https://aurelienpierre.com/"
+    }
+  },
+  "projects": [
+    {
+      "guid": "open-contact-book",
+      "name": "Open Contact Book",
+      "description": "A cross-platform Python/Qt application to manage contact databases over CardDAV, the open protocol built on plain-text vCard files. Written for people and businesses who need their address book to stay theirs, on a server they choose, rather than inside a vendor's account.",
+      "webpageUrl": {
+        "url": "https://github.com/aurelienpierre/opencontactbook"
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/aurelienpierre/opencontactbook"
+      },
+      "licenses": [
+        "spdx:GPL-3.0"
+      ],
+      "tags": [
+        "productivity",
+        "information-management",
+        "privacy",
+        "communication",
+        "linux"
+      ]
+    },
+    {
+      "guid": "static-php-contact-form",
+      "name": "Static PHP contact form",
+      "description": "A contact form for static websites: a small PHP backend with server-side spam filtering (honeypot, consistency checks on browser fingerprint fields, GeoIP), usable from any static site generator without a database or a third-party form service. Credentials live in a local .env file, never in the code.",
+      "webpageUrl": {
+        "url": "https://github.com/aurelienpierre/Static-PHP-contact-form"
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/aurelienpierre/Static-PHP-contact-form"
+      },
+      "licenses": [
+        "spdx:GPL-3.0"
+      ],
+      "tags": [
+        "web-development",
+        "developer-tools",
+        "privacy",
+        "communication",
+        "server"
+      ]
+    },
+    {
+      "guid": "wp-scholar",
+      "name": "WP Scholar",
+      "description": "Academic citation and bibliography management for WordPress: proper references, footnotes and bibliographies for people publishing scholarly work on the web rather than in a journal.",
+      "webpageUrl": {
+        "url": "https://eng.aurelienpierre.com/wp-scholar"
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/aurelienpierre/wp-scholar"
+      },
+      "licenses": [
+        "spdx:GPL-3.0"
+      ],
+      "tags": [
+        "publishing",
+        "documentation",
+        "web-development",
+        "education",
+        "knowledge"
+      ]
+    },
+    {
+      "guid": "polyrapport",
+      "name": "Polyrapport",
+      "description": "A LaTeX class and toolchain for engineering and scientific reports: consistent typography, figures, units and bibliography for students and engineers who have to hand in documents that read properly.",
+      "webpageUrl": {
+        "url": "https://github.com/aurelienpierre/Polyrapport"
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/aurelienpierre/Polyrapport"
+      },
+      "licenses": [
+        "spdx:GPL-3.0"
+      ],
+      "tags": [
+        "publishing",
+        "education",
+        "documentation",
+        "science",
+        "developer-tools"
+      ]
+    },
+    {
+      "guid": "image-cases-studies",
+      "name": "Image Cases Studies",
+      "description": "The research notebooks behind the published imaging articles: deconvolution, denoising, tone mapping and colour-science experiments in Python, kept open so the mathematics in the articles can be checked and reused rather than taken on trust.",
+      "webpageUrl": {
+        "url": "https://eng.aurelienpierre.com/"
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/aurelienpierre/Image-Cases-Studies"
+      },
+      "licenses": [
+        "spdx:GPL-3.0"
+      ],
+      "tags": [
+        "science",
+        "photography",
+        "graphics",
+        "scientific-computing",
+        "data-science"
+      ]
+    },
+    {
+      "guid": "texmaker-note",
+      "name": "TeXmaker-note",
+      "description": "A note-taking layer over TeXmaker: LaTeX note-taking for lectures and research, for people who want typeset mathematics at the speed of handwriting.",
+      "webpageUrl": {
+        "url": "https://aurelienpierre.com/portfolio/end-user/texmaker-note/"
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/aurelienpierre/TeXmaker-note"
+      },
+      "licenses": [
+        "spdx:GPL-3.0"
+      ],
+      "tags": [
+        "productivity",
+        "education",
+        "publishing",
+        "documentation",
+        "linux"
+      ]
+    }
+  ],
+  "funding": {
+    "channels": [
+      {
+        "guid": "liberapay",
+        "type": "payment-provider",
+        "address": "https://liberapay.com/aurelienpierre",
+        "description": "Liberapay: recurring, no platform commission (payment-processor fees only), and rewards are forbidden there by design — so there is nothing owed in return."
+      },
+      {
+        "guid": "paypal",
+        "type": "payment-provider",
+        "address": "https://www.paypal.com/donate/?hosted_button_id=TXVMH9DQZ8H68",
+        "description": "PayPal, for a one-off contribution. Card accepted without a PayPal account."
+      }
+    ],
+    "plans": [
+      {
+        "guid": "running-costs",
+        "status": "active",
+        "name": "Keeping the archive online",
+        "description": "Web hosting at 160 €/year (13.35 €/month), which serves the eleven websites, the free book and research articles, the photography school, and runs chantal.aurelienpierre.com — the only dynamic service in the network. Infrastructure, not wages.",
+        "amount": 14,
+        "currency": "EUR",
+        "frequency": "monthly",
+        "channels": [
+          "liberapay",
+          "paypal"
+        ]
+      },
+      {
+        "guid": "one-off",
+        "status": "active",
+        "name": "One-off contribution, any amount",
+        "description": "For a reader of the articles or the book, or a user of one of the tools. Everything stays free whether or not anyone pays; this is the object, not a subscription.",
+        "amount": 10,
+        "currency": "EUR",
+        "frequency": "one-time",
+        "channels": [
+          "liberapay",
+          "paypal"
+        ]
+      }
+    ]
+  }
+}
